@@ -33,9 +33,9 @@ def tokenize(pre):
         it += [ [] ]
         for x, s in enumerate(line.split()):
             if s in [ '..', '...', '\\dots', '…', '⋯' ]:
-                it[-1] += [ ('dots', ['hr', 'vr'][x == 0]) ]
+                it[-1] += [ { 'kind': 'dots', 'dir': ['hr', 'vr'][x == 0] } ]
             elif s in [ ':', '\\vdots', '⋮' ]:
-                it[-1] += [ ('dots', 'vr') ]
+                it[-1] += [ { 'kind': 'dots', 'dir': 'vr' } ]
             elif '\\' in s:
                 assert False
             elif '_' in s:
@@ -45,22 +45,16 @@ def tokenize(pre):
                     ix = ix[1:-1]
                 if ',' in ix:
                     raise NotImplementedError
-                it[-1] += [ ('indexed', s, ix) ]
+                it[-1] += [ { 'kind': 'indexed', 'name': s, 'index': ix } ]
             else:
-                it[-1] += [ ('fixed', s) ]
+                it[-1] += [ { 'kind': 'fixed', 'name': s } ]
     return it
 
 def merge(xs):
     ys = []
     for x in xs:
-        if ys and ys[-1][0] == x[0] and x[0] in [ 'decl', 'decl-vector' ] and ys[-1][1] == x[1]:
-            ys[-1] = list(ys[-1])
-            ys[-1][2] += x[2]
-            ys[-1] = tuple(ys[-1])
-        elif ys and ys[-1][0] == x[0] and x[0] in [ 'read', 'read-indexed' ]:
-            ys[-1] = list(ys[-1])
-            ys[-1][1] += x[1]
-            ys[-1] = tuple(ys[-1])
+        if ys and ys[-1]['kind'] == x['kind'] and x['kind'] in [ 'decl', 'decl-vector',  'read', 'read-indexed'  ]:
+            ys[-1]['targets'] += x['targets']
         else:
             ys += [ x ]
     return ys
@@ -73,14 +67,14 @@ def parse(tokens):
     env = collections.defaultdict(dict)
     for y, line in enumerate(tokens):
         for x, item in enumerate(line):
-            if item[0] == 'indexed':
-                f = env[item[1]]
-                if item[2] in 'ijk': # for A_1 \dots A_i \dots A_N
+            if item['kind'] == 'indexed':
+                f = env[item['name']]
+                if item['index'] in 'ijk': # for A_1 \dots A_i \dots A_N
                     continue
-                if 'l' not in f or item[2] < f['l']:
-                    f['l'] = item[2]
-                if 'r' not in f or f['r'] < item[2]:
-                    f['r'] = item[2]
+                if 'l' not in f or item['index'] < f['l']:
+                    f['l'] = item['index']
+                if 'r' not in f or f['r'] < item['index']:
+                    f['r'] = item['index']
     for name in env:
         env[name]['n'] = simplify('{}-{}+1'.format(env[name]['r'], env[name]['l']))
     it = []
@@ -89,30 +83,30 @@ def parse(tokens):
         for x, item in enumerate(line):
             decls = []
             reads = []
-            if item[0] == 'fixed':
-                decls += [ ('decl', 'int', [ item[1] ]) ]
-                reads += [ ('read', [ item[1] ]) ]
-            elif item[0] == 'indexed':
+            if item['kind'] == 'fixed':
+                decls += [ { 'kind': 'decl', 'names': [ item['name'] ] } ]
+                reads += [ { 'kind': 'read', 'names': [ item['name'] ] } ]
+            elif item['kind'] == 'indexed':
                 pass
-            elif item[0] == 'dots':
+            elif item['kind'] == 'dots':
                 it += merge(decls) + merge(reads)
                 decls = []
                 reads = []
-                if item[1] == 'hr':
-                    assert line[x-1][0] == 'indexed'
-                    name = line[x-1][1]
+                if item['dir'] == 'hr':
+                    assert line[x-1]['kind'] == 'indexed'
+                    name = line[x-1]['name']
                     if name in used:
                         continue
                     n = env[name]['n']
-                    it += [ ('decl-vector', 'int', [ (name, n) ]) ]
-                    it += [ ('loop', n, [ ('read-indexed', [ (name, 0) ]) ]) ]
+                    it += [ { 'kind': 'decl-vector', 'targets': [ { 'name': name, 'length': n } ] } ]
+                    it += [ { 'kind': 'loop', 'length': n, 'body': [ { 'kind': 'read-indexed', 'targets': [ { 'name': name, 'index': 0 } ] } ] } ]
                     used.add(name)
-                elif item[1] == 'vr':
+                elif item['dir'] == 'vr':
                     names = []
                     for item in tokens[y-1]:
-                        if item[0] != 'indexed':
+                        if item['kind'] != 'indexed':
                             raise NotImplementedError
-                        name = item[1]
+                        name = item['name']
                         if name in used:
                             continue
                         names += [ name ]
@@ -123,10 +117,10 @@ def parse(tokens):
                     n = env[names[0]]['n']
                     for name in names:
                         assert env[name]['n'] == n
-                        decls  += [ ('decl-vector', 'int', [ (name, n) ]) ]
-                        reads += [ ('read-indexed', [ (name, 0) ]) ]
+                        decls += [ { 'kind': 'decl-vector',  'targets': [ { 'name': name, 'length': n } ] } ]
+                        reads += [ { 'kind': 'read-indexed', 'targets': [ { 'name': name, 'index': 0 } ] } ]
                     it += merge(decls)
-                    it += [ ('loop', n, merge(reads)) ]
+                    it += [ { 'kind': 'loop', 'length': n, 'body': merge(reads) } ]
                     decls = []
                     reads = []
                 else:
@@ -137,42 +131,43 @@ def parse(tokens):
     return it
 
 def paren_if(n, lr):
+    l, r = lr
     if n:
-        return lr[0] + n + lr[1]
+        return l + n + r
     else:
         return n
 
 def export(it, repeat_macro=None, use_scanf=False):
     def go(it, nest):
-        if it[0] == 'decl':
-            if it[2]:
-                return '{} {}; '.format(it[1], ', '.join(it[2]))
-        elif it[0] == 'decl-vector':
-            if it[2]:
-                return 'vector<{}> {}; '.format(it[1], ', '.join(map(lambda x: x[0] + paren_if(x[1], '()'), it[2])))
-        elif it[0] in [ 'read', 'read-indexed' ]:
-            if it[0] == 'read':
-                items = it[1]
-            elif it[0] == 'read-indexed':
-                items = list(map(lambda x: x[0] + '[' + 'ijk'[nest - x[1] - 1] + ']', it[1]))
+        if it['kind'] == 'decl':
+            if it['names']:
+                return 'int {}; '.format(', '.join(it['names']))
+        elif it['kind'] == 'decl-vector':
+            if it['targets']:
+                return 'vector<int> {}; '.format(', '.join(map(lambda x: x['name'] + paren_if(x['length'], '()'), it['targets'])))
+        elif it['kind'] in [ 'read', 'read-indexed' ]:
+            if it['kind'] == 'read':
+                items = it['names']
+            elif it['kind'] == 'read-indexed':
+                items = list(map(lambda x: x['name'] + '[' + 'ijk'[nest - x['index'] - 1] + ']', it['targets']))
             if use_scanf:
                 return 'scanf("{}", {});\n'.format('%d' * len(items), ', '.join(map(lambda s: '&'+s, items)))
             else:
                 return 'cin >> {};\n'.format(' >> '.join(items))
-        elif it[0] == 'loop':
+        elif it['kind'] == 'loop':
             s = ''
             i = 'ijk'[nest]
             if repeat_macro is None:
-                s += 'for (int {} = 0; {} < {}; ++ {}) '.format(i, i, it[1], i)
+                s += 'for (int {} = 0; {} < {}; ++ {}) '.format(i, i, it['length'], i)
             else:
-                s += '{} ({},{}) '.format(repeat_macro, i, it[1])
-            if len(it[2]) == 0:
+                s += '{} ({},{}) '.format(repeat_macro, i, it['length'])
+            if len(it['body']) == 0:
                 s += ';'
-            elif len(it[2]) == 1:
-                s += go(it[2][0], nest+1)
+            elif len(it['body']) == 1:
+                s += go(it['body'][0], nest+1)
             else:
                 s += '{ '
-                for line in it[2]:
+                for line in it['body']:
                     s += go(line, nest+1).rstrip() + ' '
                 s += '}\n'
             return s
