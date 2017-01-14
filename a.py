@@ -8,21 +8,6 @@ import argparse
 import collections
 import copy
 
-# samples
-# http://yukicoder.me/problems/no/1
-# http://yukicoder.me/problems/no/2   # N
-# http://yukicoder.me/problems/no/6   # N K
-# http://yukicoder.me/problems/no/8   # vertical
-# http://yukicoder.me/problems/no/17  # S_{N-1}
-# http://yukicoder.me/problems/no/20  # 2D
-# http://yukicoder.me/problems/no/13  # 2D (hard)
-# http://yukicoder.me/problems/no/12  # A_1 \dots A_i \dots A_N
-# http://yukicoder.me/problems/no/11  # A_1 \dots A_i \dots A_N (vertical)
-# http://yukicoder.me/problems/no/18  # string
-# http://yukicoder.me/problems/no/66  # S_{2^M}
-# http://yukicoder.me/problems/no/70  # :
-# http://yukicoder.me/problems/no/73  # C_a \dots C_z
-
 def scrape(url):
     resp = requests.get(url)
     soup = bs4.BeautifulSoup(resp.content.decode(resp.encoding), 'html.parser')
@@ -57,10 +42,33 @@ def tokenize(pre):
             elif '_' in s:
                 assert s.count('_') == 1
                 s, ix = s.split('_')
+                if ix.startswith('{') and ix.endswith('}'):
+                    ix = ix[1:-1]
+                if ',' in ix:
+                    raise NotImplementedError
                 it[-1] += [ ('indexed', s, ix) ]
             else:
                 it[-1] += [ ('fixed', s) ]
     return it
+
+def merge(xs):
+    ys = []
+    for x in xs:
+        if ys and ys[-1][0] == x[0] and x[0] in [ 'decl', 'decl-vector' ] and ys[-1][1] == x[1]:
+            ys[-1] = list(ys[-1])
+            ys[-1][2] += x[2]
+            ys[-1] = tuple(ys[-1])
+        elif ys and ys[-1][0] == x[0] and x[0] in [ 'read', 'read-indexed' ]:
+            ys[-1] = list(ys[-1])
+            ys[-1][1] += x[1]
+            ys[-1] = tuple(ys[-1])
+        else:
+            ys += [ x ]
+    return ys
+
+def simplify(s):
+    local_dict = { 'N': sympy.Symbol('N') }
+    return str( sympy.parsing.sympy_parser.parse_expr( s, local_dict=local_dict ))
 
 def parse(tokens):
     env = collections.defaultdict(dict)
@@ -74,68 +82,101 @@ def parse(tokens):
                     f['l'] = item[2]
                 if 'r' not in f or f['r'] < item[2]:
                     f['r'] = item[2]
+    for name in env:
+        env[name]['n'] = simplify('{}-{}+1'.format(env[name]['r'], env[name]['l']))
     it = []
     used = set()
     for y, line in enumerate(tokens):
-        if y+1 < len(tokens) and tokens[y+1][0][0] == 'dots':
-            continue
         for x, item in enumerate(line):
-            if x+1 < len(line) and line[x+1][0] == 'dots':
-                continue
+            decls = []
+            reads = []
             if item[0] == 'fixed':
-                it += [ ('decl', 'int', item[1]), ('read', item[1]) ]
+                decls += [ ('decl', 'int', [ item[1] ]) ]
+                reads += [ ('read', [ item[1] ]) ]
             elif item[0] == 'indexed':
                 pass
             elif item[0] == 'dots':
+                it += merge(decls) + merge(reads)
+                decls = []
+                reads = []
                 if item[1] == 'hr':
                     assert line[x-1][0] == 'indexed'
                     name = line[x-1][1]
-                    n = str(sympy.expand( sympy.parsing.sympy_parser.parse_expr( '{}-{}+1'.format(env[name]['r'], env[name]['l']))))
-                    it += [ ('decl-vector', 'int', name, n), ('loop', n, [  ('read-indexed', name, 0) ]) ]
+                    if name in used:
+                        continue
+                    n = env[name]['n']
+                    it += [ ('decl-vector', 'int', [ (name, n) ]) ]
+                    it += [ ('loop', n, [ ('read-indexed', [ (name, 0) ]) ]) ]
                     used.add(name)
                 elif item[1] == 'vr':
-                    raise NotImplementedError
+                    names = []
+                    for item in tokens[y-1]:
+                        if item[0] != 'indexed':
+                            raise NotImplementedError
+                        name = item[1]
+                        if name in used:
+                            continue
+                        names += [ name ]
+                        used.add(name)
+                    if not names:
+                        continue
+                    acc = []
+                    n = env[names[0]]['n']
+                    for name in names:
+                        assert env[name]['n'] == n
+                        decls  += [ ('decl-vector', 'int', [ (name, n) ]) ]
+                        reads += [ ('read-indexed', [ (name, 0) ]) ]
+                    it += merge(decls)
+                    it += [ ('loop', n, merge(reads)) ]
+                    decls = []
+                    reads = []
                 else:
                     assert False
             else:
                 assert False
+            it += merge(decls) + merge(reads)
     return it
 
+def paren_if(n, lr):
+    if n:
+        return lr[0] + n + lr[1]
+    else:
+        return n
+
 def export(it, repeat_macro=None):
-    s = ''
-    nest = 0
-    def f(it):
-        nonlocal s
-        nonlocal nest
+    def go(it, nest):
         if it[0] == 'decl':
-            s += '{} {}; '.format(it[1], it[2])
+            if it[2]:
+                return '{} {}; '.format(it[1], ', '.join(it[2]))
         elif it[0] == 'decl-vector':
-            s += 'vector<{}> {}({}); '.format(it[1], it[2], it[3])
+            if it[2]:
+                return 'vector<{}> {}; '.format(it[1], ', '.join(map(lambda x: x[0] + paren_if(x[1], '()'), it[2])))
         elif it[0] == 'read':
-            s += 'cin >> {};\n'.format(it[1])
+            return 'cin >> {};\n'.format(' >> '.join(it[1]))
         elif it[0] == 'read-indexed':
-            s += 'cin >> {}[{}];\n'.format(it[1], 'ijk'[nest - it[2] - 1])
+            return 'cin >> {};\n'.format(' >> '.join(map(lambda x: x[0] + '[' + 'ijk'[nest - x[1] - 1] + ']', it[1])))
         elif it[0] == 'loop':
+            s = ''
             i = 'ijk'[nest]
             if repeat_macro is None:
                 s += 'for (int {} = 0; {} < {}; ++ {}) '.format(i, i, it[1], i)
             else:
                 s += '{} ({},{}) '.format(repeat_macro, i, it[1])
-            nest += 1
             if len(it[2]) == 0:
                 s += ';'
             elif len(it[2]) == 1:
-                f(it[2][0])
+                s += go(it[2][0], nest+1)
             else:
-                s += '{\n'
+                s += '{ '
                 for line in it[2]:
-                    f(line)
+                    s += go(line, nest+1).rstrip() + ' '
                 s += '}\n'
-            nest -= 1
+            return s
         else:
             assert False
+    s = ''
     for line in it:
-        f(line)
+        s += go(line, 0)
     return s
 
 def main():
