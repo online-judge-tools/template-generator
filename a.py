@@ -21,13 +21,30 @@ import copy
 # http://yukicoder.me/problems/no/70  # :
 # http://yukicoder.me/problems/no/73  # C_a \dots C_z
 
-def tokenize(tag):
+def scrape(url):
+    resp = requests.get(url)
+    soup = bs4.BeautifulSoup(resp.content.decode(resp.encoding), 'html.parser')
+    if 'yukicoder.me' in url:
+        for h4 in soup.find_all('h4'):
+            if h4.string == '入力':
+                return h4.parent.find('pre').string
+    elif 'atcoder.jp' in url:
+        for h3 in soup.find_all('h3'):
+            if h3.string == '入力':
+                s = ''
+                for it in h3.parent.find('pre'):
+                    s += it.string or it
+                return s
+    else:
+        raise NotImplementedError
+
+def tokenize(pre):
     it = []
-    for y, line in enumerate(tag.find('pre').string.splitlines()):
+    for y, line in enumerate(pre.splitlines()):
         line = line.replace('$', '').replace('\\(', '').replace('\\)', '').replace('\\ ', ' ')
         it += [ [] ]
         for x, s in enumerate(line.split()):
-            if s == '\\dots':
+            if s == '\\dots' or s == ':' or s == '...':
                 it[-1] += [ ('dots', ['hr', 'vr'][x == 0]) ]
             elif '\\' in s:
                 assert False
@@ -77,7 +94,7 @@ def parse(tokens):
                 assert False
     return it
 
-def export(it):
+def export(it, repeat_macro=None):
     s = ''
     nest = 0
     def f(it):
@@ -90,7 +107,11 @@ def export(it):
         elif it[0] == 'read-indexed':
             s += 'cin >> {}[{}];\n'.format(it[1], 'ijk'[nest - it[2] - 1])
         elif it[0] == 'loop':
-            s += 'repeat ({},{}) {}\n'.format('ijk'[nest], it[1], '{')
+            i = 'ijk'[nest]
+            if repeat_macro is None:
+                s += 'for (int {} = 0; {} < {}; ++ {}) {}'.format(i, i, it[1], i, '{')
+            else:
+                s += '{} ({},{}) {}\n'.format(repeat_macro, i, it[1], '{')
             nest += 1
             for line in it[2]:
                 f(line)
@@ -102,17 +123,17 @@ def export(it):
         f(line)
     return s
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('url')
+    parser.add_argument('--repeat-macro')
     args = parser.parse_args()
 
-    resp = requests.get(args.url)
-    soup = bs4.BeautifulSoup(resp.content.decode(resp.encoding), 'html.parser')
+    it = scrape(args.url)
+    it = tokenize(it)
+    it = parse(it)
+    print(export(it, repeat_macro=args.repeat_macro))
 
-    for h4 in soup.find_all('h4'):
-        if h4.string == '入力':
-            it = tokenize(h4.parent)
-            it = parse(it)
-            print(export(it))
 
+if __name__ == '__main__':
+    main()
