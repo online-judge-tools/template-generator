@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 import bs4
 import requests
+import sympy
+import sympy.parsing.sympy_parser
 import argparse
 import collections
 import copy
@@ -44,8 +46,12 @@ def tokenize(pre):
         line = line.replace('$', '').replace('\\(', '').replace('\\)', '').replace('\\ ', ' ')
         it += [ [] ]
         for x, s in enumerate(line.split()):
-            if s == '\\dots' or s == ':' or s == '...':
+            if s == '\\dots':
                 it[-1] += [ ('dots', ['hr', 'vr'][x == 0]) ]
+            elif s == ':':
+                it[-1] += [ ('dots', 'vr') ]
+            elif s == '...':
+                it[-1] += [ ('dots', 'hr') ]
             elif '\\' in s:
                 assert False
             elif '_' in s:
@@ -84,7 +90,8 @@ def parse(tokens):
                 if item[1] == 'hr':
                     assert line[x-1][0] == 'indexed'
                     name = line[x-1][1]
-                    it += [ ('loop', '{}-{}+1'.format(env[name]['r'], env[name]['l']), [  ('read-indexed', '{}'.format(name), 0) ]) ]
+                    n = str(sympy.expand( sympy.parsing.sympy_parser.parse_expr( '{}-{}+1'.format(env[name]['r'], env[name]['l']))))
+                    it += [ ('decl-vector', 'int', name, n), ('loop', n, [  ('read-indexed', name, 0) ]) ]
                     used.add(name)
                 elif item[1] == 'vr':
                     raise NotImplementedError
@@ -102,6 +109,8 @@ def export(it, repeat_macro=None):
         nonlocal nest
         if it[0] == 'decl':
             s += '{} {}; '.format(it[1], it[2])
+        elif it[0] == 'decl-vector':
+            s += 'vector<{}> {}({}); '.format(it[1], it[2], it[3])
         elif it[0] == 'read':
             s += 'cin >> {};\n'.format(it[1])
         elif it[0] == 'read-indexed':
@@ -109,14 +118,20 @@ def export(it, repeat_macro=None):
         elif it[0] == 'loop':
             i = 'ijk'[nest]
             if repeat_macro is None:
-                s += 'for (int {} = 0; {} < {}; ++ {}) {}'.format(i, i, it[1], i, '{')
+                s += 'for (int {} = 0; {} < {}; ++ {}) '.format(i, i, it[1], i)
             else:
-                s += '{} ({},{}) {}\n'.format(repeat_macro, i, it[1], '{')
+                s += '{} ({},{}) '.format(repeat_macro, i, it[1])
             nest += 1
-            for line in it[2]:
-                f(line)
+            if len(it[2]) == 0:
+                s += ';'
+            elif len(it[2]) == 1:
+                f(it[2][0])
+            else:
+                s += '{\n'
+                for line in it[2]:
+                    f(line)
+                s += '}\n'
             nest -= 1
-            s += '}\n'
         else:
             assert False
     for line in it:
@@ -132,7 +147,7 @@ def main():
     it = scrape(args.url)
     it = tokenize(it)
     it = parse(it)
-    print(export(it, repeat_macro=args.repeat_macro))
+    print(export(it, repeat_macro=args.repeat_macro), end='')
 
 
 if __name__ == '__main__':

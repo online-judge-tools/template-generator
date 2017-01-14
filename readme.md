@@ -5,15 +5,20 @@
 ## 現状
 
 ``` c
-$ ./a.py --repeat-macro=REPEAT http://yukicoder.me/problems/no/1 | clang-format
-int N;
-cin >> N;
-int C;
-cin >> C;
-int V;
-cin >> V;
-REPEAT(i, V - 1 + 1) { cin >> S[i]; }
-REPEAT(i, V - 1 + 1) { cin >> T[i]; }
-REPEAT(i, V - 1 + 1) { cin >> Y[i]; }
-REPEAT(i, V - 1 + 1) { cin >> M[i]; }
+$ ./a.py --repeat-macro=REPEAT http://yukicoder.me/problems/no/1
+int N; cin >> N;
+int C; cin >> C;
+int V; cin >> V;
+vector<int> S(V); REPEAT (i,V) cin >> S[i];
+vector<int> T(V); REPEAT (i,V) cin >> T[i];
+vector<int> Y(V); REPEAT (i,V) cin >> Y[i];
+vector<int> M(V); REPEAT (i,V) cin >> M[i];
+```
+
+## requirements
+
+``` sh
+$ pip3 install requests
+$ pip3 install beautifulsoup4
+$ pip3 install sympy
 ```
