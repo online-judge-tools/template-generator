@@ -3,7 +3,7 @@
 import bs4
 import requests
 import sympy
-import sympy.parsing.sympy_parser
+import sympy.parsing.sympy_parser as sympy_parser
 import argparse
 import collections
 import copy
@@ -50,7 +50,7 @@ def tokenize(pre):
                 it[-1] += [ { 'kind': 'fixed', 'name': s } ]
     return it
 
-def merge(xs):
+def merge_ops(xs):
     ys = []
     for x in xs:
         if ys and ys[-1]['kind'] == x['kind'] and x['kind'] in [ 'decl', 'decl-vector',  'read', 'read-indexed'  ]:
@@ -60,8 +60,9 @@ def merge(xs):
     return ys
 
 def simplify(s):
+    transformations = sympy_parser.standard_transformations + ( sympy_parser.implicit_multiplication_application ,)
     local_dict = { 'N': sympy.Symbol('N') }
-    return str( sympy.parsing.sympy_parser.parse_expr( s, local_dict=local_dict ))
+    return str(sympy_parser.parse_expr(s, local_dict=local_dict, transformations=transformations))
 
 def parse(tokens):
     env = collections.defaultdict(dict)
@@ -89,7 +90,7 @@ def parse(tokens):
             elif item['kind'] == 'indexed':
                 pass
             elif item['kind'] == 'dots':
-                it += merge(decls) + merge(reads)
+                it += merge_ops(decls) + merge_ops(reads)
                 decls = []
                 reads = []
                 if item['dir'] == 'hr':
@@ -119,15 +120,15 @@ def parse(tokens):
                         assert env[name]['n'] == n
                         decls += [ { 'kind': 'decl-vector',  'targets': [ { 'name': name, 'length': n } ] } ]
                         reads += [ { 'kind': 'read-indexed', 'targets': [ { 'name': name, 'index': 0 } ] } ]
-                    it += merge(decls)
-                    it += [ { 'kind': 'loop', 'length': n, 'body': merge(reads) } ]
+                    it += merge_ops(decls)
+                    it += [ { 'kind': 'loop', 'length': n, 'body': merge_ops(reads) } ]
                     decls = []
                     reads = []
                 else:
                     assert False
             else:
                 assert False
-            it += merge(decls) + merge(reads)
+            it += merge_ops(decls) + merge_ops(reads)
     return it
 
 def paren_if(n, lr):
