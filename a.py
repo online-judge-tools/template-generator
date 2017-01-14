@@ -143,7 +143,7 @@ def paren_if(n, lr):
     else:
         return n
 
-def export(it, repeat_macro=None):
+def export(it, repeat_macro=None, use_scanf=False):
     def go(it, nest):
         if it[0] == 'decl':
             if it[2]:
@@ -151,10 +151,15 @@ def export(it, repeat_macro=None):
         elif it[0] == 'decl-vector':
             if it[2]:
                 return 'vector<{}> {}; '.format(it[1], ', '.join(map(lambda x: x[0] + paren_if(x[1], '()'), it[2])))
-        elif it[0] == 'read':
-            return 'cin >> {};\n'.format(' >> '.join(it[1]))
-        elif it[0] == 'read-indexed':
-            return 'cin >> {};\n'.format(' >> '.join(map(lambda x: x[0] + '[' + 'ijk'[nest - x[1] - 1] + ']', it[1])))
+        elif it[0] in [ 'read', 'read-indexed' ]:
+            if it[0] == 'read':
+                items = it[1]
+            elif it[0] == 'read-indexed':
+                items = list(map(lambda x: x[0] + '[' + 'ijk'[nest - x[1] - 1] + ']', it[1]))
+            if use_scanf:
+                return 'scanf("{}", {});\n'.format('%d' * len(items), ', '.join(map(lambda s: '&'+s, items)))
+            else:
+                return 'cin >> {};\n'.format(' >> '.join(items))
         elif it[0] == 'loop':
             s = ''
             i = 'ijk'[nest]
@@ -183,12 +188,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('url')
     parser.add_argument('--repeat-macro')
+    parser.add_argument('--scanf', action='store_true')
     args = parser.parse_args()
 
     it = scrape(args.url)
     it = tokenize(it)
     it = parse(it)
-    print(export(it, repeat_macro=args.repeat_macro), end='')
+    print(export(it, use_scanf=args.scanf, repeat_macro=args.repeat_macro), end='')
 
 
 if __name__ == '__main__':
