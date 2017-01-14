@@ -1,8 +1,11 @@
+This repository is **obsoleted**, and has been merged by [kmyk/online-judge-tools](https://github.com/kmyk/online-judge-tools).
+
+---
+
 # 競プロでの入力受け取る部分を自動生成するやつ
 
-実験的な試み。上手くいったらかなり便利なはず。
-
-制約を読んで値の範囲等の情報を取るのはしんどそうなので誰か頼むという気持ち。
+思ってたよりいい感じなのでそのまま取り込んでしまった。
+制約を読んで値の範囲等の情報を取るのはしんどそうなので放棄。
 
 ## example
 
