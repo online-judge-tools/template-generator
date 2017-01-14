@@ -28,15 +28,14 @@ def scrape(url):
 def tokenize(pre):
     it = []
     for y, line in enumerate(pre.splitlines()):
-        line = line.replace('$', '').replace('\\(', '').replace('\\)', '').replace('\\ ', ' ')
+        line = line.replace('$', '').replace('\\(', '').replace('\\)', '')
+        line = line.replace('\\ ', ' ').replace('\\quad', ' ')
         it += [ [] ]
         for x, s in enumerate(line.split()):
-            if s == '\\dots':
+            if s in [ '..', '...', '\\dots', '…', '⋯' ]:
                 it[-1] += [ ('dots', ['hr', 'vr'][x == 0]) ]
-            elif s == ':':
+            elif s in [ ':', '\\vdots', '⋮' ]:
                 it[-1] += [ ('dots', 'vr') ]
-            elif s == '...':
-                it[-1] += [ ('dots', 'hr') ]
             elif '\\' in s:
                 assert False
             elif '_' in s:
