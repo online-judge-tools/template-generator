@@ -9,26 +9,31 @@
 できた:
 
 -   固定
-    -   http://yukicoder.me/problems/no/6
+    -   例: http://yukicoder.me/problems/no/6
 -   横
-    -   http://yukicoder.me/problems/no/12
+    -   例: http://yukicoder.me/problems/no/12
 -   縦
-    -   http://yukicoder.me/problems/no/8
+    -   例: http://yukicoder.me/problems/no/8
 
 まだ:
 
--   $2$次元
-    -   http://yukicoder.me/problems/no/20
+-   2次元
+    -   例: http://yukicoder.me/problems/no/20
+-   グラフをいい感じにする
+    -   例: http://yukicoder.me/problems/no/317
+    -   引数で指定とかしないとだめそう
+-   `scanf`対応
 
-むりそう:
+たぶんやらない:
+-   C++以外の言語の対応
 -   `int`以外
-    -   http://yukicoder.me/problems/no/18
+    -   例: http://yukicoder.me/problems/no/18
 -   複雑な演算
-    -   http://yukicoder.me/problems/no/66
+    -   例: http://yukicoder.me/problems/no/66
 -   固定文字列
-    -   http://yukicoder.me/problems/no/70
+    -   例: http://yukicoder.me/problems/no/70
 -   複雑な添字
-    -   http://yukicoder.me/problems/no/73
+    -   例: http://yukicoder.me/problems/no/73
 
 ## example
 
