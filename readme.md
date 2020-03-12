@@ -1,65 +1,11 @@
-This repository is **obsoleted**, and has been merged by [kmyk/online-judge-tools](https://github.com/kmyk/online-judge-tools).
+# Online Judge Template Generator
 
----
+## Architecture
 
-# 競プロでの入力受け取る部分を自動生成するやつ
+1.  download and recognize HTML with [requests](https://requests.readthedocs.io/en/master/) + [beautifulsoup4](https://www.crummy.com/software/BeautifulSoup/)
+1.  parse the `<pre>` format in old style Lex + Yacc ([ply](http://www.dabeaz.com/ply/))
+1.  generate codes with a template engine ([Mako](https://www.makotemplates.org/))
 
-思ってたよりいい感じなのでそのまま取り込んでしまった。
-制約を読んで値の範囲等の情報を取るのはしんどそうなので放棄。
+## License
 
-## example
-
-``` c
-$ ./a.py --repeat-macro=REPEAT http://yukicoder.me/problems/no/1
-int N; cin >> N;
-int C; cin >> C;
-int V; cin >> V;
-vector<int> S(V); REPEAT (i,V) cin >> S[i];
-vector<int> T(V); REPEAT (i,V) cin >> T[i];
-vector<int> Y(V); REPEAT (i,V) cin >> Y[i];
-vector<int> M(V); REPEAT (i,V) cin >> M[i];
-```
-
-``` c
-$ ./a.py --scanf http://yukicoder.me/problems/no/8
-int P; scanf("%d", &P);
-vector<int> N(P), K(P); for (int i = 0; i < P; ++ i) scanf("%d%d", &N[i], &K[i]);
-```
-
-## 現状
-
-できた:
-
--   固定
-    -   例: http://yukicoder.me/problems/no/6
--   横
-    -   例: http://yukicoder.me/problems/no/12
--   縦
-    -   例: http://yukicoder.me/problems/no/8
-
-まだ:
-
--   2次元
-    -   例: http://yukicoder.me/problems/no/20
--   グラフをいい感じにする
-    -   例: http://yukicoder.me/problems/no/317
-    -   引数で指定とかしないとだめそう
-
-たぶんやらない:
--   C++以外の言語の対応
--   `int`以外
-    -   例: http://yukicoder.me/problems/no/18
--   複雑な演算
-    -   例: http://yukicoder.me/problems/no/66
--   固定文字列
-    -   例: http://yukicoder.me/problems/no/70
--   複雑な添字
-    -   例: http://yukicoder.me/problems/no/73
-
-## requirements
-
-``` sh
-$ pip3 install requests
-$ pip3 install beautifulsoup4
-$ pip3 install sympy
-```
+MIT
