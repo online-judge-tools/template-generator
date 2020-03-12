@@ -7,8 +7,9 @@ import sympy.parsing.sympy_parser as sympy_parser
 import argparse
 import collections
 import copy
+from typing import *
 
-def scrape(url):
+def scrape(url: str) -> str:
     resp = requests.get(url)
     soup = bs4.BeautifulSoup(resp.content.decode(resp.encoding), 'html.parser')
     if 'yukicoder.me' in url:
@@ -24,9 +25,10 @@ def scrape(url):
                 return s
     else:
         raise NotImplementedError
+    raise RuntimeError
 
-def tokenize(pre):
-    it = []
+def tokenize(pre: str) -> List[Any]:
+    it: List[Any] = []
     for y, line in enumerate(pre.splitlines()):
         line = line.replace('$', '').replace('\\(', '').replace('\\)', '')
         line = line.replace('\\ ', ' ').replace('\\quad', ' ')
@@ -50,8 +52,8 @@ def tokenize(pre):
                 it[-1] += [ { 'kind': 'fixed', 'name': s } ]
     return it
 
-def merge_ops(xs):
-    ys = []
+def merge_ops(xs: List[Any]) -> List[Any]:
+    ys: List[Any] = []
     for x in xs:
         if ys and ys[-1]['kind'] == x['kind'] and x['kind'] in [ 'decl', 'decl-vector',  'read', 'read-indexed'  ]:
             ys[-1]['targets'] += x['targets']
@@ -59,13 +61,13 @@ def merge_ops(xs):
             ys += [ x ]
     return ys
 
-def simplify(s):
+def simplify(s: str) -> str:
     transformations = sympy_parser.standard_transformations + ( sympy_parser.implicit_multiplication_application ,)
     local_dict = { 'N': sympy.Symbol('N') }
     return str(sympy_parser.parse_expr(s, local_dict=local_dict, transformations=transformations))
 
-def parse(tokens):
-    env = collections.defaultdict(dict)
+def parse(tokens: List[Any]) -> List[Any]:
+    env: Dict[str, Any] = collections.defaultdict(dict)
     for y, line in enumerate(tokens):
         for x, item in enumerate(line):
             if item['kind'] == 'indexed':
@@ -78,12 +80,12 @@ def parse(tokens):
                     f['r'] = item['index']
     for name in env:
         env[name]['n'] = simplify('{}-{}+1'.format(env[name]['r'], env[name]['l']))
-    it = []
-    used = set()
+    it: List[Any] = []
+    used: Set[str] = set()
     for y, line in enumerate(tokens):
         for x, item in enumerate(line):
-            decls = []
-            reads = []
+            decls: List[Any] = []
+            reads: List[Any] = []
             if item['kind'] == 'fixed':
                 decls += [ { 'kind': 'decl', 'names': [ item['name'] ] } ]
                 reads += [ { 'kind': 'read', 'names': [ item['name'] ] } ]
@@ -103,7 +105,7 @@ def parse(tokens):
                     it += [ { 'kind': 'loop', 'length': n, 'body': [ { 'kind': 'read-indexed', 'targets': [ { 'name': name, 'index': 0 } ] } ] } ]
                     used.add(name)
                 elif item['dir'] == 'vr':
-                    names = []
+                    names: List[str] = []
                     for item in tokens[y-1]:
                         if item['kind'] != 'indexed':
                             raise NotImplementedError
@@ -114,7 +116,7 @@ def parse(tokens):
                         used.add(name)
                     if not names:
                         continue
-                    acc = []
+                    acc: List[Any] = []
                     n = env[names[0]]['n']
                     for name in names:
                         assert env[name]['n'] == n
@@ -131,14 +133,14 @@ def parse(tokens):
             it += merge_ops(decls) + merge_ops(reads)
     return it
 
-def paren_if(n, lr):
+def paren_if(n: str, lr: Tuple[str, str]) -> str:
     l, r = lr
     if n:
         return l + n + r
     else:
         return n
 
-def export(it, repeat_macro=None, use_scanf=False):
+def export(it: List[Any], repeat_macro: Optional[str] = None, use_scanf: bool = False) -> str:
     def go(it, nest):
         if it['kind'] == 'decl':
             if it['names']:
@@ -179,7 +181,7 @@ def export(it, repeat_macro=None, use_scanf=False):
         s += go(line, 0)
     return s
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('url')
     parser.add_argument('--repeat-macro')
