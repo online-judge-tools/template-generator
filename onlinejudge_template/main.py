@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import argparse
+import collections
+from typing import *
+
 import bs4
 import requests
 import sympy
 import sympy.parsing.sympy_parser as sympy_parser
-import argparse
-import collections
-import copy
-from typing import *
+
 
 def scrape(url: str) -> str:
     resp = requests.get(url)
@@ -27,17 +28,18 @@ def scrape(url: str) -> str:
         raise NotImplementedError
     raise RuntimeError
 
+
 def tokenize(pre: str) -> List[Any]:
     it: List[Any] = []
     for y, line in enumerate(pre.splitlines()):
         line = line.replace('$', '').replace('\\(', '').replace('\\)', '')
         line = line.replace('\\ ', ' ').replace('\\quad', ' ')
-        it += [ [] ]
+        it += [[]]
         for x, s in enumerate(line.split()):
-            if s in [ '..', '...', '\\dots', '…', '⋯' ]:
-                it[-1] += [ { 'kind': 'dots', 'dir': ['hr', 'vr'][x == 0] } ]
-            elif s in [ ':', '\\vdots', '⋮' ]:
-                it[-1] += [ { 'kind': 'dots', 'dir': 'vr' } ]
+            if s in ['..', '...', '\\dots', '…', '⋯']:
+                it[-1] += [{'kind': 'dots', 'dir': ['hr', 'vr'][x == 0]}]
+            elif s in [':', '\\vdots', '⋮']:
+                it[-1] += [{'kind': 'dots', 'dir': 'vr'}]
             elif '\\' in s:
                 assert False
             elif '_' in s:
@@ -47,24 +49,27 @@ def tokenize(pre: str) -> List[Any]:
                     ix = ix[1:-1]
                 if ',' in ix:
                     raise NotImplementedError
-                it[-1] += [ { 'kind': 'indexed', 'name': s, 'index': ix } ]
+                it[-1] += [{'kind': 'indexed', 'name': s, 'index': ix}]
             else:
-                it[-1] += [ { 'kind': 'fixed', 'name': s } ]
+                it[-1] += [{'kind': 'fixed', 'name': s}]
     return it
+
 
 def merge_ops(xs: List[Any]) -> List[Any]:
     ys: List[Any] = []
     for x in xs:
-        if ys and ys[-1]['kind'] == x['kind'] and x['kind'] in [ 'decl', 'decl-vector',  'read', 'read-indexed'  ]:
+        if ys and ys[-1]['kind'] == x['kind'] and x['kind'] in ['decl', 'decl-vector', 'read', 'read-indexed']:
             ys[-1]['targets'] += x['targets']
         else:
-            ys += [ x ]
+            ys += [x]
     return ys
 
+
 def simplify(s: str) -> str:
-    transformations = sympy_parser.standard_transformations + ( sympy_parser.implicit_multiplication_application ,)
-    local_dict = { 'N': sympy.Symbol('N') }
+    transformations = sympy_parser.standard_transformations + (sympy_parser.implicit_multiplication_application, )
+    local_dict = {'N': sympy.Symbol('N')}
     return str(sympy_parser.parse_expr(s, local_dict=local_dict, transformations=transformations))
+
 
 def parse(tokens: List[Any]) -> List[Any]:
     env: Dict[str, Any] = collections.defaultdict(dict)
@@ -72,7 +77,7 @@ def parse(tokens: List[Any]) -> List[Any]:
         for x, item in enumerate(line):
             if item['kind'] == 'indexed':
                 f = env[item['name']]
-                if item['index'] in 'ijk': # for A_1 \dots A_i \dots A_N
+                if item['index'] in 'ijk':  # for A_1 \dots A_i \dots A_N
                     continue
                 if 'l' not in f or item['index'] < f['l']:
                     f['l'] = item['index']
@@ -87,8 +92,8 @@ def parse(tokens: List[Any]) -> List[Any]:
             decls: List[Any] = []
             reads: List[Any] = []
             if item['kind'] == 'fixed':
-                decls += [ { 'kind': 'decl', 'names': [ item['name'] ] } ]
-                reads += [ { 'kind': 'read', 'names': [ item['name'] ] } ]
+                decls += [{'kind': 'decl', 'names': [item['name']]}]
+                reads += [{'kind': 'read', 'names': [item['name']]}]
             elif item['kind'] == 'indexed':
                 pass
             elif item['kind'] == 'dots':
@@ -96,23 +101,23 @@ def parse(tokens: List[Any]) -> List[Any]:
                 decls = []
                 reads = []
                 if item['dir'] == 'hr':
-                    assert line[x-1]['kind'] == 'indexed'
-                    name = line[x-1]['name']
+                    assert line[x - 1]['kind'] == 'indexed'
+                    name = line[x - 1]['name']
                     if name in used:
                         continue
                     n = env[name]['n']
-                    it += [ { 'kind': 'decl-vector', 'targets': [ { 'name': name, 'length': n } ] } ]
-                    it += [ { 'kind': 'loop', 'length': n, 'body': [ { 'kind': 'read-indexed', 'targets': [ { 'name': name, 'index': 0 } ] } ] } ]
+                    it += [{'kind': 'decl-vector', 'targets': [{'name': name, 'length': n}]}]
+                    it += [{'kind': 'loop', 'length': n, 'body': [{'kind': 'read-indexed', 'targets': [{'name': name, 'index': 0}]}]}]
                     used.add(name)
                 elif item['dir'] == 'vr':
                     names: List[str] = []
-                    for item in tokens[y-1]:
+                    for item in tokens[y - 1]:
                         if item['kind'] != 'indexed':
                             raise NotImplementedError
                         name = item['name']
                         if name in used:
                             continue
-                        names += [ name ]
+                        names += [name]
                         used.add(name)
                     if not names:
                         continue
@@ -120,10 +125,10 @@ def parse(tokens: List[Any]) -> List[Any]:
                     n = env[names[0]]['n']
                     for name in names:
                         assert env[name]['n'] == n
-                        decls += [ { 'kind': 'decl-vector',  'targets': [ { 'name': name, 'length': n } ] } ]
-                        reads += [ { 'kind': 'read-indexed', 'targets': [ { 'name': name, 'index': 0 } ] } ]
+                        decls += [{'kind': 'decl-vector', 'targets': [{'name': name, 'length': n}]}]
+                        reads += [{'kind': 'read-indexed', 'targets': [{'name': name, 'index': 0}]}]
                     it += merge_ops(decls)
-                    it += [ { 'kind': 'loop', 'length': n, 'body': merge_ops(reads) } ]
+                    it += [{'kind': 'loop', 'length': n, 'body': merge_ops(reads)}]
                     decls = []
                     reads = []
                 else:
@@ -133,12 +138,14 @@ def parse(tokens: List[Any]) -> List[Any]:
             it += merge_ops(decls) + merge_ops(reads)
     return it
 
+
 def paren_if(n: str, lr: Tuple[str, str]) -> str:
     l, r = lr
     if n:
         return l + n + r
     else:
         return n
+
 
 def export(it: List[Any], repeat_macro: Optional[str] = None, use_scanf: bool = False) -> str:
     def go(it, nest):
@@ -148,13 +155,13 @@ def export(it: List[Any], repeat_macro: Optional[str] = None, use_scanf: bool = 
         elif it['kind'] == 'decl-vector':
             if it['targets']:
                 return 'vector<int> {}; '.format(', '.join(map(lambda x: x['name'] + paren_if(x['length'], '()'), it['targets'])))
-        elif it['kind'] in [ 'read', 'read-indexed' ]:
+        elif it['kind'] in ['read', 'read-indexed']:
             if it['kind'] == 'read':
                 items = it['names']
             elif it['kind'] == 'read-indexed':
                 items = list(map(lambda x: x['name'] + '[' + 'ijk'[nest - x['index'] - 1] + ']', it['targets']))
             if use_scanf:
-                return 'scanf("{}", {});\n'.format('%d' * len(items), ', '.join(map(lambda s: '&'+s, items)))
+                return 'scanf("{}", {});\n'.format('%d' * len(items), ', '.join(map(lambda s: '&' + s, items)))
             else:
                 return 'cin >> {};\n'.format(' >> '.join(items))
         elif it['kind'] == 'loop':
@@ -167,19 +174,21 @@ def export(it: List[Any], repeat_macro: Optional[str] = None, use_scanf: bool = 
             if len(it['body']) == 0:
                 s += ';'
             elif len(it['body']) == 1:
-                s += go(it['body'][0], nest+1)
+                s += go(it['body'][0], nest + 1)
             else:
                 s += '{ '
                 for line in it['body']:
-                    s += go(line, nest+1).rstrip() + ' '
+                    s += go(line, nest + 1).rstrip() + ' '
                 s += '}\n'
             return s
         else:
             assert False
+
     s = ''
     for line in it:
         s += go(line, 0)
     return s
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
