@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             'oj-template = onlinejudge_template.main:main',
+            'oj-contest = onlinejudge_contest.main:main',
         ],
     },
 )
