@@ -65,33 +65,42 @@ def _declare_variable(name: str, dims: List[str], *, data: Dict[str, Any]) -> st
     ctor = ""
     for dim in reversed(dims):
         ctor = f"""({dim}, {type}({ctor}))"""
-        type = f"""{_get_std(data=data)}vector<{type}>"""
+        type = f"""{_get_std(data=data)}vector<{type} >"""
     return f"""{type} {name}{ctor};"""
 
 
-def _read_input_dfs(node: FormatNode, *, declared: Set[str], dims: Dict[str, List[str]], data: Dict[str, Any]) -> Iterator[str]:
+def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, List[str]], data: Dict[str, Any]) -> Iterator[str]:
+    # declare all possible variables
+    for var, decl in decls.items():
+        if var not in declared and all([dep in initialized for dep in decl.depending]):
+            yield _declare_variable(var, decl.dims, data=data)
+            declared.add(var)
+
+    # traverse AST
     if node.__class__.__name__ == 'ItemNode':
         if node.name not in declared:
-            declared.add(node.name)
-            yield _declare_variable(node.name, dims[node.name], data=data)
+            raise RuntimeError(f"""variable {node.name} is not declared yet""")
         var = node.name
         for index in node.indices:
             var = f"""{var}[{index}]"""
         yield f"""scanf("%d", &{var});"""
+        initialized.add(node.name)
     elif node.__class__.__name__ == 'NewlineNode':
         pass
     elif node.__class__.__name__ == 'SequenceNode':
         for item in node.items:
-            yield from _read_input_dfs(item, declared=declared, dims=dims, data=data)
+            yield from _read_input_dfs(item, declared=declared, initialized=initialized, decls=decls, data=data)
     elif node.__class__.__name__ == 'LoopNode':
         yield _declare_loop(var=node.name, size=node.size, data=data) + ' {'
-        yield from _read_input_dfs(node.body, declared=declared, dims=dims, data=data)
+        declared.add(node.name)
+        yield from _read_input_dfs(node.body, declared=declared, initialized=initialized, decls=decls, data=data)
+        declared.remove(node.name)
         yield '}'
 
 
 def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
-    dims = common.list_used_items(data['input'])
-    lines = _read_input_dfs(data['input'], dims=dims, declared=set(), data=data)
+    decls = common.list_used_items(data['input'])
+    lines = _read_input_dfs(data['input'], declared=set(), initialized=set(), decls=decls, data=data)
     return _join_with_indent(lines, nest=nest, data=data)
 
 
@@ -102,15 +111,16 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
 
 
 def arguments_types(data: Dict[str, Any]) -> str:
-    decls = []
-    for name, dims in common.list_used_items(data['input']).items():
+    decls = common.list_used_items(data['input'])
+    args = []
+    for name, decl in decls.items():
         type = "int"
-        for dim in reversed(dims):
-            type = f"""{_get_std(data=data)}vector<{type}>"""
-        if dims:
+        for _ in reversed(decl.dims):
+            type = f"""{_get_std(data=data)}vector<{type} >"""
+        if decl.dims:
             type = f"""const {type} &"""
-        decls.append(f"""{type} {name}""")
-    return ', '.join(decls)
+        args.append(f"""{type} {name}""")
+    return ', '.join(args)
 
 
 def arguments(data: Dict[str, Any]) -> str:

@@ -35,25 +35,32 @@ def _declare_variable(name: str, dims: List[str], *, data: Dict[str, Any]) -> It
         yield f"""{name} = {ctor}"""
 
 
-def _generate_input_dfs(node: FormatNode, *, dims: Dict[str, List[str]], declared: Set[str], data: Dict[str, Any]) -> Iterator[str]:
+def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, List[str]], data: Dict[str, Any]) -> Iterator[str]:
+    # declare all possible variables
+    for var, decl in decls.items():
+        if var not in declared and all([dep in initialized for dep in decl.depending]):
+            yield from _declare_variable(var, decl.dims, data=data)
+            declared.add(var)
+
+    # traverse AST
     if node.__class__.__name__ == 'ItemNode':
-        if node.name not in declared:
-            declared.add(node.name)
-            yield from _declare_variable(node.name, dims[node.name], data=data)
         var = _get_variable(node.name, node.indices)
         yield f"""{var} = random.randint(1, 10 ** 9)  # TODO: edit here"""
+        initialized.add(node.name)
     elif node.__class__.__name__ == 'NewlineNode':
         pass
     elif node.__class__.__name__ == 'SequenceNode':
         for item in node.items:
-            yield from _generate_input_dfs(item, declared=declared, dims=dims, data=data)
+            yield from _generate_input_dfs(item, declared=declared, initialized=initialized, decls=decls, data=data)
     elif node.__class__.__name__ == 'LoopNode':
         yield f"""for {node.name} in range({node.size}):"""
-        yield from _generate_input_dfs(node.body, declared=declared, dims=dims, data=data)
+        declared.add(node.name)
+        yield from _generate_input_dfs(node.body, declared=declared, initialized=initialized, decls=decls, data=data)
+        declared.remove(node.name)
         yield _DEDENT
 
 
-def _write_input_dfs(node: FormatNode, *, dims: Dict[str, List[str]], declared: Set[str], data: Dict[str, Any]) -> Iterator[str]:
+def _write_input_dfs(node: FormatNode, *, data: Dict[str, Any]) -> Iterator[str]:
     if node.__class__.__name__ == 'ItemNode':
         var = _get_variable(node.name, node.indices)
         yield f"""print({var}, end=' ')"""
@@ -61,20 +68,19 @@ def _write_input_dfs(node: FormatNode, *, dims: Dict[str, List[str]], declared: 
         yield "print()"
     elif node.__class__.__name__ == 'SequenceNode':
         for item in node.items:
-            yield from _write_input_dfs(item, declared=declared, dims=dims, data=data)
+            yield from _write_input_dfs(item, data=data)
     elif node.__class__.__name__ == 'LoopNode':
         yield f"""for {node.name} in range({node.size}):"""
-        yield from _write_input_dfs(node.body, declared=declared, dims=dims, data=data)
+        yield from _write_input_dfs(node.body, data=data)
         yield _DEDENT
 
 
 def generate_input(data: Dict[str, Any], *, nest: int = 1) -> str:
-    dims = common.list_used_items(data['input'])
-    lines = _generate_input_dfs(data['input'], dims=dims, declared=set(), data=data)
+    decls = common.list_used_items(data['input'])
+    lines = _generate_input_dfs(data['input'], declared=set(), initialized=set(), decls=decls, data=data)
     return _join_with_indent(lines, nest=nest, data=data)
 
 
 def write_input(data: Dict[str, Any], *, nest: int = 1) -> str:
-    dims = common.list_used_items(data['input'])
-    lines = _write_input_dfs(data['input'], dims=dims, declared=set(), data=data)
+    lines = _write_input_dfs(data['input'], data=data)
     return _join_with_indent(lines, nest=nest, data=data)
