@@ -30,7 +30,7 @@ def chdir(dir: pathlib.Path) -> Iterator[None]:
         os.chdir(cwd)
 
 
-def get_directory(*, problem: onlinejudge.type.Problem, contest: Optional[onlinejudge.type.Contest], config: Dict[str, Any]) -> None:
+def get_directory(*, problem: onlinejudge.type.Problem, contest: Optional[onlinejudge.type.Contest], config: Dict[str, Any]) -> pathlib.Path:
     service = problem.get_service()
 
     if contest is None:
@@ -124,7 +124,7 @@ def get_config() -> Dict[str, Any]:
     config_path = pathlib.Path(appdirs.user_config_dir('online-judge-tools')) / 'oj2.config.toml'
     logger.info('config path: %s', str(config_path))
     if config_path.exists():
-        return toml.load(config_path)
+        return dict(**toml.load(config_path))
     else:
         return {}
 

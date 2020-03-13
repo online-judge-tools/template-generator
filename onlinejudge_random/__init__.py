@@ -1,8 +1,10 @@
 import random as random_module
 from typing import *
 
+_r: random_module.Random = random_module  # type: ignore
 
-def rooted_tree_parents(nodes: int, *, base: int = 0, type: str = 'auto', r: random_module.Random = random_module) -> List[int]:
+
+def rooted_tree_parents(nodes: int, *, base: int = 0, type: str = 'auto', r: random_module.Random = _r) -> List[int]:
     assert nodes >= 1
 
     if type == 'uniform':
@@ -48,7 +50,7 @@ def rooted_tree_parents(nodes: int, *, base: int = 0, type: str = 'auto', r: ran
         raise ValueError(f"""invalid type: {repr(type)}""")
 
 
-def tree_edges(nodes: int, *, base: int = 0, type: str = 'auto', r: random_module.Random = random_module) -> List[int]:
+def tree_edges(nodes: int, *, base: int = 0, type: str = 'auto', r: random_module.Random = _r) -> List[Tuple[int, int]]:
     sigma = list(range(nodes))
     r.shuffle(sigma)
     edges = []
