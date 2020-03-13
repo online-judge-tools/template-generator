@@ -72,26 +72,26 @@ def _declare_loop(var: str, size: str, *, data: Dict[str, Any]) -> str:
         assert False
 
 
-def _read_ints(exprs: List[str], *, data: Dict[str, Any]) -> str:
+def _read_ints(exprs: List[str], *, data: Dict[str, Any]) -> List[str]:
     if not exprs:
-        return ''
+        return []
     scanner = data['config'].get('scanner')
     if scanner is None or scanner == 'scanf':
-        return f"""scanf("{'%d' * len(exprs)}", &{', &'.join(exprs)});"""
+        return [f"""scanf("{'%d' * len(exprs)}", &{', &'.join(exprs)});"""]
     elif scanner in ('cin', 'std::cin'):
-        return f"""{_get_std(data=data)}cin >> {' >> '.join(exprs)};"""
+        return [f"""{_get_std(data=data)}cin >> {' >> '.join(exprs)};"""]
     elif callable(scanner):
         return scanner(exprs)
     else:
         assert False
 
 
-def _write_ints(exprs: List[str], *, data: Dict[str, Any]) -> str:
+def _write_ints(exprs: List[str], *, data: Dict[str, Any]) -> List[str]:
     printer = data['config'].get('printer')
     if printer is None or printer == 'scanf':
-        return f"""printf("{' '.join(['%d'] * len(exprs))}\\n", {', '.join(exprs)});"""
+        return [f"""printf("{' '.join(['%d'] * len(exprs))}\\n", {', '.join(exprs)});"""]
     elif printer in ('cout', 'std::cout'):
-        return f"""{_get_std(data=data)}cout << {" << ' ' << ".join(exprs)} << {_get_std(data=data)}endl;"""
+        return [f"""{_get_std(data=data)}cout << {" << ' ' << ".join(exprs)} << {_get_std(data=data)}endl;"""]
     elif callable(printer):
         return printer(exprs)
     else:
@@ -202,9 +202,9 @@ def _serialize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> Iter
     if isinstance(node, DeclNode):
         yield from _declare_variables(node.decls, data=data)
     elif isinstance(node, InputNode):
-        yield _read_ints(node.exprs, data=data)
+        yield from _read_ints(node.exprs, data=data)
     elif isinstance(node, OutputNode):
-        yield _write_ints(node.exprs, data=data)
+        yield from _write_ints(node.exprs, data=data)
     elif isinstance(node, SentencesNode):
         for sentence in node.sentences:
             yield from _serialize_syntax_tree(sentence, data=data)
@@ -228,7 +228,8 @@ def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
 
 def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
     lines = []
-    lines.append(_write_ints(['ans'], data=data) + "  // TODO: edit here")
+    lines.extend(_write_ints(['ans'], data=data))
+    lines[0] += "  // TODO: edit here"
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
