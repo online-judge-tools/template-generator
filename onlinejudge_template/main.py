@@ -1,9 +1,15 @@
 import abc
 import argparse
+import pathlib
+import sys
 from logging import DEBUG, INFO, basicConfig, getLogger
 from typing import *
 
+import appdirs
 import bs4
+import mako.lookup
+import mako.template
+import pkg_resources
 import ply.lex as lex
 import ply.yacc as yacc
 import requests
@@ -372,6 +378,19 @@ def analyze(node: ParserNode) -> FormatNode:
         assert False
 
 
+def format(*, input_format: FormatNode) -> bytes:
+    data = {
+        'input': input_format,
+    }
+    directories = [
+        str(pathlib.Path(appdirs.user_data_dir('online-judge-tools')) / 'template'),
+        pkg_resources.resource_filename('onlinejudge_template_resources', ''),
+    ]
+    lookup = mako.lookup.TemplateLookup(directories=directories, input_encoding="utf-8", output_encoding="utf-8")
+    template = lookup.get_template('template.cpp')
+    return template.render(data=data)
+
+
 def run(url: str) -> None:
     # get HTML
     resp = requests.get(url)
@@ -401,7 +420,10 @@ def run(url: str) -> None:
     ast = analyze(parsed)
     logger.debug('abstract syntax tree: %s', ast)
 
-    print(ast)
+    # generate codes
+    code = format(input_format=ast)
+    logger.debug('Mako rendered: %s', code)
+    sys.stdout.buffer.write(code)
 
 
 def main() -> None:
