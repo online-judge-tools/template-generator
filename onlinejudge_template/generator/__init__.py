@@ -2,10 +2,9 @@ import pathlib
 from typing import *
 
 import appdirs
-import pkg_resources
 import mako.lookup
 import mako.template
-
+import pkg_resources
 from onlinejudge_template.types import *
 
 

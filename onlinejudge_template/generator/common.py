@@ -19,7 +19,7 @@ class _CounterDecl(NamedTuple):
 
 
 def _list_used_items_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], declared: Dict[str, VarDecl]) -> None:
-    if node.__class__.__name__ == 'ItemNode':
+    if isinstance(node, ItemNode):
         if node.name in declared:
             raise NotImplementedError
         dims = []
@@ -33,14 +33,14 @@ def _list_used_items_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], 
             dims.append(str(simplify(index)))
         declared[node.name] = VarDecl(name=node.name, dims=dims, depending=depending)
 
-    elif node.__class__.__name__ == 'NewlineNode':
+    elif isinstance(node, NewlineNode):
         pass
 
-    elif node.__class__.__name__ == 'SequenceNode':
+    elif isinstance(node, SequenceNode):
         for item in node.items:
             _list_used_items_dfs(item, counter=counter, declared=declared)
 
-    elif node.__class__.__name__ == 'LoopNode':
+    elif isinstance(node, LoopNode):
         depending = set()
         for n in declared.keys():
             if re.search(r'\b' + re.escape(n) + r'\b', node.size):

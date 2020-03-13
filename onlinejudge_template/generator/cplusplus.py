@@ -4,7 +4,7 @@ import onlinejudge_template.generator.common as common
 from onlinejudge_template.types import *
 
 
-def _join_with_indent(lines: Sequence[str], *, nest: int, data: Dict[str, Any]) -> str:
+def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) -> str:
     indent = data['config'].get('indent', ' ' * 4)
     buf = []
     nest = 1
@@ -69,7 +69,7 @@ def _declare_variable(name: str, dims: List[str], *, data: Dict[str, Any]) -> st
     return f"""{type} {name}{ctor};"""
 
 
-def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, List[str]], data: Dict[str, Any]) -> Iterator[str]:
+def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, common.VarDecl], data: Dict[str, Any]) -> Iterator[str]:
     # declare all possible variables
     for var, decl in decls.items():
         if var not in declared and all([dep in initialized for dep in decl.depending]):
@@ -77,7 +77,7 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
             declared.add(var)
 
     # traverse AST
-    if node.__class__.__name__ == 'ItemNode':
+    if isinstance(node, ItemNode):
         if node.name not in declared:
             raise RuntimeError(f"""variable {node.name} is not declared yet""")
         var = node.name
@@ -85,12 +85,12 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
             var = f"""{var}[{index}]"""
         yield f"""scanf("%d", &{var});"""
         initialized.add(node.name)
-    elif node.__class__.__name__ == 'NewlineNode':
+    elif isinstance(node, NewlineNode):
         pass
-    elif node.__class__.__name__ == 'SequenceNode':
+    elif isinstance(node, SequenceNode):
         for item in node.items:
             yield from _read_input_dfs(item, declared=declared, initialized=initialized, decls=decls, data=data)
-    elif node.__class__.__name__ == 'LoopNode':
+    elif isinstance(node, LoopNode):
         yield _declare_loop(var=node.name, size=node.size, data=data) + ' {'
         declared.add(node.name)
         yield from _read_input_dfs(node.body, declared=declared, initialized=initialized, decls=decls, data=data)
@@ -107,7 +107,7 @@ def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
 def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
     lines = []
     lines.append(_write_int('ans', data=data))
-    return _join_with_indent(lines, nest=nest, data=data)
+    return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
 def arguments_types(data: Dict[str, Any]) -> str:
