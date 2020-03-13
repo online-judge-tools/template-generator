@@ -1,3 +1,4 @@
+import abc
 import argparse
 from logging import DEBUG, INFO, basicConfig, getLogger
 from typing import *
@@ -6,8 +7,30 @@ import bs4
 import ply.lex as lex
 import ply.yacc as yacc
 import requests
+import sympy
+import sympy.parsing.sympy_parser as sympy_parser
 
 logger = getLogger(__name__)
+
+
+class TemplateGeneratorError(RuntimeError):
+    pass
+
+
+class HTMLParserError(TemplateGeneratorError):
+    pass
+
+
+class LexerError(TemplateGeneratorError):
+    pass
+
+
+class ParserError(TemplateGeneratorError):
+    pass
+
+
+class SyntaxError(TemplateGeneratorError):
+    pass
 
 
 def get_format_string(url: str, soup: bs4.BeautifulSoup) -> str:
@@ -18,13 +41,13 @@ def get_format_string(url: str, soup: bs4.BeautifulSoup) -> str:
                 for it in h3.parent.find('pre'):
                     s += it.string or it
                 return s
-        raise RuntimeError
+        raise HTMLParserError
 
     elif 'yukicoder.me' in url:
         for h4 in soup.find_all('h4'):
             if h4.string == '入力':
                 return h4.parent.find('pre').string
-        raise RuntimeError
+        raise HTMLParserError
 
     else:
         raise NotImplementedError
@@ -61,7 +84,7 @@ def build_lexer() -> lex.Lexer:
     t_ignore = ' \t$'
 
     def t_error(t: lex.LexToken) -> None:
-        raise RuntimeError("unexpected character: '{}' at line {} column {}".format(t.value, t.lineno, t.lexpos))
+        raise LexerError("unexpected character: '{}' at line {} column {}".format(t.value, t.lineno, t.lexpos))
 
     # t_DOLLAR = r'\$'
     # t_VAR_OPEN = r'<\s*[vV][aA][rR]\s*>'
@@ -86,7 +109,7 @@ def build_lexer() -> lex.Lexer:
     return lex.lex()
 
 
-class FormatNode(object):
+class ParserNode(abc.ABC):
     line: int
     column: int
 
@@ -106,19 +129,19 @@ class FormatNode(object):
         return f"{self.__class__.__name__}({items})"
 
 
-class SequenceNode(FormatNode):
-    items: List[FormatNode]
+class SequenceParserNode(ParserNode):
+    items: List[ParserNode]
 
-    def __init__(self, *, items: List[FormatNode], line: int, column: int):
+    def __init__(self, *, items: List[ParserNode], line: int, column: int):
         super().__init__(line=line, column=column)
         self.items = items
 
 
-class NewlineNode(FormatNode):
+class NewlineParserNode(ParserNode):
     pass
 
 
-class ItemNode(FormatNode):
+class ItemParserNode(ParserNode):
     name: str
     indices: Union[Tuple[str], Tuple]
 
@@ -128,11 +151,11 @@ class ItemNode(FormatNode):
         self.indices = indices
 
 
-class DotsNode(FormatNode):
-    first: FormatNode
-    last: FormatNode
+class DotsParserNode(ParserNode):
+    first: ParserNode
+    last: ParserNode
 
-    def __init__(self, *, first: FormatNode, last: FormatNode, line: int, column: int):
+    def __init__(self, *, first: ParserNode, last: ParserNode, line: int, column: int):
         super().__init__(line=line, column=column)
         self.first = first
         self.last = last
@@ -153,9 +176,9 @@ def build_parser(*, input: str) -> yacc.LRParser:
         """main : lines main
                 | lines"""
         if len(p) == 3:
-            p[0] = SequenceNode(items=[p[1]] + p[2].items, **loc(p))
+            p[0] = SequenceParserNode(items=[p[1]] + p[2].items, **loc(p))
         elif len(p) == 2:
-            p[0] = SequenceNode(items=[p[1]], **loc(p))
+            p[0] = SequenceParserNode(items=[p[1]], **loc(p))
 
     def p_lines(p: yacc.YaccProduction) -> None:
         """lines : line
@@ -164,27 +187,27 @@ def build_parser(*, input: str) -> yacc.LRParser:
         if len(p) == 2:
             p[0] = p[1]
         elif len(p) == 5:
-            p[0] = DotsNode(first=p[1], last=p[4], **loc(p))
+            p[0] = DotsParserNode(first=p[1], last=p[4], **loc(p))
 
     def p_newline(p: yacc.YaccProduction) -> None:
         """newline : NEWLINE"""
-        p[0] = NewlineNode(**loc(p))
+        p[0] = NewlineParserNode(**loc(p))
 
     def p_line(p: yacc.YaccProduction) -> None:
         """line : items newline"""
-        p[0] = SequenceNode(items=p[1].items + [p[2]], **loc(p))
+        p[0] = SequenceParserNode(items=p[1].items + [p[2]], **loc(p))
 
     def p_items(p: yacc.YaccProduction) -> None:
         """items : item DOTS item items
                  | item items
                  | item"""
         if len(p) == 5:
-            dots = DotsNode(first=p[1], last=p[3], **loc(p))
-            p[0] = SequenceNode(items=[dots] + p[2].items, **loc(p))
+            dots = DotsParserNode(first=p[1], last=p[3], **loc(p))
+            p[0] = SequenceParserNode(items=[dots] + p[2].items, **loc(p))
         elif len(p) == 3:
-            p[0] = SequenceNode(items=[p[1]] + p[2].items, **loc(p))
+            p[0] = SequenceParserNode(items=[p[1]] + p[2].items, **loc(p))
         elif len(p) == 2:
-            p[0] = SequenceNode(items=[p[1]], **loc(p))
+            p[0] = SequenceParserNode(items=[p[1]], **loc(p))
 
     def p_item(p: yacc.YaccProduction) -> None:
         """item : IDENT
@@ -192,16 +215,161 @@ def build_parser(*, input: str) -> yacc.LRParser:
                 | IDENT UNDERSCORE IDENT
                 | IDENT UNDERSCORE LBRACE RBRACE"""
         if len(p) == 2:
-            p[0] = ItemNode(name=p[1], indices=(), **loc(p))
+            p[0] = ItemParserNode(name=p[1], indices=(), **loc(p))
         elif len(p) == 4:
-            p[0] = ItemNode(name=p[1], indices=(p[3], ), **loc(p))
+            p[0] = ItemParserNode(name=p[1], indices=(p[3], ), **loc(p))
         elif len(p) == 5:
             raise NotImplementedError
 
     def p_error(t: lex.LexToken) -> None:
-        raise RuntimeError("unexpected token: {} \"{}\" at line {} column {}".format(t.type, t.value, t.lineno, find_column(t.lexpos)))
+        raise ParserError("unexpected token: {} \"{}\" at line {} column {}".format(t.type, t.value, t.lineno, find_column(t.lexpos)))
 
     return yacc.yacc(debug=False, write_tables=False)
+
+
+class FormatNode(abc.ABC):
+    pass
+
+    def __repr__(self) -> str:
+        keys = dir(self)
+        keys = list(filter(lambda key: not key.startswith('_'), keys))
+        keys.sort()
+        items = ', '.join([key + '=' + repr(getattr(self, key)) for key in keys])
+        return f"{self.__class__.__name__}({items})"
+
+
+class ItemNode(FormatNode):
+    name: str
+    indices: List[str]
+
+    def __init__(self, *, name: str, indices: List[str]):
+        self.name = name
+        self.indices = indices
+
+
+class NewlineNode(FormatNode):
+    pass
+
+
+class SequenceNode(FormatNode):
+    items: List[FormatNode]
+
+    def __init__(self, *, items: List[FormatNode]):
+        self.items = items
+
+
+class LoopNode(FormatNode):
+    size: str
+    name: str
+    body: FormatNode
+
+    def __init__(self, *, size: str, name: str, body: FormatNode):
+        self.size = size
+        self.name = name
+        self.body = body
+
+
+def list_used_names(node: FormatNode) -> Set[str]:
+    if isinstance(node, ItemNode):
+        return set([node.name])
+
+    elif isinstance(node, NewlineNode):
+        return set()
+
+    elif isinstance(node, SequenceNode):
+        names: Set[str] = set()
+        for item in node.items:
+            names |= list_used_names(item)
+        return names
+
+    elif isinstance(node, LoopNode):
+        return set([node.name]) | list_used_names(node.body)
+
+    else:
+        assert False
+
+
+def simplify(s: str) -> sympy.Expr:
+    transformations = sympy_parser.standard_transformations + (sympy_parser.implicit_multiplication_application, )
+    local_dict = {'N': sympy.Symbol('N')}
+    return sympy_parser.parse_expr(s, local_dict=local_dict, transformations=transformations)
+
+
+def zip_nodes(a: FormatNode, b: FormatNode, *, name: str, first: Optional[str], last: Optional[str]) -> Tuple[FormatNode, Optional[str], Optional[str]]:
+    if isinstance(a, ItemNode) and isinstance(b, ItemNode):
+        if a.name != b.name or len(a.indices) != len(b.indices):
+            raise SyntaxError("unmatched dots pair: {} and {}".format(a, b))
+        indices = []
+        for i, j in zip(a.indices, b.indices):
+            if simplify(i) == simplify(j):
+                indices.append(i)
+            else:
+                if first is None and last is None:
+                    first = i
+                    last = j
+                else:
+                    if not simplify(f"{j} - {i}") != simplify(f"{first} - {last}"):
+                        raise SyntaxError("unmatched dots pair: {} and {}".format(a, b))
+                indices.append(str(simplify(f"{i} - {first} + {name}")))
+        return ItemNode(name=a.name, indices=indices), first, last
+
+    elif isinstance(a, NewlineNode) and isinstance(b, NewlineNode):
+        return NewlineNode(), first, last
+
+    elif isinstance(a, SequenceNode) and isinstance(b, SequenceNode):
+        if len(a.items) != len(b.items):
+            raise SyntaxError("unmatched dots pair: {} and {}".format(a, b))
+        items = []
+        for a_i, b_i in zip(a.items, b.items):
+            c_i, first, last = zip_nodes(a_i, b_i, name=name, first=first, last=last)
+            items.append(c_i)
+        return SequenceNode(items=items), first, last
+
+    elif isinstance(a, LoopNode) and isinstance(b, LoopNode):
+        if a.size != b.size or a.name != b.name:
+            raise SyntaxError("unmatched dots pair: {} and {}".format(a, b))
+        c, first, last = zip_nodes(a.body, b.body, name=name, first=first, last=last)
+        return LoopNode(size=a.size, name=a.name, body=c), first, last
+
+    else:
+        raise SyntaxError("unmatched dots pair: {} and {}".format(a, b))
+
+
+def analyze(node: ParserNode) -> FormatNode:
+    if isinstance(node, ItemParserNode):
+        indices = [str(simplify(index)) for index in node.indices]
+        return ItemNode(name=node.name, indices=indices)
+
+    elif isinstance(node, NewlineParserNode):
+        return NewlineNode()
+
+    elif isinstance(node, SequenceParserNode):
+        items = []
+        for item in map(analyze, node.items):
+            if isinstance(item, SequenceNode):
+                items.extend(item.items)
+            else:
+                items.append(item)
+        return SequenceNode(items=items)
+
+    elif isinstance(node, DotsParserNode):
+        a = analyze(node.first)
+        b = analyze(node.last)
+
+        # find the name of the new loop counter
+        used_names = list_used_names(a) | list_used_names(b)
+        name = 'i'
+        while name in used_names:
+            assert name != 'z'
+            name = chr(ord(name) + 1)
+
+        # zip bodies
+        c, first, last = zip_nodes(a, b, name=name, first=None, last=None)
+        size = str(simplify(f"{last} - {first} + 1"))
+        return LoopNode(size=size, name=name, body=c)
+
+    else:
+        assert False
 
 
 def run(url: str) -> None:
@@ -228,6 +396,12 @@ def run(url: str) -> None:
     parser = build_parser(input=pre)
     parsed = parser.parse(lexer=lexer)
     logger.debug('Yacc tree: %s', parsed)
+
+    # analyze the syntax tree
+    ast = analyze(parsed)
+    logger.debug('abstract syntax tree: %s', ast)
+
+    print(ast)
 
 
 def main() -> None:

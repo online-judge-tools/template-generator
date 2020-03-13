@@ -17,7 +17,7 @@ setup(
         'ply >= 3',
         'pyyaml >= 5',
         'requests >= 2.23',
-        'sympy',
+        'sympy >= 1.5',
     ],
     packages=find_packages(exclude=('tests', 'docs')),
     package_data={
