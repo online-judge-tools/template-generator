@@ -94,7 +94,7 @@ $ cat ~/atcoder.jp/abc158/abc158_f/main.cpp
 #define ALL(x) ::std::begin(x), ::std::end(x)
 using namespace std;
 
-auto solve(int N, const vector<int > & X, const vector<int > & D) {
+auto solve(int N, const vector<int> & X, const vector<int> & D) {
     // TODO: edit here
 }
 
@@ -102,11 +102,9 @@ auto solve(int N, const vector<int > & X, const vector<int > & D) {
 int main() {
     int N;
     scanf("%d", &N);
-    vector<int > X(N, int());
-    vector<int > D(N, int());
+    vector<int > X(N), D(N);
     REP (i, N) {
-        scanf("%d", &X[i]);
-        scanf("%d", &D[i]);
+        scanf("%d%d", &X[i], &D[i]);
     }
     auto ans = solve(N, X, D);
     printf("%d\n", ans);  // TODO: edit here
