@@ -139,6 +139,68 @@ if __name__ == "__main__":
 1.  generate codes with a template engine ([Mako](https://www.makotemplates.org/))
 
 
+## How it works
+
+たとえば Library Checker の問題 [Static RQM](https://judge.yosupo.jp/problem/staticrmq) について考えてみましょう。
+この問題の入力フォーマットは次のようになっています。
+
+```
+n m
+a₀ a₁ … aₙ₋₁
+l₁ r₁
+⋮
+lₘ rₘ
+```
+
+これをまず以下のようなトークン列に分解します。
+
+``` json
+[
+    "ident(n)", "ident(m)", "newline()",
+    "ident(a)", "subscript()", "number(0)", "ident(a)", "subscript()", "number(1)", "dots()", "ident(a)", "subscript()", "ident(n)", "binop(-)", "number(1)", "newline()",
+    "ident(l)", "subscript()", "number(1)", "ident(r)", "subscript()", "number(1)", "newline()",
+    "vdots(1)", "newline()",
+    "ident(l)", "subscript()", "ident(m)", "ident(r)", "subscript()", "ident(m)", "newline()"
+]
+```
+
+このトークン列を解析して次のような木へ変形します。
+
+``` json
+[
+    {"type": "var", "name": "n"},
+    {"type": "var", "name": "m"},
+    {"type": "newline"},
+    {"type": "loop", "counter": "i", "size": "n", "body": [
+        {"type": "var", "name": "a", "subscript": "i"}
+    ]},
+    {"type": "newline"},
+    {"type": "loop", "counter": "j", "size": "m", "body": [
+        {"type": "var", "name": "l", "subscript": "j + 1"},
+        {"type": "var", "name": "r", "subscript": "j + 1"},
+        {"type": "newline"}
+    ]}
+]
+```
+
+この木を変換してソースコードにします。
+
+``` c++
+    int n, m;
+    scanf("%d%d", &n, &m);
+    std::vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        scanf("%d", &a[i]);
+    }
+    std::vector<int> l(m), r(m);
+    for (int j = 0; j < m; ++j) {
+        scanf("%d%d", &l[j], &r[j]);
+    }
+```
+
+この作業をよろしくやってくれるのがこのツールです。
+
+
 ## License
 
 MIT
