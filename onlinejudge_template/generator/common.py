@@ -61,8 +61,5 @@ def list_used_items(node: FormatNode) -> Dict[str, VarDecl]:
     return declared
 
 
-def get_indent(indent: Optional[str], *, data: Dict['str', Any]) -> str:
-    if indent is not None:
-        return indent
-    else:
-        return data['config'].get('indent', ' ' * 4)
+def get_indent(data: Dict['str', Any]) -> str:
+    return data['config'].get('indent', ' ' * 4)

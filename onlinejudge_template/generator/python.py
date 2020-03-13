@@ -59,7 +59,7 @@ class OtherNode(PythonNode):
 _DEDENT = '*DEDENT*'
 
 
-def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) -> str:
+def _join_with_indent(lines: Sequence[str], *, nest: int, data: Dict[str, Any]) -> str:
     indent = data['config'].get('indent', ' ' * 4)
     buf = []
     nest = 1
@@ -212,16 +212,31 @@ def _serialize_syntax_tree(node: PythonNode, *, data: Dict[str, Any]) -> Iterato
 
 
 def generate_input(data: Dict[str, Any], *, nest: int = 1) -> str:
+    if data['input'] is None:
+        lines = [
+            '// failed to analyze input format',
+            'n = random.randint(1, 10 ** 9)  # TODO: edit here',
+            'a = [random.randint(1, 10 ** 9) for _ in range(n)]  # TODO: edit here',
+        ]
+        return _join_with_indent(lines, nest=nest, data=data)
+
     decls = common.list_used_items(data['input'])
     node = _generate_input_dfs(data['input'], declared=set(), initialized=set(), decls=decls, data=data)
     node = _optimize_syntax_tree(node, data=data)
-    lines = _serialize_syntax_tree(node, data=data)
+    lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(lines, nest=nest, data=data)
 
 
 def write_input(data: Dict[str, Any], *, nest: int = 1) -> str:
+    if data['input'] is None:
+        lines = [
+            'print(n)  # TODO: edit here',
+            'print(*a)  # TODO: edit here',
+        ]
+        return _join_with_indent(lines, nest=nest, data=data)
+
     decls = common.list_used_items(data['input'])
     node = _write_input_dfs(data['input'], decls=decls, data=data)
     node = _optimize_syntax_tree(node, data=data)
-    lines = _serialize_syntax_tree(node, data=data)
+    lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(lines, nest=nest, data=data)

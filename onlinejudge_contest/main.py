@@ -10,8 +10,10 @@ from typing import *
 
 import appdirs
 import onlinejudge_template.analyzer
+import onlinejudge_template.analyzer.html
 import onlinejudge_template.generator
 import toml
+from onlinejudge_template.analyzer import FormatNode
 from onlinejudge_template.types import *
 
 import onlinejudge
@@ -78,23 +80,36 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
     logger.info('use directory: %s', str(dir))
 
     with chdir(dir):
-        soup = onlinejudge_template.analyzer.download_html(problem.get_url())
+        url = problem.get_url()
+        html = onlinejudge_template.analyzer.html.download_html(url)
         for dest_str, template in table.items():
             dest = dir / dest_str
 
-            # analyze
+            # analyze input
+            input_node: Optional[FormatNode] = None
             try:
-                node = onlinejudge_template.analyzer.run(soup, url=problem.get_url())
+                input_format_string = onlinejudge_template.analyzer.html.parse_input_format_string(html, url=url)
+                logger.debug('input format string: %s', repr(input_format_string))
+                input_node = onlinejudge_template.analyzer.run(input_format_string, url=url)
             except onlinejudge_template.analyzer.TemplateGeneratorError as e:
-                logger.error('analyzer failed: %s', e)
-                node = NewlineNode()
+                logger.error('input analyzer failed: %s', e)
             except NotImplementedError as e:
-                logger.error('analyzer failed: %s', e)
-                node = NewlineNode()
+                logger.error('input analyzer failed: %s', e)
+
+            # analyze output
+            output_node: Optional[FormatNode] = None
+            try:
+                output_format_string = onlinejudge_template.analyzer.html.parse_output_format_string(html, url=url)
+                logger.debug('output format string: %s', repr(output_format_string))
+                output_node = onlinejudge_template.analyzer.run(output_format_string, url=url)
+            except onlinejudge_template.analyzer.TemplateGeneratorError as e:
+                logger.error('output analyzer failed: %s', e)
+            except NotImplementedError as e:
+                logger.error('output analyzer failed: %s', e)
 
             # generate
             try:
-                code = onlinejudge_template.generator.run(node, template_file=template)
+                code = onlinejudge_template.generator.run(input_node, output_node, template_file=template)
             except NotImplementedError as e:
                 logger.error('generator failed: %s', e)
                 continue

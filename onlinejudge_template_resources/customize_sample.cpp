@@ -14,7 +14,7 @@ ${cplusplus.return_type(data)} solve(${cplusplus.arguments_types(data)}) {
 
 int main() {
 ${cplusplus.read_input(data)}
-	auto ans = solve(${cplusplus.arguments(data)});
+	auto ${cplusplus.return_values(data)} = solve(${cplusplus.arguments(data)});
 ${cplusplus.write_output(data)}
 	return 0;
 }

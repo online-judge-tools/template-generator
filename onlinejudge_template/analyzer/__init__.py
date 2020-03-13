@@ -5,10 +5,8 @@ import sys
 from logging import getLogger
 from typing import *
 
-import bs4
 import ply.lex as lex
 import ply.yacc as yacc
-import requests
 import sympy
 import sympy.parsing.sympy_parser as sympy_parser
 from onlinejudge_template.types import *
@@ -17,10 +15,6 @@ logger = getLogger(__name__)
 
 
 class TemplateGeneratorError(RuntimeError):
-    pass
-
-
-class HTMLParserError(TemplateGeneratorError):
     pass
 
 
@@ -36,32 +30,6 @@ class SyntaxError(TemplateGeneratorError):
     pass
 
 
-def get_format_string(url: str, soup: bs4.BeautifulSoup) -> str:
-    if 'atcoder.jp' in url:
-        for h3 in soup.find_all('h3'):
-            if h3.string == '入力':
-                s = ''
-                for it in h3.parent.find('pre'):
-                    s += it.string or it
-                return s
-        raise HTMLParserError
-
-    elif 'yukicoder.me' in url:
-        for h4 in soup.find_all('h4'):
-            if h4.string == '入力':
-                return h4.parent.find('pre').string
-        raise HTMLParserError
-
-    elif 'judge.yosupo.jp' in url:
-        for h2 in soup.find_all('h2'):
-            if h2.string in ('Input', 'Input / 入力', '入力'):
-                return h2.find_next_sibling('pre').string
-        raise HTMLParserError
-
-    else:
-        raise NotImplementedError
-
-
 tokens = (
     'NEWLINE',
     # 'SPACE',
@@ -69,6 +37,7 @@ tokens = (
     # 'DOLLAR',
     # 'VAR_OPEN',
     # 'VAR_CLOSE',
+    'FONTSPEC',
     'IDENT',
     'NUMBER',
     'UNDERSCORE',
@@ -102,6 +71,10 @@ def build_lexer() -> lex.Lexer:
     # t_DOLLAR = r'\$'
     # t_VAR_OPEN = r'<\s*[vV][aA][rR]\s*>'
     # t_VAR_CLOSE = r'<\s*/\s*[vV][aA][rR]\s*>'
+
+    def t_FONTSPEC(t: lex.LexToken) -> lex.LexToken:
+        r"""\\(rm|mathrm|mathtt|mathbf|mathit|mathscr|mathcal|mathfrak|mathbb)"""
+        return t
 
     t_IDENT = r'[A-Za-z]+'
     t_NUMBER = r'[0-9]+'
@@ -230,13 +203,17 @@ def build_parser(*, input: str) -> yacc.LRParser:
         """item : IDENT
                 | IDENT UNDERSCORE NUMBER
                 | IDENT UNDERSCORE IDENT
-                | IDENT UNDERSCORE LBRACE exprs RBRACE"""
+                | IDENT UNDERSCORE LBRACE exprs RBRACE
+                | FONTSPEC LBRACE item RBRACE
+                | LBRACE FONTSPEC item RBRACE"""
         if len(p) == 2:
             p[0] = ItemParserNode(name=p[1], indices=(), **loc(p))
         elif len(p) == 4:
             p[0] = ItemParserNode(name=p[1], indices=(p[3], ), **loc(p))
         elif len(p) == 6:
             p[0] = ItemParserNode(name=p[1], indices=p[4], **loc(p))
+        elif len(p) == 5:
+            p[0] = p[3]
 
     def p_exprs(p: yacc.YaccProduction) -> None:
         """exprs : expr COMMA exprs
@@ -376,7 +353,7 @@ def exnted_loop_node(a: FormatNode, b: FormatNode, *, loop: LoopNode) -> Optiona
         return None
 
 
-def analyze(node: ParserNode) -> FormatNode:
+def analyze_parsed_node(node: ParserNode) -> FormatNode:
     if isinstance(node, ItemParserNode):
         indices = [str(simplify(index)) for index in node.indices]
         return ItemNode(name=node.name, indices=indices)
@@ -386,7 +363,7 @@ def analyze(node: ParserNode) -> FormatNode:
 
     elif isinstance(node, SequenceParserNode):
         items: List[FormatNode] = []
-        que: List[FormatNode] = list(map(analyze, node.items))
+        que: List[FormatNode] = list(map(analyze_parsed_node, node.items))
         while que:
             item, *que = que
             if isinstance(item, SequenceNode):
@@ -416,8 +393,8 @@ def analyze(node: ParserNode) -> FormatNode:
             return SequenceNode(items=items)
 
     elif isinstance(node, DotsParserNode):
-        a = analyze(node.first)
-        b = analyze(node.last)
+        a = analyze_parsed_node(node.first)
+        b = analyze_parsed_node(node.last)
 
         # find the name of the new loop counter
         used_names = list_used_names(a) | list_used_names(b)
@@ -436,25 +413,7 @@ def analyze(node: ParserNode) -> FormatNode:
         assert False
 
 
-def download_html(url: str) -> bs4.BeautifulSoup:
-    # get HTML
-    resp = requests.get(url)
-    logger.debug('HTTP response: %s', resp)
-    resp.raise_for_status()
-
-    # parse HTML
-    soup = bs4.BeautifulSoup(resp.content.decode(resp.encoding), 'html.parser')
-    logger.debug('parsed HTML: %s...', repr(str(soup))[:200])
-
-    return soup
-
-
-def run(soup: bs4.BeautifulSoup, *, url: str) -> FormatNode:
-    # find the format <pre> tag
-    pre = get_format_string(url, soup)
-    pre = pre.rstrip() + '\n'
-    logger.debug('format string: %s', repr(pre))
-
+def run(pre: str, *, url: str) -> FormatNode:
     # list tokens with lex
     lexer = build_lexer()
     lexer.input(pre)
@@ -466,7 +425,7 @@ def run(soup: bs4.BeautifulSoup, *, url: str) -> FormatNode:
     logger.debug('Yacc tree: %s', parsed)
 
     # analyze the syntax tree
-    ast = analyze(parsed)
+    ast = analyze_parsed_node(parsed)
     logger.debug('abstract syntax tree: %s', ast)
 
     return ast

@@ -25,7 +25,12 @@ class InputNode(CPlusPlusNode):
         self.exprs = exprs
 
 
-class OutputNode(CPlusPlusNode):
+class OutputTokensNode(CPlusPlusNode):
+    def __init__(self, exprs: List[str]):
+        self.exprs = exprs
+
+
+class OutputNewlineNode(CPlusPlusNode):
     def __init__(self, exprs: List[str]):
         self.exprs = exprs
 
@@ -48,7 +53,7 @@ class OtherNode(CPlusPlusNode):
 
 
 def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) -> str:
-    indent = data['config'].get('indent', ' ' * 4)
+    indent = common.get_indent(data=data)
     buf = []
     nest = 1
     for line in lines:
@@ -86,14 +91,14 @@ def _read_ints(exprs: List[str], *, data: Dict[str, Any]) -> List[str]:
         assert False
 
 
-def _write_ints(exprs: List[str], *, data: Dict[str, Any]) -> List[str]:
+def _write_ints(exprs: List[str], *, newline: bool, data: Dict[str, Any]) -> List[str]:
     printer = data['config'].get('printer')
     if printer is None or printer == 'scanf':
         return [f"""printf("{' '.join(['%d'] * len(exprs))}\\n", {', '.join(exprs)});"""]
     elif printer in ('cout', 'std::cout'):
         return [f"""{_get_std(data=data)}cout << {" << ' ' << ".join(exprs)} << {_get_std(data=data)}endl;"""]
     elif callable(printer):
-        return printer(exprs)
+        return printer(exprs, newline=newline)
     else:
         assert False
 
@@ -114,6 +119,14 @@ def _get_type_and_ctor(decl: common.VarDecl, *, data: Dict[str, Any]) -> Tuple[s
         space = ' ' if type.endswith('>') else ''
         type = f"""{_get_std(data=data)}vector<{type}{space}>"""
     return type, ctor
+
+
+def _get_variable(*, decl: common.VarDecl, indices: List[str]) -> str:
+    var = decl.name
+    for index, base in zip(indices, decl.bases):
+        i = str(simplify(f"""{index} - ({base})"""))
+        var = f"""{var}[{i}]"""
+    return var
 
 
 def _declare_variables(decls: List[common.VarDecl], *, data: Dict[str, Any]) -> Iterator[str]:
@@ -144,13 +157,9 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
     if isinstance(node, ItemNode):
         if node.name not in declared:
             raise RuntimeError(f"""variable {node.name} is not declared yet""")
-        var = node.name
-        for index, base in zip(node.indices, decls[node.name].bases):
-            i = str(simplify(f"""{index} - ({base})"""))
-            var = f"""{var}[{i}]"""
-        result: CPlusPlusNode = InputNode(exprs=[var])
         initialized.add(node.name)
-        return result
+        var = _get_variable(decl=decls[node.name], indices=node.indices)
+        return InputNode(exprs=[var])
     elif isinstance(node, NewlineNode):
         return SentencesNode(sentences=[])
     elif isinstance(node, SequenceNode):
@@ -168,12 +177,33 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
         assert False
 
 
+def _write_output_dfs(node: FormatNode, *, decls: Dict[str, common.VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
+    if isinstance(node, ItemNode):
+        var = _get_variable(decl=decls[node.name], indices=node.indices)
+        return OutputTokensNode(exprs=[var])
+    elif isinstance(node, NewlineNode):
+        return OutputNewlineNode(exprs=[])
+    elif isinstance(node, SequenceNode):
+        sentences = []
+        for item in node.items:
+            sentences.append(_write_output_dfs(item, decls=decls, data=data))
+        return SentencesNode(sentences=sentences)
+    elif isinstance(node, LoopNode):
+        body = _write_output_dfs(node.body, decls=decls, data=data)
+        result = RepeatNode(name=node.name, size=node.size, body=body)
+        return result
+    else:
+        assert False
+
+
 def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlusPlusNode:
     if isinstance(node, DeclNode):
         return node
     elif isinstance(node, InputNode):
         return node
-    elif isinstance(node, OutputNode):
+    elif isinstance(node, OutputTokensNode):
+        return node
+    elif isinstance(node, OutputNewlineNode):
         return node
     elif isinstance(node, SentencesNode):
         sentences: List[CPlusPlusNode] = []
@@ -184,8 +214,10 @@ def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlus
                 sentences[-1].decls.extend(sentence.decls)
             elif sentences and isinstance(sentences[-1], InputNode) and isinstance(sentence, InputNode):
                 sentences[-1].exprs.extend(sentence.exprs)
-            elif sentences and isinstance(sentences[-1], OutputNode) and isinstance(sentence, OutputNode):
+            elif sentences and isinstance(sentences[-1], OutputTokensNode) and isinstance(sentence, OutputTokensNode):
                 sentences[-1].exprs.extend(sentence.exprs)
+            elif sentences and isinstance(sentences[-1], OutputTokensNode) and isinstance(sentence, OutputNewlineNode):
+                sentences[-1] = OutputNewlineNode(exprs=sentences[-1].exprs + sentence.exprs)
             elif isinstance(sentence, SentencesNode):
                 que = sentence.sentences + que
             else:
@@ -204,8 +236,10 @@ def _serialize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> Iter
         yield from _declare_variables(node.decls, data=data)
     elif isinstance(node, InputNode):
         yield from _read_ints(node.exprs, data=data)
-    elif isinstance(node, OutputNode):
-        yield from _write_ints(node.exprs, data=data)
+    elif isinstance(node, OutputTokensNode):
+        yield from _write_ints(node.exprs, newline=False, data=data)
+    elif isinstance(node, OutputNewlineNode):
+        yield from _write_ints(node.exprs, newline=True, data=data)
     elif isinstance(node, SentencesNode):
         for sentence in node.sentences:
             yield from _serialize_syntax_tree(sentence, data=data)
@@ -220,21 +254,45 @@ def _serialize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> Iter
 
 
 def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
+    if data['input'] is None:
+        lines = [
+            '// failed to analyze input format',
+            'int n;  // TODO: edit here',
+            *_read_ints(['n'], data=data),
+            f"""{_get_std(data=data)}vector<int> a(n);""",
+            _declare_loop('i', 'n', data=data) + ' {',
+            *_read_ints(['a[i]'], data=data),
+            '}',
+        ]
+        return _join_with_indent(iter(lines), nest=nest, data=data)
+
     decls = common.list_used_items(data['input'])
     node = _read_input_dfs(data['input'], declared=set(), initialized=set(), decls=decls, data=data)
     node = _optimize_syntax_tree(node, data=data)
-    lines = _serialize_syntax_tree(node, data=data)
+    lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
 def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
-    lines = []
-    lines.extend(_write_ints(['ans'], data=data))
-    lines[0] += "  // TODO: edit here"
+    if data['output'] is None:
+        lines = [
+            '// failed to analyze output format',
+            *_write_ints(['ans'], newline=True, data=data),
+        ]
+        lines[0] += "  // TODO: edit here"
+        return _join_with_indent(iter(lines), nest=nest, data=data)
+
+    decls = common.list_used_items(data['output'])
+    node = _write_output_dfs(data['output'], decls=decls, data=data)
+    node = _optimize_syntax_tree(node, data=data)
+    lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
 def arguments_types(data: Dict[str, Any]) -> str:
+    if data['input'] is None:
+        return f"""int n, const {_get_std(data=data)}<int> & a"""
+
     decls = common.list_used_items(data['input'])
     args = []
     for name, decl in decls.items():
@@ -249,9 +307,24 @@ def arguments_types(data: Dict[str, Any]) -> str:
 
 
 def arguments(data: Dict[str, Any]) -> str:
-    dims = common.list_used_items(data['input'])
-    return ', '.join(dims.keys())
+    if data['input'] is None:
+        return 'n, a'
+
+    decls = common.list_used_items(data['input'])
+    return ', '.join(decls.keys())
 
 
 def return_type(data: Dict[str, Any]) -> str:
     return "auto"
+
+
+def return_values(data: Dict[str, Any]) -> str:
+    if data['output'] is None:
+        return 'ans'
+
+    decls = common.list_used_items(data['output'])
+    keys = list(decls.keys())
+    if len(keys) == 1:
+        return keys[0]
+    else:
+        return f"""[{', '.join(decls.keys())}]"""
