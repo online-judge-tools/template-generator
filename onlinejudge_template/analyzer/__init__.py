@@ -85,8 +85,12 @@ def build_lexer() -> lex.Lexer:
 
     t_ignore = ' \t$'
 
+    def t_tex_space(t: lex.LexToken) -> None:
+        r"""(\\ |\\,|\\;|~)"""
+        return None
+
     def t_error(t: lex.LexToken) -> None:
-        raise LexerError("unexpected character: '{}' at line {} column {}".format(t.value, t.lineno, t.lexpos))
+        raise LexerError("unexpected character: '{}' at line {} column {}".format(t.value[0], t.lineno, t.lexpos))
 
     # t_DOLLAR = r'\$'
     # t_VAR_OPEN = r'<\s*[vV][aA][rR]\s*>'
