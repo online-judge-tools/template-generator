@@ -123,12 +123,9 @@ def main():
     for i in range(N):
         X[i] = random.randint(1, 10 ** 9)  # TODO: edit here
         D[i] = random.randint(1, 10 ** 9)  # TODO: edit here
-    print(N, end=' ')
-    print()
+    print(N)
     for i in range(N):
-        print(X[i], end=' ')
-        print(D[i], end=' ')
-        print()
+        print(X[i], D[i])
 
 if __name__ == "__main__":
     main()
