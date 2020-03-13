@@ -11,7 +11,7 @@ setup(
     description='',
     python_requires='>=3.6',
     install_requires=[
-        'appdirs >= 1.4'
+        'appdirs >= 1.4',
         'beautifulsoup4 >= 4.8',
         'Mako >= 1.1',
         'online-judge-tools >= 9',
