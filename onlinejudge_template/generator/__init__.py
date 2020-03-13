@@ -14,7 +14,7 @@ def run(input_format: FormatNode, *, template_file: str) -> bytes:
         'config': {},
     }
     directories = [
-        str(pathlib.Path(appdirs.user_data_dir('online-judge-tools')) / 'template'),
+        str(pathlib.Path(appdirs.user_config_dir('online-judge-tools')) / 'template'),
         pkg_resources.resource_filename('onlinejudge_template_resources', ''),
     ]
     lookup = mako.lookup.TemplateLookup(directories=directories, input_encoding="utf-8", output_encoding="utf-8")
