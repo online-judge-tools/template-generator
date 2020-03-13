@@ -109,7 +109,7 @@ int main() {
         scanf("%d", &D[i]);
     }
     auto ans = solve(N, X, D);
-    printf("%d\n", &ans);  // TODO: edit here
+    printf("%d\n", ans);  // TODO: edit here
     return 0;
 }
 

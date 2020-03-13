@@ -9,6 +9,7 @@ from onlinejudge_template.types import *
 class VarDecl(NamedTuple):
     name: str
     dims: List[str]
+    bases: List[str]
     depending: Set[str]
 
 
@@ -23,15 +24,20 @@ def _list_used_items_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], 
         if node.name in declared:
             raise NotImplementedError
         dims = []
+        bases = []
         depending = set()
         for index in node.indices:
+            dim = index
+            base = index
             for i, decl in counter.items():
-                index, replaced = re.subn(r'\b' + re.escape(i) + r'\b', decl.size, index)
+                dim, _ = re.subn(r'\b' + re.escape(i) + r'\b', decl.size, dim)
+                base, _ = re.subn(r'\b' + re.escape(i) + r'\b', '0', base)
             for n in declared.keys():
-                if re.search(r'\b' + re.escape(n) + r'\b', index):
+                if re.search(r'\b' + re.escape(n) + r'\b', dim):
                     depending.add(n)
-            dims.append(str(simplify(index)))
-        declared[node.name] = VarDecl(name=node.name, dims=dims, depending=depending)
+            dims.append(str(simplify(f"""{dim} - ({base})""")))
+            bases.append(str(simplify(base)))
+        declared[node.name] = VarDecl(name=node.name, dims=dims, bases=bases, depending=depending)
 
     elif isinstance(node, NewlineNode):
         pass

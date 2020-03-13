@@ -1,6 +1,7 @@
 from typing import *
 
 import onlinejudge_template.generator.common as common
+from onlinejudge_template.analyzer import simplify
 from onlinejudge_template.types import *
 
 
@@ -44,7 +45,7 @@ def _read_int(var: str, *, data: Dict[str, Any]) -> str:
 def _write_int(var: str, *, data: Dict[str, Any]) -> str:
     printer = data['config'].get('printer')
     if printer is None or printer == 'scanf':
-        return f"""printf("%d\\n", &{var});"""
+        return f"""printf("%d\\n", {var});"""
     elif printer in ('cout', 'std::cout'):
         return f"""{_get_std(data=data)}cout << {var} << {_get_std(data=data)}endl;"""
     elif callable(printer):
@@ -81,8 +82,9 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
         if node.name not in declared:
             raise RuntimeError(f"""variable {node.name} is not declared yet""")
         var = node.name
-        for index in node.indices:
-            var = f"""{var}[{index}]"""
+        for index, base in zip(node.indices, decls[node.name].bases):
+            i = str(simplify(f"""{index} - ({base})"""))
+            var = f"""{var}[{i}]"""
         yield f"""scanf("%d", &{var});"""
         initialized.add(node.name)
     elif isinstance(node, NewlineNode):
