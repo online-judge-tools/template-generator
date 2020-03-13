@@ -3,8 +3,6 @@ from typing import *
 
 
 class FormatNode(abc.ABC):
-    pass
-
     def __repr__(self) -> str:
         keys = dir(self)
         keys = list(filter(lambda key: not key.startswith('_'), keys))

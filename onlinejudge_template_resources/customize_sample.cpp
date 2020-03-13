@@ -1,4 +1,4 @@
-<%! import onlinejudge_template.library.cplusplus as cplusplus %>\
+<%! import onlinejudge_template.generator.cplusplus as cplusplus %>\
 <%
     data['config']['indent'] = '\t'
     data['config']['scanner'] = 'cin'

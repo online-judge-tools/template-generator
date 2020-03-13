@@ -1,4 +1,4 @@
-<%! import onlinejudge_template.library.python as python %>\
+<%! import onlinejudge_template.generator.python as python %>\
 #!/usr/bin/env python3
 import random
 import onlinejudge_random as random_oj

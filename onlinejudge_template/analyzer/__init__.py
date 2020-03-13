@@ -4,11 +4,7 @@ import sys
 from logging import getLogger
 from typing import *
 
-import appdirs
 import bs4
-import mako.lookup
-import mako.template
-import pkg_resources
 import ply.lex as lex
 import ply.yacc as yacc
 import requests
@@ -336,21 +332,7 @@ def analyze(node: ParserNode) -> FormatNode:
         assert False
 
 
-def format(*, input_format: FormatNode, template_file: str) -> bytes:
-    data = {
-        'input': input_format,
-        'config': {},
-    }
-    directories = [
-        str(pathlib.Path(appdirs.user_data_dir('online-judge-tools')) / 'template'),
-        pkg_resources.resource_filename('onlinejudge_template_resources', ''),
-    ]
-    lookup = mako.lookup.TemplateLookup(directories=directories, input_encoding="utf-8", output_encoding="utf-8")
-    template = lookup.get_template(template_file)
-    return template.render(data=data)
-
-
-def run(url: str, *, template: str) -> None:
+def download_html(url: str) -> bs4.BeautifulSoup:
     # get HTML
     resp = requests.get(url)
     logger.debug('HTTP response: %s', resp)
@@ -360,6 +342,10 @@ def run(url: str, *, template: str) -> None:
     soup = bs4.BeautifulSoup(resp.content.decode(resp.encoding), 'html.parser')
     logger.debug('parsed HTML: %s...', repr(str(soup))[:200])
 
+    return soup
+
+
+def run(soup: bs4.BeautifulSoup, *, url: str) -> FormatNode:
     # find the format <pre> tag
     pre = get_format_string(url, soup)
     pre = pre.rstrip() + '\n'
@@ -379,7 +365,4 @@ def run(url: str, *, template: str) -> None:
     ast = analyze(parsed)
     logger.debug('abstract syntax tree: %s', ast)
 
-    # generate codes
-    code = format(input_format=ast, template_file=template)
-    logger.debug('Mako rendered: %s', code)
-    sys.stdout.buffer.write(code)
+    return ast

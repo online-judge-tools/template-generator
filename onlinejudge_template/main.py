@@ -1,7 +1,9 @@
 import argparse
+import sys
 from logging import DEBUG, INFO, basicConfig, getLogger
 
 import onlinejudge_template.analyzer
+import onlinejudge_template.generator
 
 logger = getLogger(__name__)
 
@@ -18,7 +20,10 @@ def main() -> None:
     else:
         basicConfig(level=INFO)
 
-    onlinejudge_template.analyzer.run(args.url, template=args.template)
+    soup = onlinejudge_template.analyzer.download_html(args.url)
+    node = onlinejudge_template.analyzer.run(soup, url=args.url)
+    code = onlinejudge_template.generator.run(node, template_file=args.template)
+    sys.stdout.buffer.write(code)
 
 
 if __name__ == '__main__':

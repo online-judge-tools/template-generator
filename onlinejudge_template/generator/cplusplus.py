@@ -1,6 +1,6 @@
 from typing import *
 
-import onlinejudge_template.library.common as common
+import onlinejudge_template.generator.common as common
 from onlinejudge_template.types import *
 
 
