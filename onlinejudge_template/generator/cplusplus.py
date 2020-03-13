@@ -111,7 +111,8 @@ def _get_type_and_ctor(decl: common.VarDecl, *, data: Dict[str, Any]) -> Tuple[s
     for dim in reversed(decl.dims):
         sndarg = f""", {type}({ctor})""" if ctor else ''
         ctor = f"""({dim}{sndarg})"""
-        type = f"""{_get_std(data=data)}vector<{type} >"""
+        space = ' ' if type.endswith('>') else ''
+        type = f"""{_get_std(data=data)}vector<{type}{space}>"""
     return type, ctor
 
 
