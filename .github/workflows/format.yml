@@ -1,0 +1,25 @@
+name: format
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+
+    - name: Install dependencies
+      run: pip3 install .[dev]
+
+    - name: Run tests
+      run: |
+        oj-template -h
+        oj-contest -h
+        pylint --disable=all --enable=unused-import onlinejudge_template onlinejudge_random onlinejudge_contest tests setup.py
+        isort --check-only --diff --recursive onlinejudge_template onlinejudge_random onlinejudge_contest tests setup.py
+        yapf --diff --recursive onlinejudge_template onlinejudge_random onlinejudge_contest tests setup.py | tee yapf.patch && test ! -s yapf.patch
+        mypy onlinejudge_template onlinejudge_random onlinejudge_contest setup.py
