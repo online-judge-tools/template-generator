@@ -51,6 +51,12 @@ def get_format_string(url: str, soup: bs4.BeautifulSoup) -> str:
                 return h4.parent.find('pre').string
         raise HTMLParserError
 
+    elif 'judge.yosupo.jp' in url:
+        for h2 in soup.find_all('h2'):
+            if h2.string in ('Input', 'Input / 入力', '入力'):
+                return h2.find_next_sibling('pre').string
+        raise HTMLParserError
+
     else:
         raise NotImplementedError
 

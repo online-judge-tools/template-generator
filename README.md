@@ -22,7 +22,7 @@ $ oj-template [-t template] URL
 $ oj-contest URL
 ```
 
--   入力解析は AtCoder と yukicoder だけ。いくつかの形は動かない + 型の認識はまだ
+-   入力解析は AtCoder と yukicoder と [Library Checker](https://judge.yosupo.jp/) だけ。いくつかの形は動かない + 型の認識はまだ
 -   出力解析はまだどこもだめ
 -   サンプルの一括ダウンロードは [oj](https://github.com/kmyk/online-judge-tools) が動くやつなら全部動く
 
