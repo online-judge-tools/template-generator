@@ -22,6 +22,10 @@ $ oj-template [-t template] URL
 $ oj-contest URL
 ```
 
+-   入力解析は AtCoder と yukicoder だけ。いくつかの形は動かない + 型の認識はまだ
+-   出力解析はまだどこもだめ
+-   サンプルの一括ダウンロードは [oj](https://github.com/kmyk/online-judge-tools) が動くやつなら全部動く
+
 
 ## Settings
 
@@ -105,7 +109,7 @@ int main() {
         scanf("%d", &D[i]);
     }
     auto ans = solve(N, X, D);
-    printf("%d\n", &ans);
+    printf("%d\n", &ans);  // TODO: edit here
     return 0;
 }
 
