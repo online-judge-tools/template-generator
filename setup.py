@@ -23,7 +23,7 @@ setup(
     ],
     packages=find_packages(exclude=('tests', 'docs')),
     package_data={
-        'onlinejudge_template_resources': ['*'],
+        'onlinejudge_template_resources': ['*', 'template/*'],
     },
     entry_points={
         'console_scripts': [

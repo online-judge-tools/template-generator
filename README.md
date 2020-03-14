@@ -45,7 +45,7 @@ $ oj-contest URL
 
 `oj-template` のためのテンプレートは `~/.config/online-judge-tools/template/` の下に `~/.config/online-judge-tools/template/customized.py` のように作って `oj-template -t customized.py https://...` のように指定する。
 テンプレート記法は [Mako](https://www.makotemplates.org/) のものを使う。
-[fastio.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/fastio.cpp) とか [customize_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/customize_sample.cpp) とかを見てそれっぽく書けば動く。
+[fastio.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/fastio.cpp) とか [customize_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/customize_sample.cpp) とかを見てそれっぽく書けば動く。
 
 `oj-contest` の設定は `~/.config/online-judge-tools/oj2.config.toml` に次のように設定する。
 
