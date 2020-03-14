@@ -18,10 +18,8 @@
 ## How to Install
 
 ``` console
-$ pip3 install git+https://github.com/kmyk/online-judge-template-generator.git@master
+$ pip3 install online-judge-template-generator
 ```
-
-(後でやる: PyPI への登録)
 
 
 ## Usage
