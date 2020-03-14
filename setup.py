@@ -8,7 +8,7 @@ setup(
     author_email='kimiyuki95@gmail.com',
     url='https://github.com/kmyk/online-judge-template-generator',
     license='MIT License',
-    description='',
+    description='A simple template generator for competitive programming',
     python_requires='>=3.6',
     install_requires=[
         'appdirs >= 1.4',
