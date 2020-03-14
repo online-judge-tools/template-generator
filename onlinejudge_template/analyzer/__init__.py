@@ -413,7 +413,7 @@ def analyze_parsed_node(node: ParserNode) -> FormatNode:
         assert False
 
 
-def run(pre: str, *, url: str) -> FormatNode:
+def run(pre: str) -> FormatNode:
     # list tokens with lex
     lexer = build_lexer()
     lexer.input(pre)

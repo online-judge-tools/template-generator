@@ -30,7 +30,7 @@ def main() -> None:
     try:
         input_format_string = onlinejudge_template.analyzer.html.parse_input_format_string(html, url=args.url)
         logger.debug('input format string: %s', repr(input_format_string))
-        input_node = onlinejudge_template.analyzer.run(input_format_string, url=args.url)
+        input_node = onlinejudge_template.analyzer.run(input_format_string)
     except onlinejudge_template.analyzer.TemplateGeneratorError as e:
         logger.error('input analyzer failed: %s', e)
     except NotImplementedError as e:
@@ -41,7 +41,7 @@ def main() -> None:
     try:
         output_format_string = onlinejudge_template.analyzer.html.parse_output_format_string(html, url=args.url)
         logger.debug('output format string: %s', repr(output_format_string))
-        output_node = onlinejudge_template.analyzer.run(output_format_string, url=args.url)
+        output_node = onlinejudge_template.analyzer.run(output_format_string)
     except onlinejudge_template.analyzer.TemplateGeneratorError as e:
         logger.error('output analyzer failed: %s', e)
     except NotImplementedError as e:

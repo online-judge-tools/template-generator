@@ -15,9 +15,9 @@ class ItemNode(FormatNode):
     name: str
     indices: List[str]
 
-    def __init__(self, *, name: str, indices: List[str]):
+    def __init__(self, *, name: str, indices: Sequence[str] = []):
         self.name = name
-        self.indices = indices
+        self.indices = list(indices)
 
 
 class NewlineNode(FormatNode):
@@ -27,8 +27,8 @@ class NewlineNode(FormatNode):
 class SequenceNode(FormatNode):
     items: List[FormatNode]
 
-    def __init__(self, *, items: List[FormatNode]):
-        self.items = items
+    def __init__(self, *, items: Sequence[FormatNode]):
+        self.items = list(items)
 
 
 class LoopNode(FormatNode):

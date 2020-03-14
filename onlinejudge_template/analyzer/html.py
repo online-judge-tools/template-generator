@@ -37,7 +37,7 @@ def parse_generic_format_string(html: str, *, kind: str, url: str) -> str:
                     s = ''
                     for it in pre:
                         s += it.string or it
-                    return s.strip() + '\n'
+                    return s.strip() + '\r\n'
         raise HTMLParserError
 
     elif 'yukicoder.me' in url:
