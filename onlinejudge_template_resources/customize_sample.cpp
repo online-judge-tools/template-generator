@@ -13,6 +13,9 @@ ${cplusplus.return_type(data)} solve(${cplusplus.arguments_types(data)}) {
 }
 
 int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    constexpr char endl = '\n';
 ${cplusplus.read_input(data)}
 	auto ${cplusplus.return_values(data)} = solve(${cplusplus.arguments(data)});
 ${cplusplus.write_output(data)}
