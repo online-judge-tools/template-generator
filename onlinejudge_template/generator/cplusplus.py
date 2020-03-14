@@ -93,7 +93,7 @@ def _read_ints(exprs: List[str], *, data: Dict[str, Any]) -> List[str]:
 
 def _write_ints(exprs: List[str], *, newline: bool, data: Dict[str, Any]) -> List[str]:
     printer = data['config'].get('printer')
-    if printer is None or printer == 'scanf':
+    if printer is None or printer == 'printf':
         return [f"""printf("{' '.join(['%d'] * len(exprs))}\\n", {', '.join(exprs)});"""]
     elif printer in ('cout', 'std::cout'):
         return [f"""{_get_std(data=data)}cout << {" << ' ' << ".join(exprs)} << {_get_std(data=data)}endl;"""]
