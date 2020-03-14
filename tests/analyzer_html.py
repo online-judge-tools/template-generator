@@ -27,6 +27,28 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
+    def test_abc080_a(self) -> None:
+        url = 'https://atcoder.jp/contests/abc080/tasks/abc080_a'
+        expected = '\r\n'.join([
+            r'<var>N</var> <var>A</var> <var>B</var>',
+            r'',
+        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+
+        html = analyzer.download_html(url)
+        self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
+        self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
+
+    def test_abc042_a(self) -> None:
+        url = 'https://atcoder.jp/contests/abc042/tasks/abc042_a'
+        expected = '\r\n'.join([
+            r'<var>A</var> <var>B</var> <var>C</var>',
+            r'',
+        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+
+        html = analyzer.download_html(url)
+        self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
+        self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
+
     @unittest.expectedFailure
     def test_arc001_1(self) -> None:
         url = 'https://atcoder.jp/contests/arc001/tasks/arc001_1'
