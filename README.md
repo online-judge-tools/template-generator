@@ -1,6 +1,18 @@
 # Online Judge Template Generator
 
-テンプレートとかディレクトリとかを作ってくれるやつです。まだ不安定版なので、嘘が出力されてても怒らないでね
+まだ不安定版なので嘘が出力されてても怒らないでね。
+そのうち実装することのリストは [TODO #2](https://github.com/kmyk/online-judge-template-generator/issues/2) にあります
+
+
+## これはなに
+
+競技プログラミングテンプレートを作ってくれるやつです。
+[kyuridenamida/atcoder-tools](https://github.com/kyuridenamida/atcoder-tools) を参考に、その本質部分だけを抜き出して再実装しました。
+
+主目的は以下のふたつです:
+
+-   不適切な入出力方法を用いたことによる TLE を回避すること。たとえば「Codeforces で `std::endl` を使って TLE する」みたいなのをなくしたい
+-   ランダムケースを生成してのテストを気軽に行えるようにすること。たとえば、サンプル AC して提出してみたら謎の WA が出たとき「これランダムケース生成して愚直解と比較すれば原因分かるだろうけど、面倒なんだよな」ってなりがちですが、この面倒を半減させ高速にデバッグできるようにしたい
 
 
 ## How to Install
@@ -14,17 +26,19 @@ $ pip3 install git+https://github.com/kmyk/online-judge-template-generator.git@m
 
 ## Usage
 
+`oj-template` コマンドは、指定された問題に対し、入出力パートを自動生成します。
+入出力解析は AtCoder と yukicoder と [Library Checker](https://judge.yosupo.jp/) にのみ対応していますが、それら以外でも一応は動きます。
+
 ``` console
 $ oj-template [-t template] URL
 ```
 
+`oj-contest` コマンドは、指定された問題やコンテストに対し、テンプレート生成やサンプルのダウンロードを一括で行います。
+[oj](https://github.com/kmyk/online-judge-tools) が動くやつなら何に対してでも動きます。
+
 ``` console
 $ oj-contest URL
 ```
-
--   入力解析は AtCoder と yukicoder と [Library Checker](https://judge.yosupo.jp/) にのみ対応。型の認識はまだ
--   出力解析も AtCoder と yukicoder と [Library Checker](https://judge.yosupo.jp/) で動くけど、原理的に対応してる問題が少ない
--   サンプルの一括ダウンロードは [oj](https://github.com/kmyk/online-judge-tools) が動くやつなら全部動く
 
 
 ## Settings
@@ -166,7 +180,7 @@ lₘ rₘ
 ```
 
 このトークン列を解析して次のような木へ変形します。
-まず文脈自由文法で解析できる範囲を処理した後に、文脈依存ぽい部分を ad-hoc に処理しています。
+まず文脈自由文法で解析できる範囲を処理して木を作った後に、文脈依存ぽい部分を ad-hoc に処理してより整理された木に組み換えています。
 文脈自由部分は O(n^3) の愚直な区間 DP (CYK法) でもよいですが、規則を列挙すれば残りをいい感じにやってくれる既存のツール (Yacc) に任せてほぼ線形 (LALR法) で実装されています。
 
 ``` json
@@ -188,6 +202,7 @@ lₘ rₘ
 
 この木を変換してソースコードにします。
 木の畳み込みとか木 DP とか言われる O(n) か O(n²) ぐらいの愚直をします。
+何をやっても変換はできますが、(1.) まずフォーマット木を C++ の構文木に写し、(2.) それを最適化し、(3.) これを行の列に直列化し、(4.) インデントを整えて出力する、という 4 段階に分けると実装が楽かつ出力がきれいです。
 
 ``` c++
     int n, m;
@@ -207,4 +222,4 @@ lₘ rₘ
 
 ## License
 
-MIT
+MIT License
