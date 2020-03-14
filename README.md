@@ -1,7 +1,7 @@
 # Online Judge Template Generator
 
 まだ不安定版なので嘘が出力されてても怒らないでね。
-そのうち実装することのリストは [TODO #2](https://github.com/kmyk/online-judge-template-generator/issues/2) にあります
+そのうち実装することのリストは [TODO](https://github.com/kmyk/online-judge-template-generator/issues/2) にあります
 
 
 ## これはなに
