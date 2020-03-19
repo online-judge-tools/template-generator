@@ -5,6 +5,7 @@ from typing import *
 
 import onlinejudge_template.analyzer.combined
 import onlinejudge_template.generator
+import onlinejudge_template.network
 
 logger = getLogger(__name__)
 
@@ -21,11 +22,13 @@ def main() -> None:
     else:
         basicConfig(level=INFO)
 
+    # download
     url = args.url
-    html = onlinejudge_template.analyzer.combined.download_html(args.url)
+    html = onlinejudge_template.network.download_html(url)
+    sample_cases = onlinejudge_template.network.download_sample_cases(url)
 
     # analyze
-    resources = onlinejudge_template.analyzer.combined.prepare_from_html(html, url=url)
+    resources = onlinejudge_template.analyzer.combined.prepare_from_html(html, url=url, sample_cases=sample_cases)
     analyzed = onlinejudge_template.analyzer.combined.run(resources)
 
     # generate

@@ -11,6 +11,7 @@ from typing import *
 import appdirs
 import onlinejudge_template.analyzer.combined
 import onlinejudge_template.generator
+import onlinejudge_template.network
 import toml
 
 import onlinejudge
@@ -78,10 +79,11 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
 
     with chdir(dir):
         url = problem.get_url()
-        html = onlinejudge_template.analyzer.combined.download_html(url)
+        html = onlinejudge_template.network.download_html(url)
+        sample_cases = onlinejudge_template.network.download_sample_cases(url)
 
         # analyze
-        resources = onlinejudge_template.analyzer.combined.prepare_from_html(html, url=url)
+        resources = onlinejudge_template.analyzer.combined.prepare_from_html(html, url=url, sample_cases=sample_cases)
         analyzed = onlinejudge_template.analyzer.combined.run(resources)
 
         for dest_str, template in table.items():

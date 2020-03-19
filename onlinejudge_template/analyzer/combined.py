@@ -4,20 +4,12 @@ from typing import *
 import onlinejudge_template.analyzer.html
 import onlinejudge_template.analyzer.parser
 import onlinejudge_template.analyzer.variables
-import requests
 from onlinejudge_template.types import *
 
 logger = getLogger(__name__)
 
 
-def download_html(url: str) -> bytes:
-    resp = requests.get(url)
-    logger.debug('HTTP response: %s', resp)
-    resp.raise_for_status()
-    return resp.content
-
-
-def prepare_from_html(html: bytes, *, url: str) -> AnalyzerResources:
+def prepare_from_html(html: bytes, *, url: str, sample_cases: Optional[List[SampleCase]] = None) -> AnalyzerResources:
     input_format_string: Optional[str] = None
     try:
         input_format_string = onlinejudge_template.analyzer.html.parse_input_format_string(html, url=url)
@@ -41,7 +33,7 @@ def prepare_from_html(html: bytes, *, url: str) -> AnalyzerResources:
         html=html,
         input_format_string=input_format_string,
         output_format_string=output_format_string,
-        sample_cases=None,
+        sample_cases=sample_cases,
     )
 
 

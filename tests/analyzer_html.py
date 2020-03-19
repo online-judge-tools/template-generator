@@ -1,7 +1,7 @@
 import unittest
 
 import onlinejudge_template.analyzer.html as analyzer
-from onlinejudge_template.analyzer.combined import download_html
+from onlinejudge_template.network import download_html
 
 
 class TestFormatStringDetectorAtCoder(unittest.TestCase):
