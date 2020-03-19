@@ -41,8 +41,15 @@ def get_var_types_from_match_result(values: Dict[str, Dict[Tuple[int, ...], Unio
     types: Dict[str, VarType] = {}
     for name in variables.keys():
         ts = set(map(get_var_type, values[name].values()))
-        if len(ts) != 1:
-            raise TypingError(f"""failed to infer type: {name} has non-unique candidates {ts}""")
+        while len(ts) >= 2:
+            t1 = ts.pop()
+            t2 = ts.pop()
+            t3 = unify_types(t1, t2)
+            if t3 is None:
+                raise TypingError(f"""failed to unify types: {t1} and {t2} for variable {name}""")
+            ts.add(t3)
+        if not ts:
+            raise TypingError(f"""failed to infer type: {name} has no candidate types""")
         types[name] = ts.pop()
     for decl in variables.values():
         for name in decl.depending:
