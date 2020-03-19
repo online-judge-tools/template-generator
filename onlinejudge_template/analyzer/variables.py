@@ -34,7 +34,7 @@ def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[str, _Counte
                     depending.add(n)
             dims.append(simplify(f"""{dim} - ({base})"""))
             bases.append(simplify(base))
-        declared[node.name] = VarDecl(name=node.name, dims=dims, bases=bases, depending=depending)
+        declared[node.name] = VarDecl(name=node.name, dims=dims, bases=bases, depending=depending, type=None)
 
     elif isinstance(node, NewlineNode):
         pass

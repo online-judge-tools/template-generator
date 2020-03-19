@@ -3,6 +3,7 @@ from typing import *
 
 import onlinejudge_template.analyzer.html
 import onlinejudge_template.analyzer.parser
+import onlinejudge_template.analyzer.typing
 import onlinejudge_template.analyzer.variables
 from onlinejudge_template.types import *
 
@@ -69,6 +70,24 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
             output_variables = onlinejudge_template.analyzer.variables.list_declared_variables(output_format)
         except AnalyzerError as e:
             logger.error('output analyzer failed: %s', e)
+
+    if input_format is not None and input_variables is not None and resources.sample_cases:
+        input_samples = [case.input for case in resources.sample_cases]
+        try:
+            input_types = onlinejudge_template.analyzer.typing.infer_types_from_instances(input_format, variables=input_variables, instances=input_samples)
+        except AnalyzerError as e:
+            logger.error('input analyzer failed: %s', e)
+        else:
+            input_variables = onlinejudge_template.analyzer.typing.update_variables_with_types(variables=input_variables, types=input_types)
+
+    if output_format is not None and output_variables is not None and resources.sample_cases:
+        output_samples = [case.output for case in resources.sample_cases]
+        try:
+            output_types = onlinejudge_template.analyzer.typing.infer_types_from_instances(output_format, variables=output_variables, instances=output_samples)
+        except AnalyzerError as e:
+            logger.error('output analyzer failed: %s', e)
+        else:
+            output_variables = onlinejudge_template.analyzer.typing.update_variables_with_types(variables=output_variables, types=output_types)
 
     return AnalyzerResult(
         resources=resources,

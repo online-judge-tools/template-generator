@@ -1,4 +1,5 @@
 import abc
+import enum
 from typing import *
 
 
@@ -56,8 +57,17 @@ class AnalyzerResources(NamedTuple):
     sample_cases: Optional[List[SampleCase]]
 
 
+class VarType(enum.Enum):
+    IndexInt = 'IndexInt'
+    ValueInt = 'ValueInt'
+    Float = 'Float'
+    String = 'String'
+    Char = 'Char'
+
+
 class VarDecl(NamedTuple):
     name: str
+    type: Optional[VarType]
     dims: List[str]
     bases: List[str]
     depending: Set[str]
