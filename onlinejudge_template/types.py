@@ -81,9 +81,13 @@ class AnalyzerResult(NamedTuple):
     output_variables: Optional[Dict[str, VarDecl]]
 
 
-class TemplateGeneratorError(RuntimeError):
+class TemplateAnalyzerGeneratorError(RuntimeError):
     pass
 
 
-class AnalyzerError(TemplateGeneratorError):
+class AnalyzerError(TemplateAnalyzerGeneratorError):
+    pass
+
+
+class GeneratorError(TemplateAnalyzerGeneratorError):
     pass

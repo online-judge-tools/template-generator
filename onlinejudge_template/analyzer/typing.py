@@ -198,18 +198,24 @@ def infer_types_from_instances(node: FormatNode, *, variables: Dict[str, VarDecl
 
     assert instances
     types: Optional[Dict[str, VarType]] = None
-    for data in instances:
+    for i, data in enumerate(instances):
         values = match_format(node, data.decode(), variables=variables)
+        logger.debug("match result for %d-th data: %s", i, values)
         types2 = get_var_types_from_match_result(values, variables=variables)
         if types is None:
             types = types2
         else:
             types = unify_var_types(types, types2)
     assert types is not None
+    logger.debug("infered types: %s", types)
     return types
 
 
 def update_variables_with_types(*, variables: Dict[str, VarDecl], types: Dict[str, VarType]) -> Dict[str, VarDecl]:
+    """
+    :raises TypingError:
+    """
+
     updated: Dict[str, VarDecl] = {}
     for name, decl in variables.items():
         if decl.type is None:
