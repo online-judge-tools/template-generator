@@ -42,6 +42,26 @@ class LoopNode(FormatNode):
         self.body = body
 
 
+class SampleCase(NamedTuple):
+    input: bytes
+    output: bytes
+
+
+class AnalyzerResources(NamedTuple):
+    url: Optional[str]
+    html: Optional[bytes]
+
+    input_format_string: Optional[str]
+    output_format_string: Optional[str]
+    sample_cases: Optional[List[SampleCase]]
+
+
+class AnalyzerResult(NamedTuple):
+    resources: AnalyzerResources
+    input_format: Optional[FormatNode]
+    output_format: Optional[FormatNode]
+
+
 class TemplateGeneratorError(RuntimeError):
     pass
 

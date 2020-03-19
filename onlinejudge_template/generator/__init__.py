@@ -8,10 +8,10 @@ import pkg_resources
 from onlinejudge_template.types import *
 
 
-def run(input_format: Optional[FormatNode], output_format: Optional[FormatNode], *, template_file: str) -> bytes:
+def run(analyzed: AnalyzerResult, *, template_file: str) -> bytes:
     data: Dict[str, Any] = {
-        'input': input_format,
-        'output': output_format,
+        'input': analyzed.input_format,
+        'output': analyzed.output_format,
         'config': {},
     }
     directories = [

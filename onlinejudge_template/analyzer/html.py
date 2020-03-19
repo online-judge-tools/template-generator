@@ -2,7 +2,6 @@ from logging import getLogger
 from typing import *
 
 import bs4
-import requests
 from onlinejudge_template.types import AnalyzerError
 
 logger = getLogger(__name__)
@@ -12,20 +11,13 @@ class HTMLParserError(AnalyzerError):
     pass
 
 
-def download_html(url: str) -> str:
-    resp = requests.get(url)
-    logger.debug('HTTP response: %s', resp)
-    resp.raise_for_status()
-    return resp.content.decode(resp.encoding)
-
-
 table = {
     'in': ('Input', 'Input / 入力', '入力'),
     'out': ('Output', 'Output / 出力', '出力'),
 }
 
 
-def parse_generic_format_string(html: str, *, kind: str, url: str) -> str:
+def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
     soup = bs4.BeautifulSoup(html, 'html.parser')
     logger.debug('parsed HTML: %s...', repr(str(soup))[:200])
 
@@ -60,9 +52,9 @@ def parse_generic_format_string(html: str, *, kind: str, url: str) -> str:
         raise NotImplementedError
 
 
-def parse_input_format_string(html: str, *, url: str) -> str:
+def parse_input_format_string(html: bytes, *, url: str) -> str:
     return parse_generic_format_string(html, kind='in', url=url)
 
 
-def parse_output_format_string(html: str, *, url: str) -> str:
+def parse_output_format_string(html: bytes, *, url: str) -> str:
     return parse_generic_format_string(html, kind='out', url=url)

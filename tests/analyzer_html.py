@@ -1,6 +1,7 @@
 import unittest
 
 import onlinejudge_template.analyzer.html as analyzer
+from onlinejudge_template.analyzer.combined import download_html
 
 
 class TestFormatStringDetectorAtCoder(unittest.TestCase):
@@ -11,7 +12,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'',
         ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -23,7 +24,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'',
         ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -34,7 +35,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'',
         ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -45,7 +46,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'',
         ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -59,7 +60,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'',
         ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -76,7 +77,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'',
         ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -95,7 +96,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'',
         ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -112,7 +113,7 @@ class TestFormatStringDetectorLibraryChecker(unittest.TestCase):
             r'',
         ]).strip() + '\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -131,7 +132,7 @@ class TestFormatStringDetectorLibraryChecker(unittest.TestCase):
             r'',
         ]).strip() + '\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected_input)
         self.assertEqual(analyzer.parse_output_format_string(html, url=url), expected_output)
 
@@ -146,7 +147,7 @@ class TestFormatStringDetectorLibraryChecker(unittest.TestCase):
             r'',
         ]).strip() + '\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected_input)
         self.assertEqual(analyzer.parse_output_format_string(html, url=url), expected_output)
 
@@ -164,7 +165,7 @@ class TestFormatStringDetectorYukicoder(unittest.TestCase):
             r'',
         ]).strip() + '\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -176,7 +177,7 @@ class TestFormatStringDetectorYukicoder(unittest.TestCase):
             r'',
         ]).strip() + '\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -188,7 +189,7 @@ class TestFormatStringDetectorYukicoder(unittest.TestCase):
             r'',
         ]).strip() + '\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
@@ -205,6 +206,6 @@ class TestFormatStringDetectorYukicoder(unittest.TestCase):
             r'',
         ]).strip() + '\n'
 
-        html = analyzer.download_html(url)
+        html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
