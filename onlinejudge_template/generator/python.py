@@ -214,7 +214,7 @@ def _serialize_syntax_tree(node: PythonNode, *, data: Dict[str, Any]) -> Iterato
 def generate_input(data: Dict[str, Any], *, nest: int = 1) -> str:
     if data['input'] is None:
         lines = [
-            '// failed to analyze input format',
+            '# failed to analyze input format',
             'n = random.randint(1, 10 ** 9)  # TODO: edit here',
             'a = [random.randint(1, 10 ** 9) for _ in range(n)]  # TODO: edit here',
         ]
