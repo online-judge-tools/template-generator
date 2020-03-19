@@ -3,10 +3,10 @@ import sys
 from logging import DEBUG, INFO, basicConfig, getLogger
 from typing import *
 
-import onlinejudge_template.analyzer
 import onlinejudge_template.analyzer.html
+import onlinejudge_template.analyzer.parser
 import onlinejudge_template.generator
-from onlinejudge_template.analyzer import FormatNode
+from onlinejudge_template.types import AnalyzerError, FormatNode
 
 logger = getLogger(__name__)
 
@@ -30,8 +30,8 @@ def main() -> None:
     try:
         input_format_string = onlinejudge_template.analyzer.html.parse_input_format_string(html, url=args.url)
         logger.debug('input format string: %s', repr(input_format_string))
-        input_node = onlinejudge_template.analyzer.run(input_format_string)
-    except onlinejudge_template.analyzer.TemplateGeneratorError as e:
+        input_node = onlinejudge_template.analyzer.parser.run(input_format_string)
+    except AnalyzerError as e:
         logger.error('input analyzer failed: %s', e)
     except NotImplementedError as e:
         logger.error('input analyzer failed: %s', e)
@@ -41,8 +41,8 @@ def main() -> None:
     try:
         output_format_string = onlinejudge_template.analyzer.html.parse_output_format_string(html, url=args.url)
         logger.debug('output format string: %s', repr(output_format_string))
-        output_node = onlinejudge_template.analyzer.run(output_format_string)
-    except onlinejudge_template.analyzer.TemplateGeneratorError as e:
+        output_node = onlinejudge_template.analyzer.parser.run(output_format_string)
+    except AnalyzerError as e:
         logger.error('output analyzer failed: %s', e)
     except NotImplementedError as e:
         logger.error('output analyzer failed: %s', e)

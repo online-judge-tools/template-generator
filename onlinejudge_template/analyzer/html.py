@@ -3,12 +3,12 @@ from typing import *
 
 import bs4
 import requests
-from onlinejudge_template.analyzer import TemplateGeneratorError
+from onlinejudge_template.types import AnalyzerError
 
 logger = getLogger(__name__)
 
 
-class HTMLParserError(TemplateGeneratorError):
+class HTMLParserError(AnalyzerError):
     pass
 
 

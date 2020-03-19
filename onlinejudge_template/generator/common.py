@@ -2,8 +2,8 @@ import collections
 import re
 from typing import *
 
-from onlinejudge_template.analyzer import simplify
 from onlinejudge_template.types import *
+from onlinejudge_template.utils import simplify
 
 
 class VarDecl(NamedTuple):
@@ -35,8 +35,8 @@ def _list_used_items_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], 
             for n in declared.keys():
                 if re.search(r'\b' + re.escape(n) + r'\b', dim):
                     depending.add(n)
-            dims.append(str(simplify(f"""{dim} - ({base})""")))
-            bases.append(str(simplify(base)))
+            dims.append(simplify(f"""{dim} - ({base})"""))
+            bases.append(simplify(base))
         declared[node.name] = VarDecl(name=node.name, dims=dims, bases=bases, depending=depending)
 
     elif isinstance(node, NewlineNode):

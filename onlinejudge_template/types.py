@@ -40,3 +40,11 @@ class LoopNode(FormatNode):
         self.size = size
         self.name = name
         self.body = body
+
+
+class TemplateGeneratorError(RuntimeError):
+    pass
+
+
+class AnalyzerError(TemplateGeneratorError):
+    pass

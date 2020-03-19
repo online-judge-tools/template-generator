@@ -1,8 +1,8 @@
 from typing import *
 
 import onlinejudge_template.generator.common as common
-from onlinejudge_template.analyzer import simplify
 from onlinejudge_template.types import *
+from onlinejudge_template.utils import simplify
 
 
 class PythonNode(abc.ABC):
@@ -76,7 +76,7 @@ def _join_with_indent(lines: Sequence[str], *, nest: int, data: Dict[str, Any]) 
 def _get_variable(*, decl: common.VarDecl, indices: List[str]) -> str:
     var = decl.name
     for index, base in zip(indices, decl.bases):
-        i = str(simplify(f"""{index} - ({base})"""))
+        i = simplify(f"""{index} - ({base})""")
         var = f"""{var}[{i}]"""
     return var
 

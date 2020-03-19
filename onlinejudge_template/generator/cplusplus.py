@@ -2,8 +2,8 @@ import abc
 from typing import *
 
 import onlinejudge_template.generator.common as common
-from onlinejudge_template.analyzer import simplify
 from onlinejudge_template.types import *
+from onlinejudge_template.utils import simplify
 
 
 class CPlusPlusNode(abc.ABC):
@@ -124,7 +124,7 @@ def _get_type_and_ctor(decl: common.VarDecl, *, data: Dict[str, Any]) -> Tuple[s
 def _get_variable(*, decl: common.VarDecl, indices: List[str]) -> str:
     var = decl.name
     for index, base in zip(indices, decl.bases):
-        i = str(simplify(f"""{index} - ({base})"""))
+        i = simplify(f"""{index} - ({base})""")
         var = f"""{var}[{i}]"""
     return var
 

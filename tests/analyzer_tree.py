@@ -1,6 +1,6 @@
 import unittest
 
-import onlinejudge_template.analyzer as analyzer
+import onlinejudge_template.analyzer.parser as parser
 from onlinejudge_template.types import *
 
 
@@ -18,7 +18,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             NewlineNode(),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_agc041_b(self) -> None:
         # https://atcoder.jp/contests/agc041/tasks/agc041_b
@@ -37,7 +37,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             NewlineNode(),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_arc001_1(self) -> None:
         # https://atcoder.jp/contests/arc001/tasks/arc001_1
@@ -54,7 +54,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             NewlineNode(),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     @unittest.expectedFailure
     def test_arc001_3(self) -> None:
@@ -73,7 +73,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             NewlineNode(),
         ]))
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     @unittest.expectedFailure
     def test_arc001_4(self) -> None:
@@ -102,7 +102,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             ])),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
 
 class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
@@ -128,7 +128,7 @@ class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
             ])),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_input_two_edge_connected_components(self) -> None:
         # https://judge.yosupo.jp/problem/two_edge_connected_components
@@ -151,7 +151,7 @@ class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
             ])),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_output_two_edge_connected_components(self) -> None:
         # https://judge.yosupo.jp/problem/two_edge_connected_components
@@ -165,7 +165,7 @@ class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
             NewlineNode(),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_input_stirling_number_of_the_second_kind(self) -> None:
         # https://judge.yosupo.jp/problem/stirling_number_of_the_second_kind
@@ -178,7 +178,7 @@ class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
             NewlineNode(),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     @unittest.expectedFailure
     def test_output_stirling_number_of_the_second_kind(self) -> None:
@@ -195,7 +195,7 @@ class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
             ])),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
 
 class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
@@ -224,7 +224,7 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
             ])),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_no_999(self) -> None:
         # https://yukicoder.me/problems/no/999
@@ -240,7 +240,7 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
             NewlineNode(),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_no_100(self) -> None:
         # https://yukicoder.me/problems/no/100
@@ -256,7 +256,7 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
             NewlineNode(),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     @unittest.expectedFailure
     def test_no_1(self) -> None:
@@ -288,4 +288,4 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
             NewlineNode(),
         ])
 
-        self.assertEqual(str(analyzer.run(format_string)), str(format_tree))
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))
