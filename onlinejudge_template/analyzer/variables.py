@@ -17,6 +17,10 @@ class _CounterDecl(NamedTuple):
 
 
 def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], declared: Dict[str, VarDecl]) -> None:
+    """
+    :raises DeclaredVariablesError:
+    """
+
     if isinstance(node, ItemNode):
         if node.name in declared:
             raise DeclaredVariablesError(f"the same variable appears twice in tree: {node.name}")
@@ -53,6 +57,10 @@ def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[str, _Counte
 
 
 def list_declared_variables(node: FormatNode) -> Dict[str, VarDecl]:
+    """
+    :raises DeclaredVariablesError:
+    """
+
     declared: Dict[str, VarDecl] = collections.OrderedDict()
     _list_declared_variables_dfs(node, counter={}, declared=declared)
     return declared

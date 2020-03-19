@@ -3,6 +3,7 @@ from typing import *
 
 import onlinejudge_template.analyzer.html
 import onlinejudge_template.analyzer.parser
+import onlinejudge_template.analyzer.simple_patterns
 import onlinejudge_template.analyzer.typing
 import onlinejudge_template.analyzer.variables
 from onlinejudge_template.types import *
@@ -47,6 +48,9 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
             logger.error('input analyzer failed: %s', e)
         except NotImplementedError as e:
             logger.error('input analyzer failed: %s', e)
+    elif resources.sample_cases:
+        input_samples = [case.input for case in resources.sample_cases]
+        input_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=input_samples)
 
     output_format: Optional[FormatNode] = None
     if resources.output_format_string is not None:
@@ -56,6 +60,9 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
             logger.error('output analyzer failed: %s', e)
         except NotImplementedError as e:
             logger.error('output analyzer failed: %s', e)
+    elif resources.sample_cases:
+        output_samples = [case.output for case in resources.sample_cases]
+        output_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=output_samples)
 
     input_variables: Optional[Dict[str, VarDecl]] = None
     if input_format is not None:
