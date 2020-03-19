@@ -42,7 +42,7 @@ def _match_format_dfs(node: FormatNode, tokens: List[str], *, variables: Dict[st
                 pass
 
         # float
-        if value is None:
+        if value is None and '.' in token:
             try:
                 value = float(token)
             except ValueError:

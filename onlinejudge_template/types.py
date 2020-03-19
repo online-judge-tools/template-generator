@@ -63,6 +63,7 @@ class VarType(enum.Enum):
     Float = 'Float'
     String = 'String'
     Char = 'Char'
+    # NegativeOne = 'NegativeOne'
 
 
 class VarDecl(NamedTuple):
