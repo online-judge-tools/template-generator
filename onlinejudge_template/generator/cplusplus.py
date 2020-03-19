@@ -59,7 +59,6 @@ class OtherNode(CPlusPlusNode):
 def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) -> str:
     indent = utils.get_indent(data=data)
     buf = []
-    nest = 1
     for line in lines:
         if line.startswith('}'):
             nest -= 1
@@ -216,6 +215,21 @@ def _declare_variables(decls: List[VarDecl], *, data: Dict[str, Any]) -> Iterato
         last_inits.append(f"""{decl.name}{ctor}""")
     if last_type is not None:
         yield f"""{type} {", ".join(last_inits)};"""
+
+
+def _declare_constant(decl: ConstantDecl, *, data: Dict[str, Any]) -> str:
+    if decl.type == VarType.String:
+        const = "const"
+    else:
+        const = "constexpr"
+    type = _get_base_type(decl.type, name=decl.name, data=data)
+    if decl.type == VarType.String:
+        value = '"' + decl.value + '"'
+    elif decl.type == VarType.Char:
+        value = "'" + decl.value + "'"
+    else:
+        value = str(decl.value)
+    return f"""{const} {type} {decl.name} = {value};"""
 
 
 def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
@@ -444,3 +458,11 @@ def return_values(data: Dict[str, Any]) -> str:
         return keys[0]
     else:
         return f"""[{', '.join(analyzed.output_variables.keys())}]"""
+
+
+def declare_constants(data: Dict[str, Any], *, nest: int = 0) -> str:
+    analyzed = utils.get_analyzed(data)
+    lines: List[str] = []
+    for decl in analyzed.constants.values():
+        lines.append(_declare_constant(decl, data=data))
+    return _join_with_indent(iter(lines), nest=nest, data=data)

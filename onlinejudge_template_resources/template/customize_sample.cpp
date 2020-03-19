@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+${cplusplus.declare_constants(data)}
 ${cplusplus.return_type(data)} solve(${cplusplus.arguments_types(data)}) {
 	// TODO: edit here
 }

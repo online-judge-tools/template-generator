@@ -12,6 +12,7 @@
 #define ALL(x) ::std::begin(x), ::std::end(x)
 using namespace std;
 
+${cplusplus.declare_constants(data)}
 ${cplusplus.return_type(data)} solve(${cplusplus.arguments_types(data)}) {
     // TODO: edit here
 }

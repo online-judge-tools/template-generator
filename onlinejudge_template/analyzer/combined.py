@@ -1,6 +1,7 @@
 from logging import getLogger
 from typing import *
 
+import onlinejudge_template.analyzer.constants
 import onlinejudge_template.analyzer.html
 import onlinejudge_template.analyzer.parser
 import onlinejudge_template.analyzer.simple_patterns
@@ -94,10 +95,15 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
         except AnalyzerError as e:
             logger.error('output analyzer failed: %s', e)
 
+    constants: Dict[str, ConstantDecl] = {}
+    if resources.html is not None or resources.sample_cases:
+        constants.update(onlinejudge_template.analyzer.constants.list_constants(html=resources.html, sample_cases=resources.sample_cases))
+
     return AnalyzerResult(
         resources=resources,
         input_format=input_format,
         output_format=output_format,
         input_variables=input_variables,
         output_variables=output_variables,
+        constants=constants,
     )

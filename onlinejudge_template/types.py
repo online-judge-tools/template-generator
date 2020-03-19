@@ -73,12 +73,19 @@ class VarDecl(NamedTuple):
     depending: Set[str]
 
 
+class ConstantDecl(NamedTuple):
+    name: str
+    value: str
+    type: VarType
+
+
 class AnalyzerResult(NamedTuple):
     resources: AnalyzerResources
     input_format: Optional[FormatNode]
     input_variables: Optional[Dict[str, VarDecl]]
     output_format: Optional[FormatNode]
     output_variables: Optional[Dict[str, VarDecl]]
+    constants: Dict[str, ConstantDecl]
 
 
 class TemplateAnalyzerGeneratorError(RuntimeError):

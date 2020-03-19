@@ -55,7 +55,7 @@ inline void out(Integer n) {
     while (i) putchar_unlocked(s[-- i] + '0');
 }
 
-
+${cplusplus.declare_constants(data)}
 ${cplusplus.return_type(data)} solve(${cplusplus.arguments_types(data)}) {
     // TODO: edit here
 }
