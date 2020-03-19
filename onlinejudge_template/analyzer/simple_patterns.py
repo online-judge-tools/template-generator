@@ -1,4 +1,7 @@
 import functools
+import random
+import re
+import string
 from logging import getLogger
 from typing import *
 
@@ -228,6 +231,39 @@ def list_all_patterns() -> List[Tuple[FormatNode, Dict[str, VarDecl]]]:
     return results
 
 
+def _randomize_variables_dfs(node: FormatNode, *, mapping: Dict[str, str]) -> FormatNode:
+    def rename(s: str) -> str:
+        for a, b in mapping.items():
+            s = re.sub(r'\b' + re.escape(a) + r'\b', b, s)
+        return s
+
+    if isinstance(node, ItemNode):
+        assert node.name not in mapping
+        mapping[node.name] = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase) + random.choice(string.digits) + random.choice(string.digits)
+        indices = list(map(rename, node.indices))
+        return ItemNode(name=mapping[node.name], indices=indices)
+
+    elif isinstance(node, NewlineNode):
+        return node
+
+    elif isinstance(node, SequenceNode):
+        items: List[FormatNode] = []
+        for item in node.items:
+            items.append(_randomize_variables_dfs(item, mapping=mapping))
+        return SequenceNode(items=items)
+
+    elif isinstance(node, LoopNode):
+        body = _randomize_variables_dfs(node.body, mapping=mapping)
+        return LoopNode(name=node.name, size=rename(node.size), body=body)
+
+    else:
+        assert False
+
+
+def randomize_variables(node: FormatNode) -> FormatNode:
+    return _randomize_variables_dfs(node, mapping={})
+
+
 def guess_format_with_pattern_matching(*, instances: List[bytes]) -> Optional[FormatNode]:
     found: List[FormatNode] = []
     for pattern, variables in list_all_patterns():
@@ -238,6 +274,6 @@ def guess_format_with_pattern_matching(*, instances: List[bytes]) -> Optional[Fo
         except FormatMatchError:
             pass
     if len(found) == 1:
-        return found[0]
+        return randomize_variables(found[0])
     else:
         return None
