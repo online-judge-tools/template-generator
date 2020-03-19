@@ -36,8 +36,8 @@ def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[str, _Counte
             for n in declared.keys():
                 if re.search(r'\b' + re.escape(n) + r'\b', dim):
                     depending.add(n)
-            dims.append(simplify(f"""{dim} - ({base})"""))
-            bases.append(simplify(base))
+            dims.append(simplify(f"""{dim} - ({base})""", env=set(declared.keys())))
+            bases.append(simplify(base, env=set(declared.keys())))
         declared[node.name] = VarDecl(name=node.name, dims=dims, bases=bases, depending=depending, type=None)
 
     elif isinstance(node, NewlineNode):

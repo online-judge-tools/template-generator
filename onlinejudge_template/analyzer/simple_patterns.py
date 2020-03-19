@@ -239,7 +239,7 @@ def _randomize_variables_dfs(node: FormatNode, *, mapping: Dict[str, str]) -> Fo
 
     if isinstance(node, ItemNode):
         assert node.name not in mapping
-        mapping[node.name] = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase) + random.choice(string.digits) + random.choice(string.digits)
+        mapping[node.name] = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
         indices = list(map(rename, node.indices))
         return ItemNode(name=mapping[node.name], indices=indices)
 

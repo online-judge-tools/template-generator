@@ -195,10 +195,10 @@ def _get_type_and_ctor(decl: VarDecl, *, data: Dict[str, Any]) -> Tuple[str, str
     return type, ctor
 
 
-def _get_variable(*, decl: VarDecl, indices: List[str]) -> str:
+def _get_variable(*, decl: VarDecl, indices: List[str], decls: Dict[str, VarDecl]) -> str:
     var = decl.name
     for index, base in zip(indices, decl.bases):
-        i = simplify(f"""{index} - ({base})""")
+        i = simplify(f"""{index} - ({base})""", env=set(decls.keys()))
         var = f"""{var}[{i}]"""
     return var
 
@@ -252,7 +252,7 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
             raise CPlusPlusGeneratorError(f"""variable {node.name} is not declared yet""")
         initialized.add(node.name)
         decl = decls[node.name]
-        var = _get_variable(decl=decls[node.name], indices=node.indices)
+        var = _get_variable(decl=decls[node.name], indices=node.indices, decls=decls)
         return InputNode(exprs=[(var, decl.type)])
     elif isinstance(node, NewlineNode):
         return SentencesNode(sentences=[])
@@ -278,7 +278,7 @@ def _write_output_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict
 
     if isinstance(node, ItemNode):
         decl = decls[node.name]
-        var = _get_variable(decl=decl, indices=node.indices)
+        var = _get_variable(decl=decl, indices=node.indices, decls=decls)
         return OutputTokensNode(exprs=[(var, decl.type)])
     elif isinstance(node, NewlineNode):
         return OutputNewlineNode(exprs=[])
@@ -411,7 +411,7 @@ def _analyze_output_type(*, data: Dict[str, Any]) -> OutputType:
             if isinstance(item2, LoopNode) and isinstance(item2.body, ItemNode) and item2.size == item0.name and item2.body.indices == [item2.name]:
                 type = decls[item2.body.name].type
                 name = 'ans'  # item2.body.name may be randomized
-                subscripted_name = _get_variable(decl=decls[name], indices=item2.body.indices)
+                subscripted_name = _get_variable(decl=decls[name], indices=item2.body.indices, decls=decls)
                 counter_name = item2.name
                 if type is not None:
                     return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=False)
@@ -427,7 +427,7 @@ def _analyze_output_type(*, data: Dict[str, Any]) -> OutputType:
                 if isinstance(item3, ItemNode) and isinstance(item4, NewlineNode) and item2.size == item0.name and item3.indices == [item0.name]:
                     type = decls[item3.name].type
                     name = 'ans'  # item3.name may be randomized
-                    subscripted_name = _get_variable(decl=decls[name], indices=item3.indices)
+                    subscripted_name = _get_variable(decl=decls[name], indices=item3.indices, decls=decls)
                     counter_name = item2.name
                     if type is not None:
                         return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=True)

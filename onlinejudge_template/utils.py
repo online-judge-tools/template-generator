@@ -5,9 +5,9 @@ import sympy
 import sympy.parsing.sympy_parser as sympy_parser
 
 
-def simplify(s: str) -> str:
+def simplify(s: str, env: Set[str] = set()) -> str:
     transformations = sympy_parser.standard_transformations + (sympy_parser.implicit_multiplication_application, )
-    local_dict = {'N': sympy.Symbol('N')}
+    local_dict = {name: sympy.Symbol(name) for name in env}
     expr = sympy_parser.parse_expr(s, local_dict=local_dict, transformations=transformations)
     return str(expr)
 
