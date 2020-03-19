@@ -3,6 +3,7 @@ from typing import *
 
 import onlinejudge_template.analyzer.html
 import onlinejudge_template.analyzer.parser
+import onlinejudge_template.analyzer.variables
 import requests
 from onlinejudge_template.types import *
 
@@ -54,13 +55,33 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
         except NotImplementedError as e:
             logger.error('input analyzer failed: %s', e)
 
-    ouput_format: Optional[FormatNode] = None
+    output_format: Optional[FormatNode] = None
     if resources.output_format_string is not None:
         try:
-            ouput_format = onlinejudge_template.analyzer.parser.run(resources.output_format_string)
+            output_format = onlinejudge_template.analyzer.parser.run(resources.output_format_string)
         except AnalyzerError as e:
             logger.error('output analyzer failed: %s', e)
         except NotImplementedError as e:
             logger.error('output analyzer failed: %s', e)
 
-    return AnalyzerResult(resources=resources, input_format=input_format, output_format=ouput_format)
+    input_variables: Optional[Dict[str, VarDecl]] = None
+    if input_format is not None:
+        try:
+            input_variables = onlinejudge_template.analyzer.variables.list_declared_variables(input_format)
+        except AnalyzerError as e:
+            logger.error('input analyzer failed: %s', e)
+
+    output_variables: Optional[Dict[str, VarDecl]] = None
+    if output_format is not None:
+        try:
+            output_variables = onlinejudge_template.analyzer.variables.list_declared_variables(output_format)
+        except AnalyzerError as e:
+            logger.error('output analyzer failed: %s', e)
+
+    return AnalyzerResult(
+        resources=resources,
+        input_format=input_format,
+        output_format=output_format,
+        input_variables=input_variables,
+        output_variables=output_variables,
+    )

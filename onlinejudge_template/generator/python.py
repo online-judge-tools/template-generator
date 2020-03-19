@@ -1,6 +1,6 @@
 from typing import *
 
-import onlinejudge_template.generator.common as common
+import onlinejudge_template.generator.utils as utils
 from onlinejudge_template.types import *
 from onlinejudge_template.utils import simplify
 
@@ -15,7 +15,7 @@ class PythonNode(abc.ABC):
 
 
 class DeclNode(PythonNode):
-    def __init__(self, decl: common.VarDecl):
+    def __init__(self, decl: VarDecl):
         self.decl = decl
 
 
@@ -73,7 +73,7 @@ def _join_with_indent(lines: Sequence[str], *, nest: int, data: Dict[str, Any]) 
     return '\n'.join(buf)
 
 
-def _get_variable(*, decl: common.VarDecl, indices: List[str]) -> str:
+def _get_variable(*, decl: VarDecl, indices: List[str]) -> str:
     var = decl.name
     for index, base in zip(indices, decl.bases):
         i = simplify(f"""{index} - ({base})""")
@@ -89,7 +89,7 @@ def _declare_variable(name: str, dims: List[str], *, data: Dict[str, Any]) -> It
         yield f"""{name} = {ctor}"""
 
 
-def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, common.VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
     # declare all possible variables
     new_decls: List[PythonNode] = []
     for var, decl in decls.items():
@@ -121,7 +121,7 @@ def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Se
         assert False
 
 
-def _write_input_dfs(node: FormatNode, *, decls: Dict[str, common.VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _write_input_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
     if isinstance(node, ItemNode):
         var = _get_variable(decl=decls[node.name], indices=node.indices)
         return PrintTokensNode(exprs=[var])
@@ -212,7 +212,8 @@ def _serialize_syntax_tree(node: PythonNode, *, data: Dict[str, Any]) -> Iterato
 
 
 def generate_input(data: Dict[str, Any], *, nest: int = 1) -> str:
-    if data['input'] is None:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
         lines = [
             '# failed to analyze input format',
             'n = random.randint(1, 10 ** 9)  # TODO: edit here',
@@ -220,23 +221,22 @@ def generate_input(data: Dict[str, Any], *, nest: int = 1) -> str:
         ]
         return _join_with_indent(lines, nest=nest, data=data)
 
-    decls = common.list_used_items(data['input'])
-    node = _generate_input_dfs(data['input'], declared=set(), initialized=set(), decls=decls, data=data)
+    node = _generate_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(lines, nest=nest, data=data)
 
 
 def write_input(data: Dict[str, Any], *, nest: int = 1) -> str:
-    if data['input'] is None:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
         lines = [
             'print(n)  # TODO: edit here',
             'print(*a)  # TODO: edit here',
         ]
         return _join_with_indent(lines, nest=nest, data=data)
 
-    decls = common.list_used_items(data['input'])
-    node = _write_input_dfs(data['input'], decls=decls, data=data)
+    node = _write_input_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(lines, nest=nest, data=data)

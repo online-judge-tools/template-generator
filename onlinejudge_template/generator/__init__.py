@@ -10,8 +10,7 @@ from onlinejudge_template.types import *
 
 def run(analyzed: AnalyzerResult, *, template_file: str) -> bytes:
     data: Dict[str, Any] = {
-        'input': analyzed.input_format,
-        'output': analyzed.output_format,
+        'analyzed': analyzed,
         'config': {},
     }
     directories = [

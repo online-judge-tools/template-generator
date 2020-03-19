@@ -6,11 +6,8 @@ from onlinejudge_template.types import *
 from onlinejudge_template.utils import simplify
 
 
-class VarDecl(NamedTuple):
-    name: str
-    dims: List[str]
-    bases: List[str]
-    depending: Set[str]
+class DeclaredVariablesError(AnalyzerError):
+    pass
 
 
 class _CounterDecl(NamedTuple):
@@ -19,10 +16,10 @@ class _CounterDecl(NamedTuple):
     depending: Set[str]
 
 
-def _list_used_items_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], declared: Dict[str, VarDecl]) -> None:
+def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], declared: Dict[str, VarDecl]) -> None:
     if isinstance(node, ItemNode):
         if node.name in declared:
-            raise NotImplementedError
+            raise DeclaredVariablesError(f"the same variable appears twice in tree: {node.name}")
         dims = []
         bases = []
         depending = set()
@@ -44,7 +41,7 @@ def _list_used_items_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], 
 
     elif isinstance(node, SequenceNode):
         for item in node.items:
-            _list_used_items_dfs(item, counter=counter, declared=declared)
+            _list_declared_variables_dfs(item, counter=counter, declared=declared)
 
     elif isinstance(node, LoopNode):
         depending = set()
@@ -52,14 +49,10 @@ def _list_used_items_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], 
             if re.search(r'\b' + re.escape(n) + r'\b', node.size):
                 depending.add(n)
         decl = _CounterDecl(name=node.name, size=node.size, depending=depending)
-        _list_used_items_dfs(node.body, counter={node.name: decl, **counter}, declared=declared)
+        _list_declared_variables_dfs(node.body, counter={node.name: decl, **counter}, declared=declared)
 
 
-def list_used_items(node: FormatNode) -> Dict[str, VarDecl]:
+def list_declared_variables(node: FormatNode) -> Dict[str, VarDecl]:
     declared: Dict[str, VarDecl] = collections.OrderedDict()
-    _list_used_items_dfs(node, counter={}, declared=declared)
+    _list_declared_variables_dfs(node, counter={}, declared=declared)
     return declared
-
-
-def get_indent(data: Dict['str', Any]) -> str:
-    return data['config'].get('indent', ' ' * 4)

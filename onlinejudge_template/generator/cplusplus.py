@@ -1,7 +1,7 @@
 import abc
 from typing import *
 
-import onlinejudge_template.generator.common as common
+import onlinejudge_template.generator.utils as utils
 from onlinejudge_template.types import *
 from onlinejudge_template.utils import simplify
 
@@ -16,7 +16,7 @@ class CPlusPlusNode(abc.ABC):
 
 
 class DeclNode(CPlusPlusNode):
-    def __init__(self, decls: List[common.VarDecl]):
+    def __init__(self, decls: List[VarDecl]):
         self.decls = decls
 
 
@@ -53,7 +53,7 @@ class OtherNode(CPlusPlusNode):
 
 
 def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) -> str:
-    indent = common.get_indent(data=data)
+    indent = utils.get_indent(data=data)
     buf = []
     nest = 1
     for line in lines:
@@ -110,7 +110,7 @@ def _get_std(data: Dict['str', Any]) -> str:
         return 'std::'
 
 
-def _get_type_and_ctor(decl: common.VarDecl, *, data: Dict[str, Any]) -> Tuple[str, str]:
+def _get_type_and_ctor(decl: VarDecl, *, data: Dict[str, Any]) -> Tuple[str, str]:
     type = "int"
     ctor = ""
     for dim in reversed(decl.dims):
@@ -121,7 +121,7 @@ def _get_type_and_ctor(decl: common.VarDecl, *, data: Dict[str, Any]) -> Tuple[s
     return type, ctor
 
 
-def _get_variable(*, decl: common.VarDecl, indices: List[str]) -> str:
+def _get_variable(*, decl: VarDecl, indices: List[str]) -> str:
     var = decl.name
     for index, base in zip(indices, decl.bases):
         i = simplify(f"""{index} - ({base})""")
@@ -129,7 +129,7 @@ def _get_variable(*, decl: common.VarDecl, indices: List[str]) -> str:
     return var
 
 
-def _declare_variables(decls: List[common.VarDecl], *, data: Dict[str, Any]) -> Iterator[str]:
+def _declare_variables(decls: List[VarDecl], *, data: Dict[str, Any]) -> Iterator[str]:
     last_type = None
     last_inits = []
     for decl in decls:
@@ -143,7 +143,7 @@ def _declare_variables(decls: List[common.VarDecl], *, data: Dict[str, Any]) -> 
         yield f"""{type} {", ".join(last_inits)};"""
 
 
-def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, common.VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
+def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
     # declare all possible variables
     new_decls: List[CPlusPlusNode] = []
     for var, decl in decls.items():
@@ -177,7 +177,7 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
         assert False
 
 
-def _write_output_dfs(node: FormatNode, *, decls: Dict[str, common.VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
+def _write_output_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
     if isinstance(node, ItemNode):
         var = _get_variable(decl=decls[node.name], indices=node.indices)
         return OutputTokensNode(exprs=[var])
@@ -254,7 +254,8 @@ def _serialize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> Iter
 
 
 def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
-    if data['input'] is None:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
         lines = [
             '// failed to analyze input format',
             'int n;  // TODO: edit here',
@@ -266,15 +267,15 @@ def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
         ]
         return _join_with_indent(iter(lines), nest=nest, data=data)
 
-    decls = common.list_used_items(data['input'])
-    node = _read_input_dfs(data['input'], declared=set(), initialized=set(), decls=decls, data=data)
+    node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
 def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
-    if data['output'] is None:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.output_format is None or analyzed.output_variables is None:
         lines = [
             '// failed to analyze output format',
             *_write_ints(['ans'], newline=True, data=data),
@@ -282,20 +283,19 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
         lines[0] += "  // TODO: edit here"
         return _join_with_indent(iter(lines), nest=nest, data=data)
 
-    decls = common.list_used_items(data['output'])
-    node = _write_output_dfs(data['output'], decls=decls, data=data)
+    node = _write_output_dfs(analyzed.output_format, decls=analyzed.output_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
 def arguments_types(data: Dict[str, Any]) -> str:
-    if data['input'] is None:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
         return f"""int n, const {_get_std(data=data)}<int> & a"""
 
-    decls = common.list_used_items(data['input'])
     args = []
-    for name, decl in decls.items():
+    for name, decl in analyzed.input_variables.items():
         type = "int"
         for _ in reversed(decl.dims):
             space = ' ' if type.endswith('>') else ''
@@ -307,11 +307,11 @@ def arguments_types(data: Dict[str, Any]) -> str:
 
 
 def arguments(data: Dict[str, Any]) -> str:
-    if data['input'] is None:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
         return 'n, a'
 
-    decls = common.list_used_items(data['input'])
-    return ', '.join(decls.keys())
+    return ', '.join(analyzed.input_variables.keys())
 
 
 def return_type(data: Dict[str, Any]) -> str:
@@ -319,12 +319,12 @@ def return_type(data: Dict[str, Any]) -> str:
 
 
 def return_values(data: Dict[str, Any]) -> str:
-    if data['output'] is None:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.output_format is None or analyzed.output_variables is None:
         return 'ans'
 
-    decls = common.list_used_items(data['output'])
-    keys = list(decls.keys())
+    keys = list(analyzed.output_variables.keys())
     if len(keys) == 1:
         return keys[0]
     else:
-        return f"""[{', '.join(decls.keys())}]"""
+        return f"""[{', '.join(analyzed.output_variables.keys())}]"""

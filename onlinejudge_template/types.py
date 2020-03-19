@@ -56,10 +56,19 @@ class AnalyzerResources(NamedTuple):
     sample_cases: Optional[List[SampleCase]]
 
 
+class VarDecl(NamedTuple):
+    name: str
+    dims: List[str]
+    bases: List[str]
+    depending: Set[str]
+
+
 class AnalyzerResult(NamedTuple):
     resources: AnalyzerResources
     input_format: Optional[FormatNode]
+    input_variables: Optional[Dict[str, VarDecl]]
     output_format: Optional[FormatNode]
+    output_variables: Optional[Dict[str, VarDecl]]
 
 
 class TemplateGeneratorError(RuntimeError):
