@@ -9,10 +9,10 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
@@ -58,24 +58,22 @@ html_static_path = ['_static']
 # -- Extension configuration -------------------------------------------------
 
 def run_apidoc(_):
-    ignore_paths = [
-        'setup',
-        'tests',
-        'onlinejudge_contest',
-        'onlinejudge_template_resources',
-    ]
-
-    argv = [
+    options = [
         "--force",
         "--separate",
         "--module-first",
         "--output-dir", ".",
-        ".."
-    ] + ignore_paths
+    ]
+
+    modules = [
+        'onlinejudge_template',
+        'onlinejudge_random',
+    ]
 
     # Sphinx 1.7+
     from sphinx.ext import apidoc
-    apidoc.main(argv)
+    for module in modules:
+        apidoc.main([*options, '../' + module])
 
 def setup(app):
     app.connect('builder-inited', run_apidoc)
