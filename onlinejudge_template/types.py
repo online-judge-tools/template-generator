@@ -4,6 +4,10 @@ from typing import *
 
 
 class FormatNode(abc.ABC):
+    """
+    .. note::
+       仕様はこれでよさそうな感じある？
+    """
     def __repr__(self) -> str:
         keys = dir(self)
         keys = list(filter(lambda key: not key.startswith('_'), keys))
@@ -33,6 +37,11 @@ class SequenceNode(FormatNode):
 
 
 class LoopNode(FormatNode):
+    """
+    .. todo::
+       `name` を `counter` とかに rename する？
+    """
+
     size: str
     name: str
     body: FormatNode
@@ -58,6 +67,11 @@ class AnalyzerResources(NamedTuple):
 
 
 class VarType(enum.Enum):
+    """
+    .. todo::
+       仕様の確定
+    """
+
     IndexInt = 'IndexInt'
     ValueInt = 'ValueInt'
     Float = 'Float'
@@ -67,6 +81,11 @@ class VarType(enum.Enum):
 
 
 class VarDecl(NamedTuple):
+    """
+    .. todo::
+       仕様の確定
+    """
+
     name: str
     type: Optional[VarType]
     dims: List[str]
@@ -75,12 +94,22 @@ class VarDecl(NamedTuple):
 
 
 class ConstantDecl(NamedTuple):
+    """
+    .. todo::
+       仕様の確定
+    """
+
     name: str
     value: str
     type: VarType
 
 
 class AnalyzerResult(NamedTuple):
+    """
+    .. todo::
+       仕様の確定
+    """
+
     resources: AnalyzerResources
     input_format: Optional[FormatNode]
     input_variables: Optional[Dict[str, VarDecl]]

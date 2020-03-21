@@ -5,16 +5,12 @@
 [![PyPI](https://img.shields.io/pypi/v/online-judge-template-generator)](https://pypi.org/project/online-judge-template-generator/)
 [![LICENSE](https://img.shields.io/pypi/l/online-judge-template-generator.svg)](https://github.com/kmyk/online-judge-template-generator/blob/master/LICENSE)
 
-**CAUTION: now developping. it's unstable yet**
 
-まだ不安定版なので嘘が出力されてても怒らないでね。
-そのうち実装することのリストは [TODO](https://github.com/kmyk/online-judge-template-generator/issues/2) にあります
-
-
-## これはなに
+## What is this
 
 競技プログラミングテンプレートを作ってくれるやつです。
 [kyuridenamida/atcoder-tools](https://github.com/kyuridenamida/atcoder-tools) を参考に、その本質部分だけを抜き出して再実装しました。
+内部構造については [How it works](https://online-judge-template-generator.readthedocs.io/en/latest/how-it-works.html) に書かれています。
 
 主目的は以下のふたつです:
 
@@ -22,7 +18,7 @@
 -   ランダムケースを生成してのテストを気軽に行えるようにすること。たとえば、サンプル AC して提出してみたら謎の WA が出たとき「これランダムケース生成して愚直解と比較すれば原因分かるだろうけど、面倒なんだよな」ってなりがちですが、この面倒を半減させ高速にデバッグできるようにしたい
 
 
-## How to Install
+## How to install
 
 ``` console
 $ pip3 install online-judge-template-generator
@@ -45,8 +41,10 @@ $ oj-template [-t template] URL
 $ oj-contest URL
 ```
 
+(CAUTION: `oj-contest` command may be removed (or, renamed) in the future.)
 
-## Example
+
+## Examples
 
 ``` console
 $ oj-template https://codeforces.com/contest/1300/problem/D
