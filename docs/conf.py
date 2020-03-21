@@ -83,3 +83,8 @@ def setup(app):
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+# -- Options for Read the Docs ----------------------------------------------
+
+# https://github.com/readthedocs/readthedocs.org/issues/2569
+master_doc = 'index'
