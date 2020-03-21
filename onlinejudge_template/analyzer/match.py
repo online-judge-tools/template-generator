@@ -1,3 +1,36 @@
+"""
+the module to match format trees and sample strings
+
+この module はフォーマット木とサンプル文字列がマッチするか判定し、マッチするならその結果を求めます。
+たとえば
+::
+
+    sequence([
+        item("N"),
+        newline(),
+        loop(counter="i", size="N",
+            item("A", indices="i")
+        ),
+        newline(),
+    ])
+
+のようなフォーマット木 (:any:`FormatNode`) と
+::
+
+    6
+    1 3 8 7 10 2
+
+というサンプル文字列が与えられれば
+::
+
+    {
+        "N": 6,
+        "A": [1, 3, 8, 7, 10, 2],
+    }
+
+に相当する結果を返します。
+"""
+
 import itertools
 from logging import getLogger
 from typing import *

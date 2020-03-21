@@ -1,3 +1,36 @@
+"""
+the module to analyze free variables in format trees
+
+この module はフォーマット木の中に自由に出現する変数を分析します。
+たとえば
+::
+
+    sequence([
+        item("N"),
+        newline(),
+        loop(counter="i", size="N",
+            item("A", indices="i + 1")
+        ),
+        newline(),
+    ])
+
+のようなフォーマット木 (:any:`FormatNode`) が与えられれば
+::
+
+    {
+        "N": {
+        },
+        "A": {
+            "dims": ["N"],
+            "bases": ["1"],
+            "depending": ["N"],
+        },
+    }
+
+のような情報 (:any:`VarDecl` を値とする辞書) を返します。
+型の情報は取得できないことに注意してください。
+"""
+
 import collections
 import re
 from typing import *

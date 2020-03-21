@@ -1,3 +1,22 @@
+"""
+the module to list constants used in given problems (e.g. 1000000007)
+
+この module は問題中で使われている定数を列挙します。
+この機能の実装は `kyuridenamida/atcoder-tools <https://github.com/kyuridenamida/atcoder-tools>`_ を参考にしています。
+
+たとえば `Educational Codeforces Round 83: D. Count the Arrays <https://codeforces.com/contest/1312/problem/D>`_ に対しては
+::
+
+    {
+        "MOD": 998244353,
+    }
+
+に相当する結果を返します。
+
+MOD の値や YES / NO の文字列は間違えやすいため、この機能は便利です。
+1000000007 でなく 10000000009 が使われていることに気付かず WA を出す、``Impossible`` と出力すべきところを ``impossible`` と出力してしまい WA になる、などの事態を防げます。
+"""
+
 import re
 from logging import getLogger
 from typing import *

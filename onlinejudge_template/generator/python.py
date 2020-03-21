@@ -1,3 +1,14 @@
+"""
+the module to generate Python code
+
+この module は Python のコードを生成します。
+
+以下の関数を提供します。
+
+- :func:`generate_input`
+- :func:`write_input`
+"""
+
 from typing import *
 
 import onlinejudge_template.generator.utils as utils

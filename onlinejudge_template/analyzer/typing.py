@@ -1,3 +1,40 @@
+"""
+the module to infer types of variables in format trees
+
+この module はフォーマット木の中に自由に出現する変数の型を推論します。
+サンプル文字列とのマッチ結果を解析することで実装されています。
+
+たとえば
+::
+
+    sequence([
+        item("N"),
+        newline(),
+        loop(counter="i", size="N", sequence([
+            item("A", indices="i"),
+            newline(),
+        )),
+    ])
+
+のようなフォーマット木 (:any:`FormatNode`) と
+::
+
+    3
+    ABA
+    AAABA
+    BAAB
+
+というサンプル文字列が与えられれば
+::
+
+    {
+        "N": int,
+        "A": str,
+    }
+
+に相当する結果を返します。
+"""
+
 from logging import getLogger
 from typing import *
 

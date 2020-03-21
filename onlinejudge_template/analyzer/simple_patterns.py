@@ -1,3 +1,30 @@
+"""
+the module to guess format trees from sample strings
+
+この module はサンプル文字列から直接 (つまり、フォーマット文字列を用いずに) フォーマット木を推測します。
+単純なフォーマット木を列挙しておき、それらとのパターンマッチをすることによって実装されています。
+
+たとえば
+::
+
+    6
+    1 3 8 7 10 2
+
+というサンプル文字列から
+::
+
+    sequence([
+        item("N"),
+        newline(),
+        loop(counter="i", size="N",
+            item("A", indices="i")
+        ),
+        newline(),
+    ])
+
+のようなフォーマット木 (:any:`FormatNode`) を作ります。
+"""
+
 import functools
 import random
 import re

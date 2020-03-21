@@ -1,3 +1,9 @@
+"""
+the module to access networks
+
+この module はネットワークアクセスを行い、問題の HTML やサンプルケースを取得します。
+"""
+
 from logging import getLogger
 from typing import *
 

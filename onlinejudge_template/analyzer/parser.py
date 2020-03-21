@@ -1,3 +1,33 @@
+"""
+the module to parse format strings and construct format trees
+
+この module はフォーマット文字列を構文解析しフォーマット木を作ります。
+たとえば
+::
+
+    N
+    P_0 P_1 \cdots P_{N-1}
+    Q_0 Q_1 \cdots Q_{N-1}
+
+という入力フォーマット文字列が与えられれば
+::
+
+    sequence([
+        item("N"),
+        newline(),
+        loop(counter="i", size="N",
+            item("P", indices="i")
+        ),
+        newline(),
+        loop(counter="i", size="N",
+            item("Q", indices="i")
+        ),
+        newline(),
+    ])
+
+に相当する木構造 (:any:`FormatNode`) を返します。
+"""
+
 import abc
 import re
 from logging import getLogger
@@ -81,6 +111,10 @@ def build_lexer() -> lex.Lexer:
 
 
 class ParserNode(abc.ABC):
+    """
+    an internal representation which Yacc generates
+    """
+
     line: int
     column: int
 
@@ -255,6 +289,10 @@ def list_used_names(node: FormatNode) -> Set[str]:
 
 
 def zip_nodes(a: FormatNode, b: FormatNode, *, name: str, size: Optional[str]) -> Tuple[FormatNode, Optional[str]]:
+    """
+    :raises FormatStringParserError:
+    """
+
     if isinstance(a, ItemNode) and isinstance(b, ItemNode):
         if a.name != b.name or len(a.indices) != len(b.indices):
             raise FormatStringParserError("semantics: unmatched dots pair: {} and {}".format(a, b))
@@ -333,6 +371,12 @@ def exnted_loop_node(a: FormatNode, b: FormatNode, *, loop: LoopNode) -> Optiona
 
 
 def analyze_parsed_node(node: ParserNode) -> FormatNode:
+    """
+    translates an internal representation :any:`ParserNode` to a result tree :any:`FormatNode`
+
+    :raises FormatStringParserError:
+    """
+
     if isinstance(node, ItemParserNode):
         indices = [simplify(index) for index in node.indices]
         return ItemNode(name=node.name, indices=indices)
@@ -393,6 +437,10 @@ def analyze_parsed_node(node: ParserNode) -> FormatNode:
 
 
 def run(pre: str) -> FormatNode:
+    """
+    :raises FormatStringParserError:
+    """
+
     # list tokens with lex
     lexer = build_lexer()
     lexer.input(pre)

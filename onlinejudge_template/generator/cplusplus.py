@@ -1,3 +1,37 @@
+"""
+the module to generate C++ code
+
+この module は C++ のコードを生成します。
+
+以下の関数を提供します。
+
+- :func:`read_input`
+- :func:`write_output`
+- :func:`declare_constants`
+- :func:`arguments_types`
+- :func:`arguments`
+- :func:`return_type`
+- :func:`return_values`
+
+次のように利用することが想定されています。
+
+.. code-block:: c++
+
+    #include ...
+    ...
+
+    ${cplusplus.declare_constants(data)}
+    ${cplusplus.return_type(data)} solve(${cplusplus.arguments_types(data)}) {
+        ...
+    }
+
+    int main() {
+    ${cplusplus.read_input(data)}
+        ${cplusplus.return_type(data)} ${cplusplus.return_values(data)} = solve(${cplusplus.arguments(data)});
+    ${cplusplus.write_output(data)}
+    }
+"""
+
 import abc
 from typing import *
 

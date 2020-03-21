@@ -1,3 +1,25 @@
+"""
+the module to find the input format string written with ``<pre>`` tags from HTML
+
+この module は HTML を解析し ``<pre>`` タグに囲まれた入力フォーマット文字列を発見します。
+
+たとえば `AtCoder Grand Contest 038: F - Two Permutations <https://atcoder.jp/contests/agc038/tasks/agc038_f>`_ の HTML は
+::
+
+    <h3>Input</h3><p>Input is given from Standard Input in the following format:</p>
+    <pre><var>N</var>
+    <var>P_0</var> <var>P_1</var> <var>\cdots</var> <var>P_{N-1}</var>
+    <var>Q_0</var> <var>Q_1</var> <var>\cdots</var> <var>Q_{N-1}</var>
+    </pre>
+
+という部分文字列を含みますが、ここから次のような文字列を抜き出します。
+::
+
+    N
+    P_0 P_1 \cdots P_{N-1}
+    Q_0 Q_1 \cdots Q_{N-1}
+"""
+
 from logging import getLogger
 from typing import *
 
@@ -18,6 +40,13 @@ table = {
 
 
 def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
+    """
+    :param kind: ``"in"`` or ``"out"``
+
+    .. todo::
+       現状は ``<var>`` や ``</var>`` を消去しているが残す。構文解析時に利用できるため。
+    """
+
     soup = bs4.BeautifulSoup(html, 'html.parser')
     logger.debug('parsed HTML: %s...', repr(str(soup))[:200])
 
