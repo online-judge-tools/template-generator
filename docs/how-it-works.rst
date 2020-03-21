@@ -1,5 +1,16 @@
-How it works (Japanese) / どのようにして動いているのか (日本語)
-============================================================
+How it works
+============
+
+Summary
+-------
+
+#. download and recognize HTML with `requests <https://requests.readthedocs.io/en/master/>`_ + `beautifulsoup4 <https://www.crummy.com/software/BeautifulSoup/>`_
+#. parse the ``<pre>`` format in old style Lex + Yacc (`ply <http://www.dabeaz.com/ply/>`_)
+#. generate codes with a template engine (`Mako <https://www.makotemplates.org/>`_)
+
+
+An example (Japanese) / 具体例 (日本語)
+------------------------------------
 
 たとえば Library Checker の問題 [Static RQM](https://judge.yosupo.jp/problem/staticrmq) について考えてみましょう。
 この問題の入力フォーマットは次のようになっています。
