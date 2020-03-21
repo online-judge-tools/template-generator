@@ -7,6 +7,7 @@ Welcome to online-judge-template-generator's documentation!
 
    onlinejudge_template
    onlinejudge_random
+   how-it-works
 
 
 Indices and tables
