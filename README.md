@@ -1,6 +1,7 @@
 # Online Judge Template Generator
 
 [![test](https://github.com/kmyk/online-judge-template-generator/workflows/test/badge.svg)](https://github.com/kmyk/online-judge-template-generator/actions)
+[![Documentation Status](https://readthedocs.org/projects/online-judge-template-generator/badge/)](https://online-judge-template-generator.readthedocs.io/en/latest/)
 [![PyPI](https://img.shields.io/pypi/v/online-judge-template-generator)](https://pypi.org/project/online-judge-template-generator/)
 [![LICENSE](https://img.shields.io/pypi/l/online-judge-template-generator.svg)](https://github.com/kmyk/online-judge-template-generator/blob/master/LICENSE)
 
