@@ -31,7 +31,7 @@ $ pip3 install online-judge-template-generator
 入出力解析は AtCoder と yukicoder と [Library Checker](https://judge.yosupo.jp/) にのみ対応していますが、それら以外でも一応は動きます。
 
 ``` console
-$ oj-template [-t template] URL
+$ oj-template [-t TEMPLATE] URL
 ```
 
 `oj-contest` コマンドは、指定された問題やコンテストに対し、テンプレート生成やサンプルのダウンロードを一括で行います。
@@ -46,7 +46,7 @@ $ oj-contest URL
 
 ### Generating random cases
 
-ランダムケースの生成は `oj-contest` コマンドがデフォルトで生成する `generate.py` を適切に編集した後、次のように実行してください。
+ランダムケースの生成は、`oj-contest` コマンドがデフォルトで生成する `generate.py` を修正した後に、次のように実行してください。
 
 ``` console
 $ oj generate-input "python3 generate.py"
@@ -61,11 +61,8 @@ $ oj generate-input "python3 generate.py"
 
 ``` console
 $ oj-template https://codeforces.com/contest/1300/problem/D
-INFO:onlinejudge._implementation.logging:[x] problem recognized: CodeforcesProblem.from_url('https://codeforces.com/contest/1300/problem/D'): https://codeforces.com/contest/1300/problem/D
-INFO:onlinejudge._implementation.logging:[x] GET: https://codeforces.com/contest/1300/problem/D
-INFO:onlinejudge._implementation.logging:[x] 200 OK
-ERROR:onlinejudge_template.analyzer.combined:input analyzer failed:
-ERROR:onlinejudge_template.analyzer.combined:output analyzer failed:
+...
+
 #include <bits/stdc++.h>
 #define REP(i, n) for (int i = 0; (i) < (int)(n); ++ (i))
 #define REP3(i, m, n) for (int i = (m); (i) < (int)(n); ++ (i))
@@ -95,6 +92,34 @@ int main() {
     cout << (ans ? YES : NO) << endl;
     return 0;
 }
+```
+
+``` console
+$ oj-template -t generate.py https://judge.yosupo.jp/problem/staticrmq
+...
+
+#!/usr/bin/env python3
+import random
+import onlinejudge_random as random_oj
+
+def main():
+    N = random.randint(1, 10 ** 9)  # TODO: edit here
+    a = [None for _ in range(N)]
+    Q = random.randint(1, 10 ** 9)  # TODO: edit here
+    l = [None for _ in range(Q)]
+    r = [None for _ in range(Q)]
+    for i in range(N):
+        a[i] = random.randint(1, 10 ** 9)  # TODO: edit here
+    for i in range(Q):
+        l[i] = random.randint(1, 10 ** 9)  # TODO: edit here
+        r[i] = random.randint(1, 10 ** 9)  # TODO: edit here
+    print(N, Q)
+    print(*[a[i] for i in range(N)])
+    for i in range(Q):
+        print(l[i], r[i])
+
+if __name__ == "__main__":
+    main()
 ```
 
 ``` console
