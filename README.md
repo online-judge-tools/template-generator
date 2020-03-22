@@ -35,13 +35,26 @@ $ oj-template [-t template] URL
 ```
 
 `oj-contest` コマンドは、指定された問題やコンテストに対し、テンプレート生成やサンプルのダウンロードを一括で行います。
-[oj](https://github.com/kmyk/online-judge-tools) が動くやつなら何に対してでも動きます。
+[`oj` コマンド](https://github.com/kmyk/online-judge-tools) が動くやつなら何に対してでも動きます。
 
 ``` console
 $ oj-contest URL
 ```
 
-(CAUTION: `oj-contest` command may be removed (or, renamed) in the future.)
+(CAUTION: `oj-contest` command may be removed (or, renamed) in the future. / `oj-contest` コマンドはそのうち削除されたり名前が変更されたりするかもしれません)
+
+
+### Generating random cases
+
+ランダムケースの生成は `oj-contest` コマンドがデフォルトで生成する `generate.py` を適切に編集した後、次のように実行してください。
+
+``` console
+$ oj generate-input "python3 generate.py"
+```
+
+ファイル `generate.py` は `oj-template -t generate.py "https://..."` というコマンドの実行によっても生成できます。
+
+また、ランダムケース生成を補助するための module `onlinejudge_random` が用意されています。詳細は[ドキュメント](https://online-judge-template-generator.readthedocs.io/en/latest/onlinejudge_random.html)を確認してください。
 
 
 ## Examples
@@ -139,7 +152,7 @@ problem_directory = "~/{service_domain}/{contest_id}/{problem_id}"
 "generate.py" = "generate.py"
 ```
 
-(まだ不安定版であり、設定等の後方互換性は保証されません)
+(CAUTION: The compatibility of setting files is not guaranteed. / まだ不安定版であり、設定等の後方互換性は保証されません)
 
 
 ## License
