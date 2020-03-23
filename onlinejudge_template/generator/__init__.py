@@ -19,7 +19,7 @@ def run(analyzed: AnalyzerResult, *, template_file: str) -> bytes:
     ]
     lookup = mako.lookup.TemplateLookup(directories=directories, input_encoding="utf-8", output_encoding="utf-8")
     path = pathlib.Path(template_file)
-    if path.exists():
+    if path.is_absolute() and path.exists():
         with open(path, "rb") as fh:
             lookup.put_string(template_file, fh.read())
     template = lookup.get_template(template_file)
