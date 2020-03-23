@@ -5,6 +5,8 @@
 [![PyPI](https://img.shields.io/pypi/v/online-judge-template-generator)](https://pypi.org/project/online-judge-template-generator/)
 [![LICENSE](https://img.shields.io/pypi/l/online-judge-template-generator.svg)](https://github.com/kmyk/online-judge-template-generator/blob/master/LICENSE)
 
+(CAUTION: the current version is unstable. see [Compatibility](https://online-judge-template-generator.readthedocs.io/en/latest/compatibility.html)
+/ 注意: 現在開発中です。[互換性について](https://online-judge-template-generator.readthedocs.io/en/latest/compatibility.html)は読んでおいてください)
 
 ## What is this
 
@@ -40,8 +42,6 @@ $ oj-template [-t TEMPLATE] URL
 ``` console
 $ oj-contest URL
 ```
-
-(CAUTION: `oj-contest` command may be removed (or, renamed) in the future. / `oj-contest` コマンドはそのうち削除されたり名前が変更されたりするかもしれません)
 
 
 ### Generating random cases
@@ -176,8 +176,6 @@ problem_directory = "~/{service_domain}/{contest_id}/{problem_id}"
 "main.cpp" = "template.cpp"
 "generate.py" = "generate.py"
 ```
-
-(CAUTION: The compatibility of setting files is not guaranteed. / まだ不安定版であり、設定等の後方互換性は保証されません)
 
 
 ## License
