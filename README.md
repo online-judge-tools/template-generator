@@ -6,7 +6,7 @@
 [![LICENSE](https://img.shields.io/pypi/l/online-judge-template-generator.svg)](https://github.com/kmyk/online-judge-template-generator/blob/master/LICENSE)
 
 (CAUTION: the current version is unstable. see [Compatibility](https://online-judge-template-generator.readthedocs.io/en/latest/compatibility.html)
-/ 注意: 現在開発中です。[互換性について](https://online-judge-template-generator.readthedocs.io/en/latest/compatibility.html)は読んでおいてください)
+/ 注意: 現在はまだ開発中のバージョンです。[互換性について](https://online-judge-template-generator.readthedocs.io/en/latest/compatibility.html)は読んでおいてください)
 
 ## What is this
 
