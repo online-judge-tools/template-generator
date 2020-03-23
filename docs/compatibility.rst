@@ -7,8 +7,8 @@ Stable features (Japanese) / 安定な機能 (日本語)
 ------------------------------------------------
 
 ``oj-template`` コマンドを以下の形式で使うことについては安全です。
-
 ::
+
    $ oj-template [-t TEMPLATE] URL
 
 テンプレートとしては、解法コード用の ``template.cpp`` と ``template.py`` と、ランダムケース生成用の ``generate.py`` が使えます。
