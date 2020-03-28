@@ -5,6 +5,15 @@ the module to generate Python code
 
 以下の関数を提供します。
 
+- :func:`read_input`
+- :func:`write_output`
+- :func:`formal_arguments`
+- :func:`actual_arguments`
+- :func:`return_type`
+- :func:`return_values`
+
+加えて、ランダムケースの生成のために、以下の関数を提供します。
+
 - :func:`generate_input`
 - :func:`write_input`
 """
@@ -14,6 +23,14 @@ from typing import *
 import onlinejudge_template.generator.utils as utils
 from onlinejudge_template.types import *
 from onlinejudge_template.utils import simplify
+
+
+class PythonGeneratorError(GeneratorError):
+    pass
+
+
+class TokenizedInputRequiredError(GeneratorError):
+    pass
 
 
 class PythonNode(abc.ABC):
@@ -31,12 +48,12 @@ class DeclNode(PythonNode):
 
 
 class InputTokensNode(PythonNode):
-    def __init__(self, exprs: List[str]):
+    def __init__(self, exprs: List[Tuple[str, VarDecl]]):
         self.exprs = exprs
 
 
 class InputNode(PythonNode):
-    def __init__(self, exprs: List[str]):
+    def __init__(self, exprs: List[Tuple[str, VarDecl]]):
         self.exprs = exprs
 
 
@@ -84,6 +101,23 @@ def _join_with_indent(lines: Sequence[str], *, nest: int, data: Dict[str, Any]) 
     return '\n'.join(buf)
 
 
+def _get_python_type(type: Optional[VarType]) -> str:
+    if type == VarType.IndexInt:
+        return "int"
+    elif type == VarType.ValueInt:
+        return "int"
+    elif type == VarType.Float:
+        return "float"
+    elif type == VarType.String:
+        return "str"
+    elif type == VarType.Char:
+        return "str"
+    elif type is None:
+        return "str"
+    else:
+        assert False
+
+
 def _get_variable(*, decl: VarDecl, indices: List[str]) -> str:
     var = decl.name
     for index, base in zip(indices, decl.bases):
@@ -100,16 +134,24 @@ def _declare_variable(name: str, dims: List[str], *, data: Dict[str, Any]) -> It
         yield f"""{name} = {ctor}"""
 
 
-def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
-    # declare all possible variables
-    new_decls: List[PythonNode] = []
+def _declare_all_possible_variables(declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> List[PythonNode]:
+    """
+    :param declared: updated
+    """
+
+    decl_nodes: List[PythonNode] = []
     for var, decl in decls.items():
         if var not in declared and all([dep in initialized for dep in decl.depending]):
             for line in _declare_variable(var, decl.dims, data=data):
-                new_decls.append(OtherNode(line=line))
+                decl_nodes.append(OtherNode(line=line))
             declared.add(var)
-    if new_decls:
-        return SentencesNode(sentences=new_decls + [_generate_input_dfs(node, declared=declared, initialized=initialized, decls=decls, data=data)])
+    return decl_nodes
+
+
+def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+    decl_nodes = _declare_all_possible_variables(declared=declared, initialized=initialized, decls=decls, data=data)
+    if decl_nodes:
+        return SentencesNode(sentences=decl_nodes + [_generate_input_dfs(node, declared=declared, initialized=initialized, decls=decls, data=data)])
 
     # traverse AST
     if isinstance(node, ItemNode):
@@ -132,7 +174,25 @@ def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Se
         assert False
 
 
-def _write_input_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _read_input_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+    if isinstance(node, ItemNode):
+        decl = decls[node.name]
+        var = _get_variable(decl=decl, indices=node.indices)
+        return InputTokensNode(exprs=[(var, decl)])
+    elif isinstance(node, NewlineNode):
+        return InputNode(exprs=[])
+    elif isinstance(node, SequenceNode):
+        sentences = []
+        for item in node.items:
+            sentences.append(_read_input_dfs(item, decls=decls, data=data))
+        return SentencesNode(sentences=sentences)
+    elif isinstance(node, LoopNode):
+        return RangeNode(name=node.name, size=node.size, body=_read_input_dfs(node.body, decls=decls, data=data))
+    else:
+        assert False
+
+
+def _write_output_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
     if isinstance(node, ItemNode):
         var = _get_variable(decl=decls[node.name], indices=node.indices)
         return PrintTokensNode(exprs=[var])
@@ -141,10 +201,10 @@ def _write_input_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[
     elif isinstance(node, SequenceNode):
         sentences = []
         for item in node.items:
-            sentences.append(_write_input_dfs(item, decls=decls, data=data))
+            sentences.append(_write_output_dfs(item, decls=decls, data=data))
         return SentencesNode(sentences=sentences)
     elif isinstance(node, LoopNode):
-        return RangeNode(name=node.name, size=node.size, body=_write_input_dfs(node.body, decls=decls, data=data))
+        return RangeNode(name=node.name, size=node.size, body=_write_output_dfs(node.body, decls=decls, data=data))
     else:
         assert False
 
@@ -194,16 +254,115 @@ def _optimize_syntax_tree(node: PythonNode, *, data: Dict[str, Any]) -> PythonNo
         assert False
 
 
+def _realize_input_nodes_without_tokens(node: PythonNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+    """
+    :raises TokenizedInputRequiredError:
+    """
+
+    decl_nodes = _declare_all_possible_variables(declared=declared, initialized=initialized, decls=decls, data=data)
+    if decl_nodes:
+        return SentencesNode(sentences=decl_nodes + [_realize_input_nodes_without_tokens(node, declared=declared, initialized=initialized, decls=decls, data=data)])
+
+    if isinstance(node, InputTokensNode):
+        raise TokenizedInputRequiredError
+
+    elif isinstance(node, InputNode):
+        for _, decl in node.exprs:
+            initialized.add(decl.name)
+
+        if len(node.exprs) == 0:
+            return OtherNode(line="""assert input() == ''""")
+        elif len(node.exprs) == 1:
+            expr, decl = node.exprs[0]
+            if _get_python_type(decl.type) == "str":
+                return OtherNode(line=f"""{expr} = input()""")
+            else:
+                return OtherNode(line=f"""{expr} = {_get_python_type(decl.type)}(input())""")
+        else:
+            exprs = [expr for expr, _ in node.exprs]
+            types = [decl.type for _, decl in node.exprs]
+            if len(set(map(_get_python_type, types))) == 1:
+                type = types[0]
+                if _get_python_type(type) == "str":
+                    return OtherNode(line=f"""{', '.join(exprs)} = input().split()""")
+                else:
+                    return OtherNode(line=f"""{', '.join(exprs)} = map({_get_python_type(type)}, input().split())""")
+            else:
+                raise TokenizedInputRequiredError
+
+    elif isinstance(node, PrintTokensNode):
+        return node
+    elif isinstance(node, PrintNode):
+        return node
+    elif isinstance(node, SentencesNode):
+        sentences: List[PythonNode] = []
+        for sentence in node.sentences:
+            sentences.append(_realize_input_nodes_without_tokens(sentence, declared=declared, initialized=initialized, decls=decls, data=data))
+        return SentencesNode(sentences=sentences)
+    elif isinstance(node, RangeNode):
+        declared.add(node.name)
+        body = _realize_input_nodes_without_tokens(node.body, declared=declared, initialized=initialized, decls=decls, data=data)
+        declared.remove(node.name)
+        return RangeNode(name=node.name, size=node.size, body=body)
+    elif isinstance(node, OtherNode):
+        return node
+    else:
+        assert False
+
+
+def _realize_input_nodes_with_tokens_dfs(node: PythonNode, tokens: str, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+    decl_nodes = _declare_all_possible_variables(declared=declared, initialized=initialized, decls=decls, data=data)
+    if decl_nodes:
+        return SentencesNode(sentences=decl_nodes + [_realize_input_nodes_with_tokens_dfs(node, tokens, declared=declared, initialized=initialized, decls=decls, data=data)])
+
+    if isinstance(node, InputTokensNode) or isinstance(node, InputNode):
+        for _, decl in node.exprs:
+            initialized.add(decl.name)
+
+        sentences: List[PythonNode] = []
+        for expr, decl in node.exprs:
+            if _get_python_type(decl.type) == "str":
+                node_ = OtherNode(line=f"""{expr} = next({tokens})""")
+            else:
+                node_ = OtherNode(line=f"""{expr} = {_get_python_type(decl.type)}(next({tokens}))""")
+            sentences.append(node_)
+        return SentencesNode(sentences=sentences)
+
+    elif isinstance(node, PrintTokensNode):
+        return node
+    elif isinstance(node, PrintNode):
+        return node
+    elif isinstance(node, SentencesNode):
+        sentences = []
+        for sentence in node.sentences:
+            sentences.append(_realize_input_nodes_with_tokens_dfs(sentence, tokens, declared=declared, initialized=initialized, decls=decls, data=data))
+        return SentencesNode(sentences=sentences)
+    elif isinstance(node, RangeNode):
+        declared.add(node.name)
+        body = _realize_input_nodes_with_tokens_dfs(node.body, tokens, declared=declared, initialized=initialized, decls=decls, data=data)
+        declared.remove(node.name)
+        return RangeNode(name=node.name, size=node.size, body=body)
+    elif isinstance(node, OtherNode):
+        return node
+    else:
+        assert False
+
+
+def _realize_input_nodes_with_tokens(node: PythonNode, tokens: str, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+    node = SentencesNode(sentences=[
+        OtherNode(line="""import sys"""),
+        OtherNode(line=f"""{tokens} = iter(sys.stdin.read().split())"""),
+        node,
+        OtherNode(line=f"""assert next({tokens}, None) is None"""),
+    ])
+    return _realize_input_nodes_with_tokens_dfs(node, tokens, declared=set(), initialized=set(), decls=decls, data=data)
+
+
 def _serialize_syntax_tree(node: PythonNode, *, data: Dict[str, Any]) -> Iterator[str]:
     if isinstance(node, InputTokensNode):
-        raise NotImplementedError
+        assert False
     elif isinstance(node, InputNode):
-        if len(node.exprs) == 0:
-            yield f"""assert input() == ''"""
-        elif len(node.exprs) == 1:
-            yield f"""{node.exprs[0]} = int(input())"""
-        if len(node.exprs) == 1:
-            yield f"""{', '.join(node.exprs)}) = map(int, input().split())"""
+        assert False
     elif isinstance(node, PrintTokensNode):
         if node.exprs:
             yield f"""print({', '.join(node.exprs)}, end=' ')"""
@@ -247,7 +406,91 @@ def write_input(data: Dict[str, Any], *, nest: int = 1) -> str:
         ]
         return _join_with_indent(lines, nest=nest, data=data)
 
-    node = _write_input_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
+    node = _write_output_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(lines, nest=nest, data=data)
+
+
+def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.output_format is None or analyzed.output_variables is None:
+        lines = [
+            'print(ans)  # TODO: edit here',
+        ]
+        return _join_with_indent(lines, nest=nest, data=data)
+
+    node = _write_output_dfs(analyzed.output_format, decls=analyzed.output_variables, data=data)
+    node = _optimize_syntax_tree(node, data=data)
+    lines = list(_serialize_syntax_tree(node, data=data))
+    return _join_with_indent(lines, nest=nest, data=data)
+
+
+def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
+        lines = [
+            '# failed to analyze input format',
+            'n = int(input())  # TODO: edit here',
+            'a = list(map(int, input().split()))  # TODO: edit here',
+        ]
+        return _join_with_indent(lines, nest=nest, data=data)
+
+    node = _read_input_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
+    node = _optimize_syntax_tree(node, data=data)
+    try:
+        node = _realize_input_nodes_without_tokens(node, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data)
+    except TokenizedInputRequiredError:
+        node = _realize_input_nodes_with_tokens(node, 'tokens', decls=analyzed.input_variables, data=data)
+    node = _optimize_syntax_tree(node, data=data)
+    lines = list(_serialize_syntax_tree(node, data=data))
+    return _join_with_indent(lines, nest=nest, data=data)
+
+
+def formal_arguments(data: Dict[str, Any]) -> str:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
+        return 'n: int, a: List[int]'
+
+    args: List[str] = []
+    for name, decl in analyzed.input_variables.items():
+        type = _get_python_type(decl.type)
+        for _ in decl.dims:
+            type = f"""List[{type}]"""
+        args.append(f"""{name}: {type}""")
+    return ', '.join(args)
+
+
+def actual_arguments(data: Dict[str, Any]) -> str:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
+        return 'n, a'
+
+    return ', '.join(analyzed.input_variables.keys())
+
+
+def return_type(data: Dict[str, Any]) -> str:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.output_format is None or analyzed.output_variables is None:
+        return 'ans'
+
+    types: List[str] = []
+    for decl in analyzed.output_variables.values():
+        type = _get_python_type(decl.type)
+        for _ in decl.dims:
+            type = f"""List[{type}]"""
+        types.append(type)
+    if len(types) == 0:
+        return "None"
+    elif len(types) == 1:
+        return types[0]
+    else:
+        return f"""Tuple[{", ".join(types)}]"""
+
+
+def return_values(data: Dict[str, Any]) -> str:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.output_format is None or analyzed.output_variables is None:
+        return 'ans'
+
+    return ', '.join(analyzed.output_variables.keys())
