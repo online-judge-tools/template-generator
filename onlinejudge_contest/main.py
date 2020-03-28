@@ -71,6 +71,7 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
     if table is None:
         table = {
             'main.cpp': 'template.cpp',
+            'main.py': 'template.py',
             'generate.py': 'generate.py',
         }
         logger.info('setting "templates" is not found in your config; use %s', repr(table))

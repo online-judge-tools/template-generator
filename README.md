@@ -130,8 +130,9 @@ $ tree ~/atcoder.jp
 /home/ubuntu/atcoder.jp
 └── abc158
     ├── abc158_a
-    │   ├── generate.py
     │   ├── main.cpp
+    │   ├── main.py
+    │   ├── generate.py
     │   └── test
     │       ├── sample-1.in
     │       ├── sample-1.in
@@ -145,8 +146,9 @@ $ tree ~/atcoder.jp
     ├── ...
     ├── ...
     └── abc158_f
-        ├── generate.py
         ├── main.cpp
+        ├── main.py
+        ├── generate.py
         └── test
             ├── sample-1.in
             ├── sample-1.out
