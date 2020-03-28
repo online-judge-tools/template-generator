@@ -2,6 +2,7 @@ import argparse
 import contextlib
 import os
 import pathlib
+import stat
 import subprocess
 import sys
 import urllib.parse
@@ -104,6 +105,8 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
                 logger.info('write file: %s', str(dest))
                 with open(dest, 'wb') as fh:
                     fh.write(code)
+                if code.startswith(b'#!'):
+                    os.chmod(dest, os.stat(dest).st_mode | stat.S_IEXEC)
 
         # download
         try:
