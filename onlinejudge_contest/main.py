@@ -13,9 +13,11 @@ import appdirs
 import onlinejudge_template.analyzer.combined
 import onlinejudge_template.generator
 import onlinejudge_template.network
+import requests
 import toml
 
 import onlinejudge
+import onlinejudge.utils
 
 logger = getLogger(__name__)
 
@@ -66,7 +68,7 @@ def get_directory(*, problem: onlinejudge.type.Problem, contest: Optional[online
     return pathlib.Path(pattern.format(**params)).expanduser()
 
 
-def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onlinejudge.type.Contest] = None, config: Dict[str, Any]) -> None:
+def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onlinejudge.type.Contest] = None, config: Dict[str, Any], session: requests.Session) -> None:
     table = config.get('templates')
     if table is None:
         table = {
@@ -81,8 +83,8 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
 
     with chdir(dir):
         url = problem.get_url()
-        html = onlinejudge_template.network.download_html(url)
-        sample_cases = onlinejudge_template.network.download_sample_cases(url)
+        html = onlinejudge_template.network.download_html(url, session=session)
+        sample_cases = onlinejudge_template.network.download_sample_cases(url, session=session)
 
         # analyze
         resources = onlinejudge_template.analyzer.combined.prepare_from_html(html, url=url, sample_cases=sample_cases)
@@ -116,9 +118,9 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
             logger.error('samples downloader failed: %s', e)
 
 
-def prepare_contest(contest: onlinejudge.type.Contest, *, config: Dict[str, Any]) -> None:
+def prepare_contest(contest: onlinejudge.type.Contest, *, config: Dict[str, Any], session: requests.Session) -> None:
     for i, problem in enumerate(contest.list_problems()):
-        prepare_problem(problem, contest=contest, config=config)
+        prepare_problem(problem, contest=contest, config=config, session=session)
 
 
 def get_config() -> Dict[str, Any]:
@@ -134,6 +136,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('url')
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-c', '--cookie')
     args = parser.parse_args()
 
     if args.verbose:
@@ -144,14 +147,15 @@ def main() -> None:
     config = get_config()
     logger.info('config: %s', config)
 
-    problem = onlinejudge.dispatch.problem_from_url(args.url)
-    contest = onlinejudge.dispatch.contest_from_url(args.url)
-    if problem is not None:
-        prepare_problem(problem, config=config)
-    elif contest is not None:
-        prepare_contest(contest, config=config)
-    else:
-        raise ValueError(f"""unrecognized URL: {args.url}""")
+    with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=args.cookie) as session:
+        problem = onlinejudge.dispatch.problem_from_url(args.url)
+        contest = onlinejudge.dispatch.contest_from_url(args.url)
+        if problem is not None:
+            prepare_problem(problem, config=config, session=session)
+        elif contest is not None:
+            prepare_contest(contest, config=config, session=session)
+        else:
+            raise ValueError(f"""unrecognized URL: {args.url}""")
 
 
 if __name__ == '__main__':
