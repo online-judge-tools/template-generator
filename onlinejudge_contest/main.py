@@ -136,7 +136,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('url')
     parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('-c', '--cookie')
+    parser.add_argument('-c', '--cookie', default=onlinejudge.utils.default_cookie_path)
     args = parser.parse_args()
 
     if args.verbose:
