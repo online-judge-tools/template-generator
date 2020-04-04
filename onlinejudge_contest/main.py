@@ -34,15 +34,11 @@ def chdir(dir: pathlib.Path) -> Iterator[None]:
 
 
 def get_directory(*, problem: onlinejudge.type.Problem, contest: Optional[onlinejudge.type.Contest], config: Dict[str, Any]) -> pathlib.Path:
+    # prepare params
     service = problem.get_service()
 
-    if contest is None:
-        try:
-            contest = problem.get_contest()
-        except:
-            pass
     for name in ('contest_id', 'contest_slug'):
-        contest_id = getattr(contest, name, None)
+        contest_id = getattr(problem, name, None)
         if contest_id:
             break
     else:
@@ -61,11 +57,20 @@ def get_directory(*, problem: onlinejudge.type.Problem, contest: Optional[online
         'contest_id': contest_id,
         'problem_id': problem_id,
     }
-    pattern = config.get('problem_directory')
-    if pattern is None:
-        pattern = str(pathlib.Path.home() / '{service_domain}' / '{contest_id}' / '{problem_id}')
-        logger.info('setting "problem_directory" is not found in your config; use %s', repr(pattern))
-    return pathlib.Path(pattern.format(**params)).expanduser()
+
+    # generate the path
+    problem_pattern = config.get('problem_directory', '.')
+    if 'problem_directory' not in config:
+        logger.info('setting "problem_directory" is not found in your config; use %s', repr(problem_pattern))
+    problem_directory = pathlib.Path(problem_pattern.format(**params)).expanduser()
+    if contest is None:
+        return problem_directory
+
+    contest_pattern = config.get('contest_directory', '{problem_id}')
+    if 'contest_directory' not in config:
+        logger.info('setting "contest_directory" is not found in your config; use %s', repr(contest_pattern))
+    contest_directory = pathlib.Path(contest_pattern.format(**params)).expanduser()
+    return contest_directory / problem_directory
 
 
 def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onlinejudge.type.Contest] = None, config: Dict[str, Any], session: requests.Session) -> None:

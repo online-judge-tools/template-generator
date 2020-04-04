@@ -172,13 +172,30 @@ $ tree ~/atcoder.jp
 `oj-contest` の設定は `~/.config/online-judge-tools/oj2.config.toml` に次のように設定する。
 
 ``` toml
-problem_directory = "~/{service_domain}/{contest_id}/{problem_id}"
+contest_directory = "~/Desktop/{service_domain}/{contest_id}/{problem_id}"
+problem_directory = "."
 
 [templates]
 "main.py" = "main.py"
 "naive.py" = "main.py"
 "generate.py" = "generate.py"
 ```
+
+設定項目:
+
+-   `problem_directory` (string): 問題の URL が指定された場合は `{problem_directory}` にファイルが用意される。
+    -   default: `.`
+    -   使える変数:
+        -   `{problem_id}`: 問題 ID (`abc123_d` など)
+-   `contest_directory` (string): コンテストの URL が指定された場合は `{contest_directory}/{problem_directory}` にファイルが用意される。(default: 
+    -   default: `{problem_id}`
+    -   使える変数:
+        -   `{problem_id}`: 問題 ID (`abc123_d` など)
+        -   `{contest_id}`: コンテスト ID (`abc123` など)
+        -   `{service_domain}`: サービスのドメイン (`atcoder.jp` など)
+        -   `{service_name}`: サービスの名前 (`AtCoder` など)
+-   `templates` (table of string): value (右側) のテンプレートによる生成結果を key (左側) で指定したパスに配置する。
+    -   default: `{ "main.cpp" = "main.cpp", "main.py" = "main.py", "generate.py" = "generate.py" }`
 
 
 ## License
