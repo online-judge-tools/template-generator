@@ -11,7 +11,7 @@ Stable features (Japanese) / 安定な機能 (日本語)
 
    $ oj-template [-t TEMPLATE] URL
 
-テンプレートとしては、解法コード用の ``template.cpp`` と ``template.py`` と、ランダムケース生成用の ``generate.py`` が使えます。
+テンプレートとしては、解法コード用の ``main.cpp`` と ``main.py`` と、ランダムケース生成用の ``generate.py`` が使えます。
 また、絶対パスで [Mako](https://www.makotemplates.org/) のテンプレートファイルを指定することもできます。
 
 

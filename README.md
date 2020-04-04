@@ -175,7 +175,8 @@ $ tree ~/atcoder.jp
 problem_directory = "~/{service_domain}/{contest_id}/{problem_id}"
 
 [templates]
-"main.cpp" = "template.cpp"
+"main.py" = "main.py"
+"naive.py" = "main.py"
 "generate.py" = "generate.py"
 ```
 
