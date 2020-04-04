@@ -36,17 +36,17 @@ $ pip3 install online-judge-template-generator
 $ oj-template [-t TEMPLATE] URL
 ```
 
-`oj-contest` コマンドは、指定された問題やコンテストに対し、テンプレート生成やサンプルのダウンロードを一括で行います。
+`oj-prepare` コマンドは、指定された問題やコンテストに対し、テンプレート生成やサンプルのダウンロードを一括で行います。
 [`oj` コマンド](https://github.com/kmyk/online-judge-tools) が動くやつなら何に対してでも動きます。
 
 ``` console
-$ oj-contest URL
+$ oj-prepare URL
 ```
 
 
 ### Generating random cases
 
-ランダムケースの生成は、`oj-contest` コマンドがデフォルトで生成する `generate.py` を修正した後に、次のように実行してください。
+ランダムケースの生成は、`oj-prepare` コマンドがデフォルトで生成する `generate.py` を修正した後に、次のように実行してください。
 
 ``` console
 $ oj generate-input "python3 generate.py"
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 ```
 
 ``` console
-$ oj-contest https://atcoder.jp/contests/abc158
+$ oj-prepare https://atcoder.jp/contests/abc158
 ...
 
 $ tree ~/atcoder.jp
@@ -169,7 +169,7 @@ $ tree ~/atcoder.jp
 テンプレート記法は [Mako](https://www.makotemplates.org/) のものを使う。
 [fastio.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/fastio.cpp) とか [customize_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/customize_sample.cpp) とかを見てそれっぽく書けば動く。
 
-`oj-contest` の設定は `~/.config/online-judge-tools/oj2.config.toml` に次のように設定する。
+`oj-prepare` の設定は `~/.config/online-judge-tools/oj2.config.toml` に次のように設定する。
 
 ``` toml
 contest_directory = "~/Desktop/{service_domain}/{contest_id}/{problem_id}"
