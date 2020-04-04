@@ -18,5 +18,5 @@ jobs:
     - name: Run tests
       run: |
         oj-template -h
-        oj-contest -h
+        oj-prepare -h
         python3 setup.py test
