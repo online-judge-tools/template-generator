@@ -472,7 +472,7 @@ def actual_arguments(data: Dict[str, Any]) -> str:
 def return_type(data: Dict[str, Any]) -> str:
     analyzed = utils.get_analyzed(data)
     if analyzed.output_format is None or analyzed.output_variables is None:
-        return 'ans'
+        return 'Any'
 
     types: List[str] = []
     for decl in analyzed.output_variables.values():

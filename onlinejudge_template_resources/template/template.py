@@ -1,6 +1,6 @@
 <%! import onlinejudge_template.generator.python as python %>\
 #!/usr/bin/env python3
-from typing import *
+# from typing import *
 
 # def solve(${python.formal_arguments(data)}) -> ${python.return_type(data)}:
 def solve(${python.actual_arguments(data)}):
