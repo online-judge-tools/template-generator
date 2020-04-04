@@ -30,7 +30,7 @@ $ pip3 install online-judge-template-generator
 ## Usage
 
 `oj-template` コマンドは、指定された問題に対し、入出力パートを自動生成します。
-入出力解析は AtCoder と yukicoder と [Library Checker](https://judge.yosupo.jp/) にのみ対応していますが、それら以外でも一応は動きます。
+入出力解析は (精度は別として) たいていのオンラインジャッジで動きます。
 
 ``` console
 $ oj-template [-t TEMPLATE] URL
@@ -42,6 +42,15 @@ $ oj-template [-t TEMPLATE] URL
 ``` console
 $ oj-prepare URL
 ```
+
+
+### Supported languages
+
+`oj-template` が認識する組み込みのテンプレートとして以下が使えます。
+
+-   `main.cpp`: C++ 解法コード
+-   `main.py`: Python 解法コード
+-   `generate.py`: Python ランダムケース生成器
 
 
 ### Generating random cases
