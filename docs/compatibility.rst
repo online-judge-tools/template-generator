@@ -1,7 +1,7 @@
 Compatibility / 互換性について
 ==============================
 
-The current version ``v2.7.0`` is still unstable.
+The current version ``v3.0.0`` is still unstable.
 
 Stable features (Japanese) / 安定な機能 (日本語)
 ------------------------------------------------
