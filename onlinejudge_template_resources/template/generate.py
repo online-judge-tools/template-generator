@@ -4,8 +4,8 @@ import random
 import onlinejudge_random as random_oj
 
 def main():
-${python.generate_input(data=data)}
-${python.write_input(data=data)}
+${python.generate_input(data)}
+${python.write_input(data)}
 
 if __name__ == "__main__":
     main()

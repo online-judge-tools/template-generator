@@ -8,10 +8,10 @@ the module to generate C++ code
 - :func:`read_input`
 - :func:`write_output`
 - :func:`declare_constants`
-- :func:`arguments_types`
-- :func:`arguments`
+- :func:`formal_arguments`
+- :func:`actual_arguments`
 - :func:`return_type`
-- :func:`return_values`
+- :func:`return_value`
 
 次のように利用することが想定されています。
 
@@ -21,13 +21,13 @@ the module to generate C++ code
     ...
 
     ${cplusplus.declare_constants(data)}
-    ${cplusplus.return_type(data)} solve(${cplusplus.arguments_types(data)}) {
+    ${cplusplus.return_type(data)} solve(${cplusplus.formal_arguments(data)}) {
         ...
     }
 
     int main() {
     ${cplusplus.read_input(data)}
-        ${cplusplus.return_type(data)} ${cplusplus.return_values(data)} = solve(${cplusplus.arguments(data)});
+        auto ${cplusplus.return_value(data)} = solve(${cplusplus.actual_arguments(data)});
     ${cplusplus.write_output(data)}
     }
 """
@@ -631,7 +631,7 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
-def arguments_types(data: Dict[str, Any]) -> str:
+def formal_arguments(data: Dict[str, Any]) -> str:
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
         return f"""int n, const {_get_std(data=data)}<int> & a"""
@@ -648,7 +648,7 @@ def arguments_types(data: Dict[str, Any]) -> str:
     return ', '.join(args)
 
 
-def arguments(data: Dict[str, Any]) -> str:
+def actual_arguments(data: Dict[str, Any]) -> str:
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
         return 'n, a'
@@ -672,7 +672,7 @@ def return_type(data: Dict[str, Any]) -> str:
         assert False
 
 
-def return_values(data: Dict[str, Any]) -> str:
+def return_value(data: Dict[str, Any]) -> str:
     output_type = _analyze_output_type(data=data)
     if isinstance(output_type, OneOutputType):
         return output_type.name

@@ -10,7 +10,7 @@ the module to generate Python code
 - :func:`formal_arguments`
 - :func:`actual_arguments`
 - :func:`return_type`
-- :func:`return_values`
+- :func:`return_value`
 
 加えて、ランダムケースの生成のために、以下の関数を提供します。
 
@@ -447,7 +447,10 @@ def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
     return _join_with_indent(lines, nest=nest, data=data)
 
 
-def formal_arguments(data: Dict[str, Any]) -> str:
+def formal_arguments(data: Dict[str, Any], *, typed: bool = True) -> str:
+    if not typed:
+        return actual_arguments(data=data)
+
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
         return 'n: int, a: List[int]'
@@ -488,7 +491,7 @@ def return_type(data: Dict[str, Any]) -> str:
         return f"""Tuple[{", ".join(types)}]"""
 
 
-def return_values(data: Dict[str, Any]) -> str:
+def return_value(data: Dict[str, Any]) -> str:
     analyzed = utils.get_analyzed(data)
     if analyzed.output_format is None or analyzed.output_variables is None:
         return 'ans'

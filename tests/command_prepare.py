@@ -50,7 +50,7 @@ class TestOJPrepareCommand(unittest.TestCase):
         url = 'https://yukicoder.me/problems/no/993'
         subdir = '.'
         template = 'main.py'
-        placeholder = '    # TODO: edit here\n'
+        placeholder = '    pass  # TODO: edit here\n'
         code = textwrap.indent(textwrap.dedent("""\
             return S.replace('ao', 'ki')
         """), '    ')

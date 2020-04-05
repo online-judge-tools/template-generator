@@ -13,7 +13,7 @@
 using namespace std;
 
 ${cplusplus.declare_constants(data)}
-${cplusplus.return_type(data)} solve(${cplusplus.arguments_types(data)}) {
+${cplusplus.return_type(data)} solve(${cplusplus.formal_arguments(data)}) {
     // TODO: edit here
 }
 
@@ -23,7 +23,7 @@ int main() {
     std::cin.tie(nullptr);
     constexpr char endl = '\n';
 ${cplusplus.read_input(data)}
-    ${cplusplus.return_type(data)} ${cplusplus.return_values(data)} = solve(${cplusplus.arguments(data)});
+    auto ${cplusplus.return_value(data)} = solve(${cplusplus.actual_arguments(data)});
 ${cplusplus.write_output(data)}
     return 0;
 }
