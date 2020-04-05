@@ -138,31 +138,31 @@ def get_config(*, config_path: Optional[pathlib.Path] = None) -> Dict[str, Any]:
         return {}
 
 
-def main() -> None:
+def main(args: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('url')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-c', '--cookie', default=onlinejudge.utils.default_cookie_path)
-    args = parser.parse_args()
     parser.add_argument('--config-file', type=pathlib.Path)
+    parsed = parser.parse_args(args=args)
 
-    if args.verbose:
+    if parsed.verbose:
         basicConfig(level=DEBUG)
     else:
         basicConfig(level=INFO)
 
-    config = get_config(config_path=args.config_file)
+    config = get_config(config_path=parsed.config_file)
     logger.info('config: %s', config)
 
-    with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=args.cookie) as session:
-        problem = onlinejudge.dispatch.problem_from_url(args.url)
-        contest = onlinejudge.dispatch.contest_from_url(args.url)
+    with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=parsed.cookie) as session:
+        problem = onlinejudge.dispatch.problem_from_url(parsed.url)
+        contest = onlinejudge.dispatch.contest_from_url(parsed.url)
         if problem is not None:
             prepare_problem(problem, config=config, session=session)
         elif contest is not None:
             prepare_contest(contest, config=config, session=session)
         else:
-            raise ValueError(f"""unrecognized URL: {args.url}""")
+            raise ValueError(f"""unrecognized URL: {parsed.url}""")
 
 
 if __name__ == '__main__':

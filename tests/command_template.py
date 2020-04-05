@@ -28,9 +28,9 @@ class TestOJTemplateCommand(unittest.TestCase):
                 fh.write(code)
 
             # test
-            subprocess.check_call(compile(source_file), stdout=sys.stdout, stderr=sys.stderr)
+            subprocess.check_call(compile(tmpdir), stdout=sys.stdout, stderr=sys.stderr)
             subprocess.check_call(['oj', 'd', '--directory', str(test_directory), url], stdout=sys.stdout, stderr=sys.stderr)
-            subprocess.check_call(['oj', 't', '--directory', str(test_directory), '-c', command(source_file)], stdout=sys.stdout, stderr=sys.stderr)
+            subprocess.check_call(['oj', 't', '--directory', str(test_directory), '-c', command(tmpdir)], stdout=sys.stdout, stderr=sys.stderr)
 
     def test_main_py_abc152_b(self) -> None:
         url = 'https://atcoder.jp/contests/abc152/tasks/abc152_b'
@@ -41,8 +41,8 @@ class TestOJTemplateCommand(unittest.TestCase):
             y = str(b) * a
             return int(min(x, y))
         """), '    ')
-        compile = lambda path: [sys.executable, '--version']
-        command = lambda path: f'{sys.executable} {str(path)}'
+        compile = lambda tmpdir: [sys.executable, '--version']
+        command = lambda tmpdir: ' '.join([sys.executable, str(tmpdir / 'main.py')])
         self._helper(url=url, template=template, placeholder=placeholder, code=code, compile=compile, command=command)
 
     def test_main_cpp_aplusb(self) -> None:
@@ -52,6 +52,6 @@ class TestOJTemplateCommand(unittest.TestCase):
         code = textwrap.indent(textwrap.dedent("""\
             return A + B;
         """), '    ')
-        compile = lambda path: ['g++', '-std=c++14', str(path)]
-        command = lambda path: './a.out'
+        compile = lambda tmpdir: ['g++', '-std=c++14', str(tmpdir / 'main.cpp'), '-o', str(tmpdir / 'a.out')]
+        command = lambda tmpdir: str(tmpdir / 'a.out')
         self._helper(url=url, template=template, placeholder=placeholder, code=code, compile=compile, command=command)
