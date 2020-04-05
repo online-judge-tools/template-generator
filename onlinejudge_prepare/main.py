@@ -86,6 +86,7 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
     dir = get_directory(problem=problem, contest=contest, config=config)
     logger.info('use directory: %s', str(dir))
 
+    dir.parent.mkdir(parents=True, exist_ok=True)
     with chdir(dir):
         url = problem.get_url()
         html = onlinejudge_template.network.download_html(url, session=session)
@@ -96,7 +97,7 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
         analyzed = onlinejudge_template.analyzer.combined.run(resources)
 
         for dest_str, template in table.items():
-            dest = dir / dest_str
+            dest = pathlib.Path(dest_str)
 
             # generate
             try:
