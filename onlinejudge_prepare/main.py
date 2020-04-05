@@ -128,8 +128,8 @@ def prepare_contest(contest: onlinejudge.type.Contest, *, config: Dict[str, Any]
         prepare_problem(problem, contest=contest, config=config, session=session)
 
 
-def get_config() -> Dict[str, Any]:
-    config_path = pathlib.Path(appdirs.user_config_dir('online-judge-tools')) / 'oj2.config.toml'
+def get_config(*, config_path: Optional[pathlib.Path] = None) -> Dict[str, Any]:
+    config_path = config_path or pathlib.Path(appdirs.user_config_dir('online-judge-tools')) / 'oj2.config.toml'
     logger.info('config path: %s', str(config_path))
     if config_path.exists():
         return dict(**toml.load(config_path))
@@ -143,13 +143,14 @@ def main() -> None:
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-c', '--cookie', default=onlinejudge.utils.default_cookie_path)
     args = parser.parse_args()
+    parser.add_argument('--config-file', type=pathlib.Path)
 
     if args.verbose:
         basicConfig(level=DEBUG)
     else:
         basicConfig(level=INFO)
 
-    config = get_config()
+    config = get_config(config_path=args.config_file)
     logger.info('config: %s', config)
 
     with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=args.cookie) as session:
