@@ -135,38 +135,37 @@ if __name__ == "__main__":
 $ oj-prepare https://atcoder.jp/contests/abc158
 ...
 
-$ tree ~/atcoder.jp
-/home/ubuntu/atcoder.jp
-└── abc158
-    ├── abc158_a
-    │   ├── main.cpp
-    │   ├── main.py
-    │   ├── generate.py
-    │   └── test
-    │       ├── sample-1.in
-    │       ├── sample-1.in
-    │       ├── sample-1.out
-    │       ├── sample-2.in
-    │       ├── sample-2.out
-    │       ├── sample-3.in
-    │       └── sample-3.out
-    ├── ...
-    ├── ...
-    ├── ...
-    ├── ...
-    └── abc158_f
-        ├── main.cpp
-        ├── main.py
-        ├── generate.py
-        └── test
-            ├── sample-1.in
-            ├── sample-1.out
-            ├── sample-2.in
-            ├── sample-2.out
-            ├── sample-3.in
-            ├── sample-3.out
-            ├── sample-4.in
-            └── sample-4.out
+$ tree
+.
+├── abc158_a
+│   ├── main.cpp
+│   ├── main.py
+│   ├── generate.py
+│   └── test
+│       ├── sample-1.in
+│       ├── sample-1.in
+│       ├── sample-1.out
+│       ├── sample-2.in
+│       ├── sample-2.out
+│       ├── sample-3.in
+│       └── sample-3.out
+├── ...
+├── ...
+├── ...
+├── ...
+└── abc158_f
+    ├── main.cpp
+    ├── main.py
+    ├── generate.py
+    └── test
+        ├── sample-1.in
+        ├── sample-1.out
+        ├── sample-2.in
+        ├── sample-2.out
+        ├── sample-3.in
+        ├── sample-3.out
+        ├── sample-4.in
+        └── sample-4.out
 
 13 directories, 50 files
 ```
