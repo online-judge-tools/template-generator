@@ -5,7 +5,7 @@ Welcome to online-judge-template-generator's documentation!
    :maxdepth: 100
    :caption: Contents:
 
-   onlinejudge_template
+   onlinejudge_template.generator
    onlinejudge_random
    how-it-works
    compatibility

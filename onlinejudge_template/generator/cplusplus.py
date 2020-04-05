@@ -34,7 +34,7 @@ the module to generate C++ code
 
 from typing import *
 
-import onlinejudge_template.generator.utils as utils
+import onlinejudge_template.generator._utils as utils
 from onlinejudge_template.generator._cplusplus import *
 from onlinejudge_template.types import *
 from onlinejudge_template.utils import simplify
