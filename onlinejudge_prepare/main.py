@@ -129,8 +129,11 @@ def prepare_contest(contest: onlinejudge.type.Contest, *, config: Dict[str, Any]
         prepare_problem(problem, contest=contest, config=config, session=session)
 
 
+default_config_path = pathlib.Path(appdirs.user_config_dir('online-judge-tools')) / 'prepare.config.toml'
+
+
 def get_config(*, config_path: Optional[pathlib.Path] = None) -> Dict[str, Any]:
-    config_path = config_path or pathlib.Path(appdirs.user_config_dir('online-judge-tools')) / 'oj2.config.toml'
+    config_path = config_path or default_config_path
     logger.info('config path: %s', str(config_path))
     if config_path.exists():
         return dict(**toml.load(config_path))
@@ -143,7 +146,7 @@ def main(args: Optional[List[str]] = None) -> None:
     parser.add_argument('url')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-c', '--cookie', default=onlinejudge.utils.default_cookie_path)
-    parser.add_argument('--config-file', type=pathlib.Path)
+    parser.add_argument('--config-file', type=pathlib.Path, help=f"""default: {str(default_config_path)}""")
     parsed = parser.parse_args(args=args)
 
     if parsed.verbose:

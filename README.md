@@ -178,7 +178,7 @@ $ tree ~/atcoder.jp
 テンプレート記法は [Mako](https://www.makotemplates.org/) のものを使う。
 [fastio.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/fastio.cpp) とか [customize_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/customize_sample.cpp) とかを見てそれっぽく書けば動く。
 
-`oj-prepare` の設定は `~/.config/online-judge-tools/oj2.config.toml` に次のように設定する。
+`oj-prepare` の設定は `~/.config/online-judge-tools/prepare.config.toml` に次のように設定する。
 
 ``` toml
 contest_directory = "~/Desktop/{service_domain}/{contest_id}/{problem_id}"
