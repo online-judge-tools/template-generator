@@ -1,7 +1,7 @@
 Compatibility / 互換性について
 ==============================
 
-The current version ``v3.0.0`` is still unstable.
+The current version ``v4.0.0`` is still unstable.
 
 Stable features (Japanese) / 安定な機能 (日本語)
 ------------------------------------------------
@@ -13,14 +13,14 @@ Stable features (Japanese) / 安定な機能 (日本語)
 
 テンプレートとしては、解法コード用の ``main.cpp`` と ``main.py`` と、ランダムケース生成用の ``generate.py`` が使えます。
 また、絶対パスで [Mako](https://www.makotemplates.org/) のテンプレートファイルを指定することもできます。
-
+テンプレートファイル中では :any:`onlinejudge_template.generator.cplusplus` module や :any:`onlinejudge_template.generator.python` module を使うことができます。
 
 Unstable features (Japanese) / 不安定な機能 (日本語)
 ----------------------------------------------------
 
 その他の利用法については、後方互換性を保証しません。つまり、バージョンが上がると動かなくなる可能性があります。
 
-- [Mako](https://www.makotemplates.org/) のテンプレートファイルに与えられるデータの形式は不安定です。もう少し使ってみて様子を見たい。
-- ``oj_template`` module や ``oj_random`` module は不安定です。これももう少し使ってみて様子を見たい。
+- `Mako <https://www.makotemplates.org/>`_ のテンプレートファイルに与えられるデータの形式は不安定です。そう変更はないはずですが、内部データなので、これの互換性よりも出力結果の完成度の方が優先されます。
+- :any:`onlinejudge_random` module は不安定です。これももう少し使ってみて様子を見たい。
 - ``oj-prepare`` コマンドは不安定です。 ``oj2`` のような名前のコマンドとして生まれ変わる可能性や、他のプロジェクトで十分だとして廃止される可能性があります。
 - 設定ファイルのパスや内容の形式は不安定です。
