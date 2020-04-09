@@ -15,7 +15,7 @@ logger = getLogger(__name__)
 def main(args: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('url')
-    parser.add_argument('-t', '--template', default='template.cpp')
+    parser.add_argument('-t', '--template', default='main.cpp')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-c', '--cookie', default=onlinejudge.utils.default_cookie_path)
     parsed = parser.parse_args(args=args)
