@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='online-judge-template-generator',
-    version='4.0.1',
+    version='4.0.2',
     author='Kimiyuki Onaka',
     author_email='kimiyuki95@gmail.com',
     url='https://github.com/kmyk/online-judge-template-generator',
