@@ -1,8 +1,8 @@
 <%! import onlinejudge_template.generator.python as python %>\
 #!/usr/bin/env python3
 import random
-import onlinejudge_random as random_oj
 
+# usage: $ oj generate-input 'python3 generate.py'
 def main():
 ${python.generate_input(data)}
 ${python.write_input(data)}
