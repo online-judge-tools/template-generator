@@ -116,9 +116,10 @@ def _match_format_dfs(node: FormatNode, tokens: List[str], *, variables: Dict[st
         if size is None:
             raise FormatMatchError(f"""failed to evaluate: {node.size}""")
         for i in range(size):
+            assert node.name not in values
             values[node.name] = {(): i}
             _match_format_dfs(node.body, tokens, variables=variables, values=values)
-        del values[node.name]
+            del values[node.name]
 
     else:
         assert False
