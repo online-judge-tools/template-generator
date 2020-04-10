@@ -522,7 +522,7 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
 def formal_arguments(data: Dict[str, Any]) -> str:
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
-        return f"""int n, const {_get_std(data=data)}<int> & a"""
+        return f"""int n, const {_get_std(data=data)}vector<int64_t> & a"""
 
     args = []
     for name, decl in analyzed.input_variables.items():
