@@ -54,7 +54,7 @@ def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) 
 
 def _declare_loop(var: str, size: str, *, data: Dict[str, Any]) -> str:
     """
-    :raises CPlusPlusGeneratorError"
+    :raises CPlusPlusGeneratorError:
     """
 
     rep = data['config'].get('rep_macro')
@@ -70,7 +70,7 @@ def _declare_loop(var: str, size: str, *, data: Dict[str, Any]) -> str:
 
 def _read_variables(exprs: List[Tuple[str, Optional[VarType]]], *, data: Dict[str, Any]) -> List[str]:
     """
-    :raises CPlusPlusGeneratorError"
+    :raises CPlusPlusGeneratorError:
     """
 
     if not exprs:
@@ -97,7 +97,7 @@ def _read_variables(exprs: List[Tuple[str, Optional[VarType]]], *, data: Dict[st
 
 def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: bool, data: Dict[str, Any]) -> List[str]:
     """
-    :raises CPlusPlusGeneratorError"
+    :raises CPlusPlusGeneratorError:
     """
 
     printer = data['config'].get('printer')
@@ -149,7 +149,7 @@ def _get_base_type(type: Optional[VarType], *, data: Dict[str, Any]) -> str:
 
 def _get_base_type_format_specifier(type: Optional[VarType], *, name: str, data: Dict[str, Any]) -> str:
     """
-    :raises CPlusPlusGeneratorError"
+    :raises CPlusPlusGeneratorError:
     """
 
     if type == VarType.IndexInt:
@@ -218,7 +218,7 @@ def _declare_constant(decl: ConstantDecl, *, data: Dict[str, Any]) -> str:
 
 def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
     """
-    :raises CPlusPlusGeneratorError"
+    :raises CPlusPlusGeneratorError:
     """
 
     # declare all possible variables
@@ -257,7 +257,7 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
 
 def _write_output_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
     """
-    :raises CPlusPlusGeneratorError"
+    :raises CPlusPlusGeneratorError:
     """
 
     if isinstance(node, ItemNode):
