@@ -429,7 +429,7 @@ def _read_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> st
     try:
         lines.extend(_declare_variables([VarDecl(name='a', type=VarType.ValueInt, dims=['n'], bases=['0'], depending=set(['n']))], data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}vector<int> a(n);""")
+        lines.append(f"""{_get_std(data=data)}vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
     try:
         lines.append(_declare_loop(var='i', size='n', data=data) + " {")
     except CPlusPlusGeneratorError:
@@ -437,7 +437,7 @@ def _read_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> st
     try:
         lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}scanf("%d", &a[i]);""")
+        lines.append(f"""{_get_std(data=data)}scanf("{_get_base_type_format_specifier(VarType.ValueInt, name="a", data=data)}", &a[i]);""")
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
