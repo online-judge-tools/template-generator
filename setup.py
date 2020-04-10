@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
+from onlinejudge_template.__about__ import __title__, __url__, __version__
 from setuptools import find_packages, setup
 
 setup(
-    name='online-judge-template-generator',
-    version='4.0.2',
+    name=__title__,
+    version=__version__,
     author='Kimiyuki Onaka',
     author_email='kimiyuki95@gmail.com',
-    url='https://github.com/kmyk/online-judge-template-generator',
+    url=__url__,
     license='MIT License',
     description='A simple template generator for competitive programming',
     python_requires='>=3.6',
