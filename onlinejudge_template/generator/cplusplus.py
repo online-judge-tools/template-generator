@@ -30,6 +30,11 @@ the module to generate C++ code
         auto ${cplusplus.return_value(data)} = solve(${cplusplus.actual_arguments(data)});
     ${cplusplus.write_output(data)}
     }
+
+加えて、ランダムケースの生成のために、以下の関数を提供します。
+
+- :func:`generate_input`
+- :func:`write_input`
 """
 
 from typing import *
@@ -121,6 +126,24 @@ def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: boo
         return printer(exprs, newline=newline)
     else:
         raise CPlusPlusGeneratorError(f"""invalid "printer" config: {printer}""")
+
+
+def _generate_variable(expr: Tuple[str, Optional[VarType]], *, data: Dict[str, Any]) -> Iterator[str]:
+    """
+    :raises CPlusPlusGeneratorError:
+    """
+
+    name, type = expr
+    if type is None:
+        type = VarType.IndexInt
+    if type == VarType.IndexInt:
+        l, r = 0, 10**5 + 1
+    elif type == VarType.ValueInt:
+        l, r = 0, 10**9 + 1
+    else:
+        raise CPlusPlusGeneratorError(f"""cannot generate a variable of type {type}: {repr(name)}""")
+
+    yield f"""{name} = {_get_std(data=data)}uniform_int_distribution<{_get_base_type(type, data=data)}>({l}, {r - 1})(gen);"""
 
 
 def _get_std(data: Dict['str', Any]) -> str:
@@ -216,7 +239,7 @@ def _declare_constant(decl: ConstantDecl, *, data: Dict[str, Any]) -> str:
     return f"""{const} {type} {decl.name} = {value};"""
 
 
-def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
+def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any], make_node: Callable[[str, Optional[VarType]], CPlusPlusNode] = lambda var, type: InputNode(exprs=[(var, type)])) -> CPlusPlusNode:
     """
     :raises CPlusPlusGeneratorError:
     """
@@ -228,7 +251,7 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
             new_decls.append(DeclNode(decls=[decl]))
             declared.add(var)
     if new_decls:
-        return SentencesNode(sentences=new_decls + [_read_input_dfs(node, declared=declared, initialized=initialized, decls=decls, data=data)])
+        return SentencesNode(sentences=new_decls + [_read_input_dfs(node, declared=declared, initialized=initialized, decls=decls, data=data, make_node=make_node)])
 
     # traverse AST
     if isinstance(node, ItemNode):
@@ -237,17 +260,17 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
         initialized.add(node.name)
         decl = decls[node.name]
         var = _get_variable(decl=decls[node.name], indices=node.indices, decls=decls)
-        return InputNode(exprs=[(var, decl.type)])
+        return make_node(var, decl.type)
     elif isinstance(node, NewlineNode):
         return SentencesNode(sentences=[])
     elif isinstance(node, SequenceNode):
         sentences = []
         for item in node.items:
-            sentences.append(_read_input_dfs(item, declared=declared, initialized=initialized, decls=decls, data=data))
+            sentences.append(_read_input_dfs(item, declared=declared, initialized=initialized, decls=decls, data=data, make_node=make_node))
         return SentencesNode(sentences=sentences)
     elif isinstance(node, LoopNode):
         declared.add(node.name)
-        body = _read_input_dfs(node.body, declared=declared, initialized=initialized, decls=decls, data=data)
+        body = _read_input_dfs(node.body, declared=declared, initialized=initialized, decls=decls, data=data, make_node=make_node)
         result = RepeatNode(name=node.name, size=node.size, body=body)
         declared.remove(node.name)
         return result
@@ -366,6 +389,8 @@ def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlus
         return node
     elif isinstance(node, OutputNewlineNode):
         return node
+    elif isinstance(node, GenerateNode):
+        return node
     elif isinstance(node, SentencesNode):
         sentences: List[CPlusPlusNode] = []
         que = [_optimize_syntax_tree(sentence, data=data) for sentence in node.sentences]
@@ -401,6 +426,8 @@ def _serialize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> Iter
         yield from _write_variables(node.exprs, newline=False, data=data)
     elif isinstance(node, OutputNewlineNode):
         yield from _write_variables(node.exprs, newline=True, data=data)
+    elif isinstance(node, GenerateNode):
+        yield from _generate_variable(node.expr, data=data)
     elif isinstance(node, SentencesNode):
         for sentence in node.sentences:
             yield from _serialize_syntax_tree(sentence, data=data)
@@ -451,6 +478,85 @@ def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
         node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data)
     except CPlusPlusGeneratorError as e:
         return _read_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
+    node = _optimize_syntax_tree(node, data=data)
+    lines = list(_serialize_syntax_tree(node, data=data))
+    return _join_with_indent(iter(lines), nest=nest, data=data)
+
+
+def _generate_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> str:
+    lines = []
+    lines.append(f"""// {message}""")
+    lines.append(f"""// TODO: edit here""")
+    lines.append(f"""{_get_std(data=data)}random_device device;""")
+    lines.append(f"""{_get_std(data=data)}default_random_engine gen(device());""")
+    try:
+        lines.extend(_declare_variables([VarDecl(name='n', type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
+    except CPlusPlusGeneratorError:
+        lines.append(f"""int n;""")
+    try:
+        lines.extend(_generate_variable(('n', VarType.IndexInt), data=data))
+    except CPlusPlusGeneratorError:
+        lines.append(f"""n = {_get_std(data=data)}uniform_int_distribution<int>(0, 100000)(gen);""")
+    try:
+        lines.extend(_declare_variables([VarDecl(name='a', type=VarType.ValueInt, dims=['n'], bases=['0'], depending=set(['n']))], data=data))
+    except CPlusPlusGeneratorError:
+        lines.append(f"""{_get_std(data=data)}vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
+    try:
+        lines.append(_declare_loop(var='i', size='n', data=data) + " {")
+    except CPlusPlusGeneratorError:
+        lines.append("""for (int i = 0; i < n; ++i) {""")
+    try:
+        lines.extend(_generate_variable(('a[i]', VarType.ValueInt), data=data))
+    except CPlusPlusGeneratorError:
+        lines.append(f"""a[i] = {_get_std(data=data)}uniform_int_distribution<{_get_base_type(VarType.ValueInt, data=data)}>(0, 1000000000)(gen);""")
+    lines.append("""}""")
+    return _join_with_indent(iter(lines), nest=nest, data=data)
+
+
+def generate_input(data: Dict[str, Any], *, nest: int = 1) -> str:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
+        return _generate_input_fallback(message="failed to analyze input format", data=data, nest=nest)
+
+    try:
+        make_node = lambda var, type: GenerateNode(expr=(var, type))
+        node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data, make_node=make_node)
+    except CPlusPlusGeneratorError as e:
+        return _read_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
+    node = _optimize_syntax_tree(node, data=data)
+    lines = list(_serialize_syntax_tree(node, data=data))
+    return _join_with_indent(iter(lines), nest=nest, data=data)
+
+
+def _write_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> str:
+    lines = []
+    lines.append(f"""// {message}""")
+    lines.append(f"""// TODO: edit here""")
+    try:
+        lines.extend(_write_variables([('n', VarType.IndexInt)], newline=True, data=data))
+    except CPlusPlusGeneratorError:
+        lines.append(f"""{_get_std(data=data)}printf("%d\n", ans);""")
+    try:
+        lines.append(_declare_loop(var='i', size='n', data=data) + " {")
+    except CPlusPlusGeneratorError:
+        lines.append("""for (int i = 0; i < n; ++i) {""")
+    try:
+        lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
+    except CPlusPlusGeneratorError:
+        lines.append(f"""{_get_std(data=data)}printf("{_get_base_type(VarType.ValueInt, data=data)}%c", &a[i], i < n - 1 ? ' ' : '\\n');""")
+    lines.append("""}""")
+    return _join_with_indent(iter(lines), nest=nest, data=data)
+
+
+def write_input(data: Dict[str, Any], *, nest: int = 1) -> str:
+    analyzed = utils.get_analyzed(data)
+    if analyzed.input_format is None or analyzed.input_variables is None:
+        return _write_input_fallback(message="failed to analyze input format", data=data, nest=nest)
+
+    try:
+        node = _write_output_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
+    except CPlusPlusGeneratorError as e:
+        return _write_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)

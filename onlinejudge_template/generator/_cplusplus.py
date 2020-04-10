@@ -27,6 +27,11 @@ class InputNode(CPlusPlusNode):
         self.exprs = exprs
 
 
+class GenerateNode(CPlusPlusNode):
+    def __init__(self, expr: Tuple[str, Optional[VarType]]):
+        self.expr = expr
+
+
 class OutputTokensNode(CPlusPlusNode):
     def __init__(self, exprs: List[Tuple[str, Optional[VarType]]]):
         self.exprs = exprs
