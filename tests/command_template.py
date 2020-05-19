@@ -35,7 +35,7 @@ class TestOJTemplateCommand(unittest.TestCase):
     def test_main_py_abc152_b(self) -> None:
         url = 'https://atcoder.jp/contests/abc152/tasks/abc152_b'
         template = 'main.py'
-        placeholder = '    pass  # TODO: edit here\n'
+        placeholder = '    pass  # TODO: edit here'
         code = textwrap.indent(textwrap.dedent("""\
             x = str(a) * b
             y = str(b) * a
@@ -48,7 +48,7 @@ class TestOJTemplateCommand(unittest.TestCase):
     def test_main_cpp_aplusb(self) -> None:
         url = 'https://judge.yosupo.jp/problem/aplusb'
         template = 'main.cpp'
-        placeholder = '    // TODO: edit here\n'
+        placeholder = '    // TODO: edit here'
         code = textwrap.indent(textwrap.dedent("""\
             return A + B;
         """), '    ')
