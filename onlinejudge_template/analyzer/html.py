@@ -71,7 +71,11 @@ def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
 
     elif 'judge.yosupo.jp' in url:
         for h2 in soup.find_all('h2'):
-            if h2.string in table[kind]:
+            found = False
+            for div in h2.find_all('div'):
+                if div.string in table[kind]:
+                    found = True
+            if found:
                 pre = h2.find_next_sibling('pre')
                 if pre:
                     return pre.string.strip() + '\n'
