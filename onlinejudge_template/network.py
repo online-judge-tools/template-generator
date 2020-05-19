@@ -28,6 +28,7 @@ def download_sample_cases(url: str, *, session: Optional[requests.Session] = Non
     session = session or onlinejudge.utils.get_default_session()
     try:
         problem = onlinejudge.dispatch.problem_from_url(url)
+        assert problem is not None
         sample_cases = problem.download_sample_cases(session=session)
         return [SampleCase(input=case.input_data, output=case.output_data) for case in sample_cases]
     except Exception as e:
