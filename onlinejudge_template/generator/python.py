@@ -31,7 +31,6 @@ _DEDENT = '*DEDENT*'
 def _join_with_indent(lines: Sequence[str], *, nest: int, data: Dict[str, Any]) -> str:
     indent = data['config'].get('indent', ' ' * 4)
     buf = []
-    nest = 1
     for line in lines:
         if line == _DEDENT:
             nest -= 1
