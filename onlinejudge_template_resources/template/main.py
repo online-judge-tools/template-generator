@@ -5,6 +5,8 @@
 #!/usr/bin/env python3
 # from typing import *
 
+${python.declare_constants(data)}
+
 # def solve(${python.formal_arguments(data)}) -> ${python.return_type(data)}:
 def solve(${python.formal_arguments(data, typed=False)}):
     pass  # TODO: edit here

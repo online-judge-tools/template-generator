@@ -7,6 +7,7 @@ the module to generate Python code
 
 - :func:`read_input`
 - :func:`write_output`
+- :func:`declare_constants`
 - :func:`formal_arguments`
 - :func:`actual_arguments`
 - :func:`return_type`
@@ -86,6 +87,14 @@ def _declare_all_possible_variables(declared: Set[str], initialized: Set[str], d
                 decl_nodes.append(OtherNode(line=line))
             declared.add(var)
     return decl_nodes
+
+
+def _declare_constant(decl: ConstantDecl, *, data: Dict[str, Any]) -> str:
+    if decl.type in (VarType.String, VarType.Char):
+        value = repr(decl.value)
+    else:
+        value = decl.value
+    return f"""{decl.name} = {value}"""
 
 
 def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
@@ -437,3 +446,11 @@ def return_value(data: Dict[str, Any]) -> str:
         return 'ans'
 
     return ', '.join(analyzed.output_variables.keys())
+
+
+def declare_constants(data: Dict[str, Any], *, nest: int = 0) -> str:
+    analyzed = utils.get_analyzed(data)
+    lines: List[str] = []
+    for decl in analyzed.constants.values():
+        lines.append(_declare_constant(decl, data=data))
+    return _join_with_indent(lines, nest=nest, data=data)
