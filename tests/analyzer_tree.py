@@ -104,6 +104,18 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
 
         self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
+    def test_arc066_e(self) -> None:
+        # https://atcoder.jp/contests/arc066/tasks/arc066_c
+        # https://github.com/online-judge-tools/template-generator/issues/13
+        format_string = '\n'.join([
+            r'',
+            r'<var>N</var>',
+            r'<var>A_1</var> <var>op_1</var> <var>A_2</var> <var>...</var> <var>op_{N-1}</var> <var>A_N</var>',
+            r'',
+        ]).replace('<var>', '').replace('</var>', '').strip() + '\n'
+
+        self.assertRaises(parser.FormatStringParserError, lambda: parser.run(format_string))
+
 
 class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
     def test_unionfind(self) -> None:

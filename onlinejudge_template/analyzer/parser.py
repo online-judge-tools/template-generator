@@ -209,7 +209,7 @@ def build_parser(*, input: str) -> yacc.LRParser:
                  | item"""
         if len(p) == 5:
             dots = DotsParserNode(first=p[1], last=p[3], **loc(p))
-            p[0] = SequenceParserNode(items=[dots] + p[2].items, **loc(p))
+            p[0] = SequenceParserNode(items=[dots] + p[4].items, **loc(p))
         if len(p) == 4:
             dots = DotsParserNode(first=p[1], last=p[3], **loc(p))
             p[0] = SequenceParserNode(items=[dots], **loc(p))
