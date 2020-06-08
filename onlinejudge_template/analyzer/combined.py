@@ -3,6 +3,7 @@ from typing import *
 
 import onlinejudge_template.analyzer.constants
 import onlinejudge_template.analyzer.html
+import onlinejudge_template.analyzer.output_types
 import onlinejudge_template.analyzer.parser
 import onlinejudge_template.analyzer.simple_patterns
 import onlinejudge_template.analyzer.topcoder
@@ -118,6 +119,10 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
     if resources.html is not None or resources.sample_cases:
         constants.update(onlinejudge_template.analyzer.constants.list_constants(html=resources.html, sample_cases=resources.sample_cases))
 
+    output_type: Optional[OutputType] = None
+    if output_format is not None and output_variables is not None:
+        output_type = onlinejudge_template.analyzer.output_types.analyze_output_type(output_format=output_format, output_variables=output_variables, constants=constants)
+
     return AnalyzerResult(
         resources=resources,
         input_format=input_format,
@@ -125,5 +130,6 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
         input_variables=input_variables,
         output_variables=output_variables,
         constants=constants,
+        output_type=output_type,
         topcoder_class_definition=topcoder_class_definition,
     )
