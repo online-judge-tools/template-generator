@@ -104,6 +104,22 @@ class ConstantDecl(NamedTuple):
     type: VarType
 
 
+class TopcoderType(enum.Enum):
+    Int = 'int'
+    Double = 'double'
+    String = 'String'
+    IntList = 'int[]'
+    DoubleList = 'double[]'
+    StringList = 'String[]'
+
+
+class TopcoderClassDefinition(NamedTuple):
+    class_name: str
+    method_name: str
+    formal_arguments: List[Tuple[TopcoderType, str]]
+    return_type: TopcoderType
+
+
 class AnalyzerResult(NamedTuple):
     """
     .. todo::
@@ -116,6 +132,8 @@ class AnalyzerResult(NamedTuple):
     output_format: Optional[FormatNode]
     output_variables: Optional[Dict[str, VarDecl]]
     constants: Dict[str, ConstantDecl]
+
+    topcoder_class_definition: Optional[TopcoderClassDefinition]
 
 
 class TemplateAnalyzerGeneratorError(RuntimeError):
