@@ -302,114 +302,6 @@ def _write_output_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict
         assert False
 
 
-def _analyze_output_type(*, data: Dict[str, Any]) -> OutputType:
-    analyzed = utils.get_analyzed(data)
-    if analyzed.output_format is None or analyzed.output_variables is None:
-        return UnknownOutputType()
-    node = analyzed.output_format
-    decls = analyzed.output_variables
-
-    # pattern:
-    #     ans
-    if isinstance(node, SequenceNode) and len(node.items) == 2:
-        item0 = node.items[0]
-        item1 = node.items[1]
-        if isinstance(item0, ItemNode) and isinstance(item1, NewlineNode):
-            type = decls[item0.name].type
-            name = 'ans'  # item0.name may be randomized
-            if type is not None:
-                if 'YES' in analyzed.constants and 'NO' in analyzed.constants and type == VarType.String:
-                    return YesNoOutputType(name=name, yes='YES', no='NO')
-                if 'FIRST' in analyzed.constants and 'SECOND' in analyzed.constants and type == VarType.String:
-                    return YesNoOutputType(name=name, yes='FIRST', no='SECOND')
-                return OneOutputType(name=name, type=type)
-
-    # pattern:
-    #     x y
-    if isinstance(node, SequenceNode) and len(node.items) == 3:
-        item0 = node.items[0]
-        item1 = node.items[1]
-        item2 = node.items[2]
-        if isinstance(item0, ItemNode) and isinstance(item1, ItemNode) and isinstance(item2, NewlineNode):
-            name1 = item0.name
-            name2 = item1.name
-            type1 = decls[name1].type
-            type2 = decls[name2].type
-            if type1 is not None and type2 is not None:
-                return TwoOutputType(name1=name1, type1=type1, name2=name2, type2=type2, print_newline_after_item=False)
-
-    # pattern:
-    #     x
-    #     y
-    if isinstance(node, SequenceNode) and len(node.items) == 4:
-        item0 = node.items[0]
-        item1 = node.items[1]
-        item2 = node.items[2]
-        item3 = node.items[3]
-        if isinstance(item0, ItemNode) and isinstance(item1, NewlineNode) and isinstance(item2, ItemNode) and isinstance(item3, NewlineNode):
-            name1 = item0.name
-            name2 = item2.name
-            type1 = decls[name1].type
-            type2 = decls[name2].type
-            if type1 is not None and type2 is not None:
-                return TwoOutputType(name1=name1, type1=type1, name2=name2, type2=type2, print_newline_after_item=False)
-
-    # pattern:
-    #     n
-    #     a_1 ... a_n
-    if isinstance(node, SequenceNode) and len(node.items) == 4:
-        item0 = node.items[0]
-        item1 = node.items[1]
-        item2 = node.items[2]
-        item3 = node.items[3]
-        if isinstance(item0, ItemNode) and isinstance(item1, NewlineNode) and isinstance(item3, NewlineNode):
-            if isinstance(item2, LoopNode) and isinstance(item2.body, ItemNode) and item2.size == item0.name and item2.body.indices == [item2.name]:
-                type = decls[item2.body.name].type
-                name = 'ans'  # item2.body.name may be randomized
-                subscripted_name = _get_variable(decl=decls[name], indices=item2.body.indices, decls=decls)
-                counter_name = item2.name
-                if type is not None:
-                    return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=False)
-
-    # pattern:
-    #     n a_1 ... a_n
-    if isinstance(node, SequenceNode) and len(node.items) == 3:
-        item0 = node.items[0]
-        item1 = node.items[1]
-        item2 = node.items[2]
-        if isinstance(item0, ItemNode) and isinstance(item2, NewlineNode):
-            if isinstance(item1, LoopNode) and isinstance(item1.body, ItemNode) and item1.size == item0.name and item1.body.indices == [item1.name]:
-                type = decls[item1.body.name].type
-                name = 'ans'  # item1.body.name may be randomized
-                subscripted_name = _get_variable(decl=decls[name], indices=item1.body.indices, decls=decls)
-                counter_name = item1.name
-                if type is not None:
-                    return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=False, print_newline_after_item=False)
-
-    # pattern:
-    #     n
-    #     a_1
-    #     ...
-    #     a_n
-    if isinstance(node, SequenceNode) and len(node.items) == 3:
-        item0 = node.items[0]
-        item1 = node.items[1]
-        item2 = node.items[2]
-        if isinstance(item0, ItemNode) and isinstance(item1, NewlineNode):
-            if isinstance(item2, LoopNode) and isinstance(item2.body, SequenceNode) and len(item2.body.items) == 2:
-                item3 = node.items[0]
-                item4 = node.items[1]
-                if isinstance(item3, ItemNode) and isinstance(item4, NewlineNode) and item2.size == item0.name and item3.indices == [item0.name]:
-                    type = decls[item3.name].type
-                    name = 'ans'  # item3.name may be randomized
-                    subscripted_name = _get_variable(decl=decls[name], indices=item3.indices, decls=decls)
-                    counter_name = item2.name
-                    if type is not None:
-                        return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=True)
-
-    return UnknownOutputType()
-
-
 def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlusPlusNode:
     if isinstance(node, DeclNode):
         return node
@@ -605,9 +497,7 @@ def _write_output_fallback(message: str, *, data: Dict[str, Any], nest: int) -> 
 
 def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
     analyzed = utils.get_analyzed(data)
-    if analyzed.output_format is None or analyzed.output_variables is None:
-        return _write_output_fallback(message="failed to analyze output format", data=data, nest=nest)
-    output_type = _analyze_output_type(data=data)
+    output_type = analyzed.output_type
 
     if isinstance(output_type, OneOutputType):
         node: CPlusPlusNode = OutputNewlineNode(exprs=[(output_type.name, output_type.type)])
@@ -641,7 +531,9 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
             inner_sentences.append(OutputNewlineNode(exprs=[]))
         node = SentencesNode(sentences=sentences)
 
-    elif isinstance(output_type, UnknownOutputType):
+    elif output_type is None:
+        if analyzed.output_format is None or analyzed.output_variables is None:
+            return _write_output_fallback(message="failed to analyze output format", data=data, nest=nest)
         try:
             node = _write_output_dfs(analyzed.output_format, decls=analyzed.output_variables, data=data)
         except CPlusPlusGeneratorError as e:
@@ -686,7 +578,8 @@ def actual_arguments(data: Dict[str, Any]) -> str:
 
 
 def return_type(data: Dict[str, Any]) -> str:
-    output_type = _analyze_output_type(data=data)
+    analyzed = utils.get_analyzed(data)
+    output_type = analyzed.output_type
     if isinstance(output_type, OneOutputType):
         return _get_base_type(output_type.type, data=data)
     elif isinstance(output_type, TwoOutputType):
@@ -695,14 +588,15 @@ def return_type(data: Dict[str, Any]) -> str:
         return "bool"
     elif isinstance(output_type, VectorOutputType):
         return f"""{_get_std(data=data)}vector<{_get_base_type(output_type.type, data=data)}>"""
-    elif isinstance(output_type, UnknownOutputType):
+    elif output_type is None:
         return "auto"
     else:
         assert False
 
 
 def return_value(data: Dict[str, Any]) -> str:
-    output_type = _analyze_output_type(data=data)
+    analyzed = utils.get_analyzed(data)
+    output_type = analyzed.output_type
     if isinstance(output_type, OneOutputType):
         return output_type.name
     elif isinstance(output_type, TwoOutputType):
@@ -711,7 +605,7 @@ def return_value(data: Dict[str, Any]) -> str:
         return output_type.name
     elif isinstance(output_type, VectorOutputType):
         return output_type.name
-    elif isinstance(output_type, UnknownOutputType):
+    elif output_type is None:
         return "ans"
     else:
         assert False
