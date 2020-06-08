@@ -7,6 +7,7 @@ import onlinejudge_template.analyzer.combined
 import onlinejudge_template.generator
 import onlinejudge_template.network
 
+import onlinejudge.dispatch
 import onlinejudge.utils
 
 logger = getLogger(__name__)
@@ -27,6 +28,9 @@ def main(args: Optional[List[str]] = None) -> None:
 
     # download
     url = parsed.url
+    problem = onlinejudge.dispatch.problem_from_url(url)
+    if problem is not None:
+        url = problem.get_url()  # normalize url
     logger.debug('url: %s', url)
     with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=parsed.cookie) as session:
         html = onlinejudge_template.network.download_html(url, session=session)
