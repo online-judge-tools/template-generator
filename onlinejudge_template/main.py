@@ -27,13 +27,17 @@ def main(args: Optional[List[str]] = None) -> None:
 
     # download
     url = parsed.url
+    logger.debug('url: %s', url)
     with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=parsed.cookie) as session:
         html = onlinejudge_template.network.download_html(url, session=session)
         sample_cases = onlinejudge_template.network.download_sample_cases(url, session=session)
+    logger.debug('sample cases: %s', sample_cases)
 
     # analyze
     resources = onlinejudge_template.analyzer.combined.prepare_from_html(html, url=url, sample_cases=sample_cases)
+    logger.debug('analyzer resources: %s', resources._replace(html=b'...skipped...'))
     analyzed = onlinejudge_template.analyzer.combined.run(resources)
+    logger.debug('analyzed result: %s', analyzed._replace(resources=analyzed.resources._replace(html=b'...skipped...')))
 
     # generate
     code = onlinejudge_template.generator.run(analyzed, template_file=parsed.template)

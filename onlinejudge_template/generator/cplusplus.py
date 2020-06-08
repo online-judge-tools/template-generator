@@ -309,6 +309,8 @@ def _analyze_output_type(*, data: Dict[str, Any]) -> OutputType:
     node = analyzed.output_format
     decls = analyzed.output_variables
 
+    # pattern:
+    #     ans
     if isinstance(node, SequenceNode) and len(node.items) == 2:
         item0 = node.items[0]
         item1 = node.items[1]
@@ -322,6 +324,8 @@ def _analyze_output_type(*, data: Dict[str, Any]) -> OutputType:
                     return YesNoOutputType(name=name, yes='FIRST', no='SECOND')
                 return OneOutputType(name=name, type=type)
 
+    # pattern:
+    #     x y
     if isinstance(node, SequenceNode) and len(node.items) == 3:
         item0 = node.items[0]
         item1 = node.items[1]
@@ -334,6 +338,9 @@ def _analyze_output_type(*, data: Dict[str, Any]) -> OutputType:
             if type1 is not None and type2 is not None:
                 return TwoOutputType(name1=name1, type1=type1, name2=name2, type2=type2, print_newline_after_item=False)
 
+    # pattern:
+    #     x
+    #     y
     if isinstance(node, SequenceNode) and len(node.items) == 4:
         item0 = node.items[0]
         item1 = node.items[1]
@@ -347,6 +354,9 @@ def _analyze_output_type(*, data: Dict[str, Any]) -> OutputType:
             if type1 is not None and type2 is not None:
                 return TwoOutputType(name1=name1, type1=type1, name2=name2, type2=type2, print_newline_after_item=False)
 
+    # pattern:
+    #     n
+    #     a_1 ... a_n
     if isinstance(node, SequenceNode) and len(node.items) == 4:
         item0 = node.items[0]
         item1 = node.items[1]
@@ -361,6 +371,26 @@ def _analyze_output_type(*, data: Dict[str, Any]) -> OutputType:
                 if type is not None:
                     return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=False)
 
+    # pattern:
+    #     n a_1 ... a_n
+    if isinstance(node, SequenceNode) and len(node.items) == 3:
+        item0 = node.items[0]
+        item1 = node.items[1]
+        item2 = node.items[2]
+        if isinstance(item0, ItemNode) and isinstance(item2, NewlineNode):
+            if isinstance(item1, LoopNode) and isinstance(item1.body, ItemNode) and item1.size == item0.name and item1.body.indices == [item1.name]:
+                type = decls[item1.body.name].type
+                name = 'ans'  # item1.body.name may be randomized
+                subscripted_name = _get_variable(decl=decls[name], indices=item1.body.indices, decls=decls)
+                counter_name = item1.name
+                if type is not None:
+                    return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=False, print_newline_after_item=False)
+
+    # pattern:
+    #     n
+    #     a_1
+    #     ...
+    #     a_n
     if isinstance(node, SequenceNode) and len(node.items) == 3:
         item0 = node.items[0]
         item1 = node.items[1]
@@ -630,8 +660,11 @@ def formal_arguments(data: Dict[str, Any]) -> str:
     if analyzed.input_format is None or analyzed.input_variables is None:
         return f"""int n, const {_get_std(data=data)}vector<int64_t> & a"""
 
+    decls = analyzed.input_variables
+    decls = utils._filter_ignored_variables(decls, data=data)
+
     args = []
-    for name, decl in analyzed.input_variables.items():
+    for name, decl in decls.items():
         type = _get_base_type(decl.type, data=data)
         for _ in reversed(decl.dims):
             space = ' ' if type.endswith('>') else ''
@@ -647,7 +680,9 @@ def actual_arguments(data: Dict[str, Any]) -> str:
     if analyzed.input_format is None or analyzed.input_variables is None:
         return 'n, a'
 
-    return ', '.join(analyzed.input_variables.keys())
+    decls = analyzed.input_variables
+    decls = utils._filter_ignored_variables(decls, data=data)
+    return ', '.join(decls.keys())
 
 
 def return_type(data: Dict[str, Any]) -> str:
