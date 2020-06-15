@@ -12,6 +12,8 @@ from onlinejudge_template.main import main
 
 
 class TestOJTemplateCommand(unittest.TestCase):
+    """TestOJTemplateCommand is a class for end-to-end tests about oj-template command.
+    """
     def _helper(self, *, url: str, template: str, placeholder: str, code: str, compile: Callable[[pathlib.Path], str], command: Callable[[pathlib.Path], str]):
         with tempfile.TemporaryDirectory() as tmpdir_:
             tmpdir = pathlib.Path(tmpdir_)

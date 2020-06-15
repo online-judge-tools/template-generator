@@ -5,6 +5,8 @@ from onlinejudge_template.network import download_html
 
 
 class TestFormatStringDetectorAtCoder(unittest.TestCase):
+    """TestFormatStringDetectorAtCoder is a class for unit tests about the format string detection of AtCoder (with network access).
+    """
     def test_agc041_a(self) -> None:
         url = 'https://atcoder.jp/contests/agc041/tasks/agc041_a'
         expected = '\r\n'.join([
@@ -102,6 +104,8 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
 
 
 class TestFormatStringDetectorLibraryChecker(unittest.TestCase):
+    """TestFormatStringDetectorLibraryChecker is a class for unit tests about the format string detection of Library Checker (with network access).
+    """
     def test_unionfind(self) -> None:
         url = 'https://judge.yosupo.jp/problem/unionfind'
         expected = '\n'.join([
@@ -153,6 +157,8 @@ class TestFormatStringDetectorLibraryChecker(unittest.TestCase):
 
 
 class TestFormatStringDetectorYukicoder(unittest.TestCase):
+    """TestFormatStringDetectorYukicoder is a class for unit tests about the format string detection of yukicoder (with network access).
+    """
     def test_no_1000(self) -> None:
         url = 'https://yukicoder.me/problems/no/1000'
         expected = '\n'.join([
