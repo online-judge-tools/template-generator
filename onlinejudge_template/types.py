@@ -164,9 +164,11 @@ class VectorOutputType(OutputType):
 
 class TopcoderType(enum.Enum):
     Int = 'int'
+    Long = 'long'
     Double = 'double'
     String = 'String'
     IntList = 'int[]'
+    LongList = 'long[]'
     DoubleList = 'double[]'
     StringList = 'String[]'
 

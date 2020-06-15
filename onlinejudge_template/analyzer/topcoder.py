@@ -64,9 +64,11 @@ def _parse_topcoder_method_signature(signature: str) -> Tuple[TopcoderType, List
 
     type_table = {
         'int': TopcoderType.Int,
+        'long': TopcoderType.Long,
         'double': TopcoderType.Double,
         'String': TopcoderType.String,
         'int[]': TopcoderType.IntList,
+        'long[]': TopcoderType.LongList,
         'double[]': TopcoderType.DoubleList,
         'String[]': TopcoderType.StringList,
     }
@@ -105,12 +107,12 @@ def parse_topcoder_class_definition(html: bytes, *, url: str) -> TopcoderClassDe
 
 
 def _convert_topcoder_node(type_: TopcoderType, name: str) -> FormatNode:
-    if type_ in (TopcoderType.Int, TopcoderType.Double, TopcoderType.String):
+    if type_ in (TopcoderType.Int, TopcoderType.Long, TopcoderType.Double, TopcoderType.String):
         return SequenceNode(items=[
             ItemNode(name=name),
             NewlineNode(),
         ])
-    elif type_ in (TopcoderType.IntList, TopcoderType.DoubleList, TopcoderType.StringList):
+    elif type_ in (TopcoderType.IntList, TopcoderType.LongList, TopcoderType.DoubleList, TopcoderType.StringList):
         length_name = name + '_length'
         index_name = 'i'
         return SequenceNode(items=[
@@ -135,10 +137,12 @@ def convert_topcoder_class_definition_to_output_format(definition: TopcoderClass
 
 def _convert_topcoder_var_decls(type_: TopcoderType, name: str) -> List[VarDecl]:
     type_table = {
-        TopcoderType.Int: (VarType.ValueInt, False),
+        TopcoderType.Int: (VarType.IndexInt, False),
+        TopcoderType.Long: (VarType.ValueInt, False),
         TopcoderType.Double: (VarType.Float, False),
         TopcoderType.String: (VarType.String, False),
-        TopcoderType.IntList: (VarType.ValueInt, True),
+        TopcoderType.IntList: (VarType.IndexInt, True),
+        TopcoderType.LongList: (VarType.ValueInt, True),
         TopcoderType.DoubleList: (VarType.Float, True),
         TopcoderType.StringList: (VarType.String, True),
     }

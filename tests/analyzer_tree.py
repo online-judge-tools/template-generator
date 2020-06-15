@@ -5,6 +5,8 @@ from onlinejudge_template.types import *
 
 
 class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
+    """TestFormatStringAnalyzerAtCoder is a class for unit tests for the format string analyzer about AtCoder (without network access).
+    """
     def test_agc041_a(self) -> None:
         # https://atcoder.jp/contests/agc041/tasks/agc041_a
         format_string = '\n'.join([
@@ -118,6 +120,8 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
 
 
 class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
+    """TestFormatStringAnalyzerLibraryChecker is a class for unit tests for the format string analyzer about Library Checker (without network access).
+    """
     def test_unionfind(self) -> None:
         # https://judge.yosupo.jp/problem/unionfind
         format_string = '\n'.join([
@@ -211,6 +215,8 @@ class TestFormatStringAnalyzerLibraryChecker(unittest.TestCase):
 
 
 class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
+    """TestFormatStringAnalyzerYukicoder is a class for unit tests for the format string analyzer about yukicoder (without network access).
+    """
     def test_no_1000(self) -> None:
         # https://yukicoder.me/problems/no/1000
         format_string = '\n'.join([
