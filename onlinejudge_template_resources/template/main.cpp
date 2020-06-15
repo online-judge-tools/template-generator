@@ -3,7 +3,7 @@
     import platform
 
     import onlinejudge_template.generator.cplusplus as cplusplus
-    import onlinejudge_template.generator._topcoder as _topcoder
+    import onlinejudge_template.generator.topcoder as topcoder
     import onlinejudge_template.generator.about as about
 %>\
 <%
@@ -28,11 +28,11 @@ ${include}
 using namespace std;
 
 ${cplusplus.declare_constants(data)}
-% if _topcoder.is_topcoder(data):
-<% solve_function = _topcoder.class_name(data) + "()." + _topcoder.method_name(data) %>\
-class ${_topcoder.class_name(data)} {
+% if topcoder.is_topcoder(data):
+<% solve_function = topcoder.class_name(data) + "()." + topcoder.method_name(data) %>\
+class ${topcoder.class_name(data)} {
 public:
-    ${cplusplus.return_type(data)} ${_topcoder.method_name(data)}(${cplusplus.formal_arguments(data)}) {
+    ${cplusplus.return_type(data)} ${topcoder.method_name(data)}(${cplusplus.formal_arguments(data)}) {
         // TODO: edit here
     }
 };
