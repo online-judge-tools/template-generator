@@ -19,7 +19,8 @@ def run(analyzed: AnalyzerResult, *, template_file: str) -> bytes:
     ]
     lookup = mako.lookup.TemplateLookup(directories=directories, input_encoding="utf-8", output_encoding="utf-8")
     path = pathlib.Path(template_file)
-    if path.is_absolute() and path.exists():
+    has_slash = path.name != template_file  # If template_file has path separators or any other things characteristic to paths, we use it as a path. This is a similar behavior to searching commands in shell.
+    if has_slash and path.exists():
         with open(path, "rb") as fh:
             lookup.put_string(template_file, fh.read())
     template = lookup.get_template(template_file)
