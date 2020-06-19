@@ -3,9 +3,9 @@ import sys
 from logging import DEBUG, INFO, basicConfig, getLogger
 from typing import *
 
-import onlinejudge_template.analyzer.combined
-import onlinejudge_template.generator
-import onlinejudge_template.network
+import onlinejudge_template.analyzer.combined as analyzer
+import onlinejudge_template.generator._main as generator
+import onlinejudge_template.network as network
 
 import onlinejudge.dispatch
 import onlinejudge.utils
@@ -33,18 +33,18 @@ def main(args: Optional[List[str]] = None) -> None:
         url = problem.get_url()  # normalize url
     logger.debug('url: %s', url)
     with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=parsed.cookie) as session:
-        html = onlinejudge_template.network.download_html(url, session=session)
-        sample_cases = onlinejudge_template.network.download_sample_cases(url, session=session)
+        html = network.download_html(url, session=session)
+        sample_cases = network.download_sample_cases(url, session=session)
     logger.debug('sample cases: %s', sample_cases)
 
     # analyze
-    resources = onlinejudge_template.analyzer.combined.prepare_from_html(html, url=url, sample_cases=sample_cases)
+    resources = analyzer.prepare_from_html(html, url=url, sample_cases=sample_cases)
     logger.debug('analyzer resources: %s', resources._replace(html=b'...skipped...'))
-    analyzed = onlinejudge_template.analyzer.combined.run(resources)
+    analyzed = analyzer.run(resources)
     logger.debug('analyzed result: %s', analyzed._replace(resources=analyzed.resources._replace(html=b'...skipped...')))
 
     # generate
-    code = onlinejudge_template.generator.run(analyzed, template_file=parsed.template)
+    code = generator.run(analyzed, template_file=parsed.template)
     sys.stdout.buffer.write(code)
 
 
