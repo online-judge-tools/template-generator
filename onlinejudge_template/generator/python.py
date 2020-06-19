@@ -105,8 +105,20 @@ def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Se
     # traverse AST
     if isinstance(node, ItemNode):
         var = _get_variable(decl=decls[node.name], indices=node.indices)
+        type_ = decls[node.name].type
         initialized.add(node.name)
-        return OtherNode(line=f"""{var} = random.randint(1, 10 ** 9)  # TODO: edit here""")
+        if type_ == VarType.IndexInt:
+            return OtherNode(line=f"""{var} = random.randint(1, 1000)  # TODO: edit here""")
+        elif type_ == VarType.ValueInt:
+            return OtherNode(line=f"""{var} = random.randint(1, 10 ** 9)  # TODO: edit here""")
+        elif type_ == VarType.Float:
+            return OtherNode(line=f"""{var} = 100.0 * random.random()  # TODO: edit here""")
+        elif type_ == VarType.String:
+            return OtherNode(line=f"""{var} = ''.join([random.choice('abcde') for range(random.randint(1, 100))])  # TODO: edit here""")
+        elif type_ == VarType.Char:
+            return OtherNode(line=f"""{var} = random.choice('abcde')  # TODO: edit here""")
+        else:
+            return OtherNode(line=f"""{var} = None  # TODO: edit here""")
     elif isinstance(node, NewlineNode):
         return SentencesNode(sentences=[])
     elif isinstance(node, SequenceNode):
