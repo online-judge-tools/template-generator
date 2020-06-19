@@ -26,9 +26,8 @@ the module to guess format trees from sample strings
 """
 
 import functools
-import random
+import itertools
 import re
-import string
 from logging import getLogger
 from typing import *
 
@@ -229,6 +228,9 @@ def _make_tree_pattern_dfs(node: FormatNode) -> Tuple[FormatNode, bool]:
 
 
 def _make_tree_patterns(patterns: List[FormatNode]) -> List[FormatNode]:
+    """_make_tree_patterns detects patterns which have the variable `n` and arrays with lentgh `n`, and replaces the length of arrays with `n - 1`.
+    """
+
     tree_patterns = []
     for pattern in patterns:
         pattern, replaced = _make_tree_pattern_dfs(pattern)
@@ -239,6 +241,9 @@ def _make_tree_patterns(patterns: List[FormatNode]) -> List[FormatNode]:
 
 @functools.lru_cache(maxsize=None)
 def list_all_patterns() -> List[Tuple[FormatNode, Dict[str, VarDecl]]]:
+    """list_all_patterns lists all pre-defined petterns.
+    """
+
     patterns: List[FormatNode] = [
         *_simple_patterns,
         *_vertical_simple_patterns,
@@ -258,17 +263,24 @@ def list_all_patterns() -> List[Tuple[FormatNode, Dict[str, VarDecl]]]:
     return results
 
 
-def _randomize_variables_dfs(node: FormatNode, *, mapping: Dict[str, str]) -> FormatNode:
+def _rename_variables_if_conflicts_dfs(node: FormatNode, *, mapping: Dict[str, str], env: Dict[str, VarDecl]) -> FormatNode:
     def rename(s: str) -> str:
         for a, b in mapping.items():
             s = re.sub(r'\b' + re.escape(a) + r'\b', b, s)
         return s
 
     if isinstance(node, ItemNode):
-        assert node.name not in mapping
-        mapping[node.name] = random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase) + random.choice(string.ascii_lowercase)
-        indices = list(map(rename, node.indices))
-        return ItemNode(name=mapping[node.name], indices=indices)
+        assert node.name not in mapping  # because there are only such patterns
+        if node.name not in env:
+            return node
+        else:
+            for i in itertools.count(1):
+                new_name = node.name + str(i)
+                if new_name not in env:
+                    mapping[node.name] = new_name
+                    break
+            indices = list(map(rename, node.indices))
+            return ItemNode(name=mapping[node.name], indices=indices)
 
     elif isinstance(node, NewlineNode):
         return node
@@ -276,22 +288,30 @@ def _randomize_variables_dfs(node: FormatNode, *, mapping: Dict[str, str]) -> Fo
     elif isinstance(node, SequenceNode):
         items: List[FormatNode] = []
         for item in node.items:
-            items.append(_randomize_variables_dfs(item, mapping=mapping))
+            items.append(_rename_variables_if_conflicts_dfs(item, mapping=mapping, env=env))
         return SequenceNode(items=items)
 
     elif isinstance(node, LoopNode):
-        body = _randomize_variables_dfs(node.body, mapping=mapping)
+        body = _rename_variables_if_conflicts_dfs(node.body, mapping=mapping, env=env)
         return LoopNode(name=node.name, size=rename(node.size), body=body)
 
     else:
         assert False
 
 
-def randomize_variables(node: FormatNode) -> FormatNode:
-    return _randomize_variables_dfs(node, mapping={})
+def rename_variables_if_conflicts(node: FormatNode, *, env: Dict[str, VarDecl]) -> FormatNode:
+    return _rename_variables_if_conflicts_dfs(node, mapping={}, env=env)
 
 
-def guess_format_with_pattern_matching(*, instances: List[bytes]) -> Optional[FormatNode]:
+def guess_format_with_pattern_matching(*, instances: List[bytes], env: Optional[Dict[str, VarDecl]] = None) -> Optional[FormatNode]:
+    """guess_format_with_pattern_matching guesses a format tree from the strings which match with the format tree, i.e. sample cases.
+
+    :param instances: are sample cases.
+    :param env: is the dict which contains variables already defined.
+    """
+
+    if env is None:
+        env = {}
     found: List[FormatNode] = []
     for pattern, variables in list_all_patterns():
         try:
@@ -301,6 +321,6 @@ def guess_format_with_pattern_matching(*, instances: List[bytes]) -> Optional[Fo
         except FormatMatchError:
             pass
     if len(found) == 1:
-        return randomize_variables(found[0])
+        return rename_variables_if_conflicts(found[0], env=env)
     else:
         return None
