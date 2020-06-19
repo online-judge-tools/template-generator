@@ -38,13 +38,12 @@ def analyze_output_type(*, output_format: FormatNode, output_variables: Dict[str
         item1 = node.items[1]
         if isinstance(item0, ItemNode) and isinstance(item1, NewlineNode):
             type = decls[item0.name].type
-            name = 'ans'  # item0.name may be randomized
             if type is not None:
                 if 'YES' in constants and 'NO' in constants and type == VarType.String:
-                    return YesNoOutputType(name=name, yes='YES', no='NO')
+                    return YesNoOutputType(name='ans', yes='YES', no='NO')
                 if 'FIRST' in constants and 'SECOND' in constants and type == VarType.String:
-                    return YesNoOutputType(name=name, yes='FIRST', no='SECOND')
-                return OneOutputType(name=name, type=type)
+                    return YesNoOutputType(name='ans', yes='FIRST', no='SECOND')
+                return OneOutputType(name='ans', type=type)
 
     # pattern:
     #     x y
@@ -87,11 +86,10 @@ def analyze_output_type(*, output_format: FormatNode, output_variables: Dict[str
         if isinstance(item0, ItemNode) and isinstance(item1, NewlineNode) and isinstance(item3, NewlineNode):
             if isinstance(item2, LoopNode) and isinstance(item2.body, ItemNode) and item2.size == item0.name and item2.body.indices == [item2.name]:
                 type = decls[item2.body.name].type
-                name = 'ans'  # item2.body.name may be randomized
-                subscripted_name = _get_variable(decl=decls[name], indices=item2.body.indices, decls=decls)
+                subscripted_name = _get_variable(decl=decls[item2.body.name], indices=item2.body.indices, decls=decls)
                 counter_name = item2.name
                 if type is not None:
-                    return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=False)
+                    return VectorOutputType(name='ans', type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=False)
 
     # pattern:
     #     n a_1 ... a_n
@@ -102,11 +100,10 @@ def analyze_output_type(*, output_format: FormatNode, output_variables: Dict[str
         if isinstance(item0, ItemNode) and isinstance(item2, NewlineNode):
             if isinstance(item1, LoopNode) and isinstance(item1.body, ItemNode) and item1.size == item0.name and item1.body.indices == [item1.name]:
                 type = decls[item1.body.name].type
-                name = 'ans'  # item1.body.name may be randomized
-                subscripted_name = _get_variable(decl=decls[name], indices=item1.body.indices, decls=decls)
+                subscripted_name = _get_variable(decl=decls[item1.body.name], indices=item1.body.indices, decls=decls)
                 counter_name = item1.name
                 if type is not None:
-                    return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=False, print_newline_after_item=False)
+                    return VectorOutputType(name='ans', type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=False, print_newline_after_item=False)
 
     # pattern:
     #     n
@@ -123,10 +120,9 @@ def analyze_output_type(*, output_format: FormatNode, output_variables: Dict[str
                 item4 = node.items[1]
                 if isinstance(item3, ItemNode) and isinstance(item4, NewlineNode) and item2.size == item0.name and item3.indices == [item0.name]:
                     type = decls[item3.name].type
-                    name = 'ans'  # item3.name may be randomized
-                    subscripted_name = _get_variable(decl=decls[name], indices=item3.indices, decls=decls)
+                    subscripted_name = _get_variable(decl=decls[item3.name], indices=item3.indices, decls=decls)
                     counter_name = item2.name
                     if type is not None:
-                        return VectorOutputType(name=name, type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=True)
+                        return VectorOutputType(name='ans', type=type, subscripted_name=subscripted_name, counter_name=counter_name, print_size=True, print_newline_after_size=True, print_newline_after_item=True)
 
     return None
