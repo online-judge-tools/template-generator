@@ -10,9 +10,9 @@ from logging import DEBUG, INFO, basicConfig, getLogger
 from typing import *
 
 import appdirs
-import onlinejudge_template.analyzer.combined
-import onlinejudge_template.generator
-import onlinejudge_template.network
+import onlinejudge_template.analyzer.combined as analyzer
+import onlinejudge_template.generator._main as generator
+import onlinejudge_template.network as network
 import requests
 import toml
 
@@ -89,19 +89,19 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
     dir.parent.mkdir(parents=True, exist_ok=True)
     with chdir(dir):
         url = problem.get_url()
-        html = onlinejudge_template.network.download_html(url, session=session)
-        sample_cases = onlinejudge_template.network.download_sample_cases(url, session=session)
+        html = network.download_html(url, session=session)
+        sample_cases = network.download_sample_cases(url, session=session)
 
         # analyze
-        resources = onlinejudge_template.analyzer.combined.prepare_from_html(html, url=url, sample_cases=sample_cases)
-        analyzed = onlinejudge_template.analyzer.combined.run(resources)
+        resources = analyzer.prepare_from_html(html, url=url, sample_cases=sample_cases)
+        analyzed = analyzer.run(resources)
 
         for dest_str, template in table.items():
             dest = pathlib.Path(dest_str)
 
             # generate
             try:
-                code = onlinejudge_template.generator.run(analyzed, template_file=template)
+                code = generator.run(analyzed, template_file=template)
             except NotImplementedError as e:
                 logger.error('generator failed: %s', e)
                 continue
