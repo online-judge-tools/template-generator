@@ -125,14 +125,23 @@ def _match_format_dfs(node: FormatNode, tokens: List[str], *, variables: Dict[st
         assert False
 
 
-def match_format(node: FormatNode, data: str, *, variables: Dict[str, VarDecl]) -> Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]:
+def match_format(
+        node: FormatNode,
+        data: str,
+        *,
+        variables: Dict[str, VarDecl],
+        values: Optional[Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]] = None,
+) -> Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]:
     """
     :raises FormatMatchError:
+    :param values: is an optional argument to specify pre-defined variables.
     """
 
     # prepare buffer
-    values: Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]] = {}
+    if values is None:
+        values = {}
     for name in variables.keys():
+        assert name not in values
         values[name] = {}
 
     # tokenize input

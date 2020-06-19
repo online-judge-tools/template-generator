@@ -97,8 +97,11 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
     elif topcoder_class_definition is not None:
         output_format = onlinejudge_template.analyzer.topcoder.convert_topcoder_class_definition_to_output_format(topcoder_class_definition)
     elif resources.sample_cases:
-        output_samples = [case.output for case in resources.sample_cases]
-        output_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=output_samples, env=input_variables)
+        if input_format is not None and input_variables is not None:
+            output_format = onlinejudge_template.analyzer.simple_patterns.guess_output_format_with_pattern_matching_using_input_format(instances=resources.sample_cases, input_format=input_format, input_variables=input_variables)
+        else:
+            output_samples = [case.output for case in resources.sample_cases]
+            output_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=output_samples)
 
     # list the variables for output
     output_variables: Optional[Dict[str, VarDecl]] = None

@@ -263,6 +263,25 @@ def list_all_patterns() -> List[Tuple[FormatNode, Dict[str, VarDecl]]]:
     return results
 
 
+def list_output_patterns_depending_input_variable(n: str) -> List[FormatNode]:
+    """list_output_patterns_depending_input_variable lists output patterns which depend input patterns.
+
+    :param n: is the name of the variable which represents the length of array.
+    """
+
+    assert n not in ('ans', 'i')
+    vector_pattern = SequenceNode(items=[
+        LoopNode(name='i', size=n, body=ItemNode(name='ans', indices=['i'])),
+        NewlineNode(),
+    ])
+    vertical_vector_pattern = LoopNode(name='i', size=n, body=SequenceNode(items=[
+        ItemNode(name='ans', indices=['i']),
+        NewlineNode(),
+    ]))
+    all_patterns = [vector_pattern, vertical_vector_pattern]
+    return all_patterns
+
+
 def _rename_variables_if_conflicts_dfs(node: FormatNode, *, mapping: Dict[str, str], env: Dict[str, VarDecl]) -> FormatNode:
     def rename(s: str) -> str:
         for a, b in mapping.items():
@@ -303,24 +322,83 @@ def rename_variables_if_conflicts(node: FormatNode, *, env: Dict[str, VarDecl]) 
     return _rename_variables_if_conflicts_dfs(node, mapping={}, env=env)
 
 
-def guess_format_with_pattern_matching(*, instances: List[bytes], env: Optional[Dict[str, VarDecl]] = None) -> Optional[FormatNode]:
+def guess_format_with_pattern_matching(*, instances: List[bytes]) -> Optional[FormatNode]:
     """guess_format_with_pattern_matching guesses a format tree from the strings which match with the format tree, i.e. sample cases.
 
     :param instances: are sample cases.
-    :param env: is the dict which contains variables already defined.
     """
 
-    if env is None:
-        env = {}
     found: List[FormatNode] = []
+
+    # patterns without variables in the input format
     for pattern, variables in list_all_patterns():
+        pattern = rename_variables_if_conflicts(pattern, env={})
         try:
             for data in instances:
                 match_format(pattern, data.decode(), variables=variables)
-            found.append(pattern)
         except FormatMatchError:
             pass
+        else:
+            logger.debug('simple pattern found: %s', pattern)
+            found.append(pattern)
+
     if len(found) == 1:
-        return rename_variables_if_conflicts(found[0], env=env)
+        return found[0]
+    else:
+        return None
+
+
+def guess_output_format_with_pattern_matching_using_input_format(*, instances: List[SampleCase], input_format: FormatNode, input_variables: Dict[str, VarDecl]) -> Optional[FormatNode]:
+    """guess_output_format_with_pattern_matching_using_input_format
+
+    :param instances: are sample cases.
+    :param input_format:
+    :param input_variables:
+    """
+
+    found: List[FormatNode] = []
+
+    # patterns without variables in the input format
+    for pattern, variables in list_all_patterns():
+        try:
+            for data in instances:
+                match_format(pattern, data.output.decode(), variables=variables)
+        except FormatMatchError:
+            pass
+        else:
+            pattern = rename_variables_if_conflicts(pattern, env=input_variables)
+            logger.debug('simple output pattern found without input variables: %s', pattern)
+            found.append(pattern)
+
+    # patterns with variables in the input format
+    for name in ('n', 'N', 'm', 'M', 't', 'T'):
+        if name in input_variables and input_variables[name].type in (VarType.IndexInt, VarType.ValueInt):
+            env = dict(input_variables)
+            env.pop(name)
+            for pattern in list_output_patterns_depending_input_variable(name):
+
+                # prepare pattern
+                pattern = rename_variables_if_conflicts(pattern, env=env)
+                try:
+                    variables = onlinejudge_template.analyzer.variables.list_declared_variables(pattern)
+                except onlinejudge_template.analyzer.variables.DeclaredVariablesError:
+                    assert False
+                assert name not in variables
+
+                # try matching
+                try:
+                    for data in instances:
+                        input_values = match_format(input_format, data.input.decode(), variables=input_variables)
+                        values = {name: input_values[name]}  # hide variables other than the `name`
+                        match_format(pattern, data.output.decode(), variables=variables, values=values)
+                except FormatMatchError as e:
+                    logger.exception(e)
+                    pass
+                else:
+                    logger.debug('simple output pattern found with input variables: %s', pattern)
+                    found.append(pattern)
+
+    if len(found) == 1:
+        return found[0]
     else:
         return None
