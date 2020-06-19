@@ -51,7 +51,9 @@ $ oj-prepare URL
 -   `main.cpp`: C++ 解法コード
 -   `main.py`: Python 解法コード
 -   `generate.py`: Python ランダムケース生成器
+-   `generate.cpp`: C++ ランダムケース生成器
 
+(他にもいくつかありますが、それらは突然削除されることがあります。)
 
 ### Generating random cases
 
@@ -173,11 +175,25 @@ $ tree
 
 ## Settings
 
-`oj-template` のためのテンプレートは `~/.config/online-judge-tools/template/` の下に `~/.config/online-judge-tools/template/customized.py` のように作って `oj-template -t customized.py https://...` のように指定する。
-テンプレート記法は [Mako](https://www.makotemplates.org/) のものを使う。
-[fastio.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/fastio.cpp) とか [customize_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/customize_sample.cpp) とかを見てそれっぽく書けば動く。
+### oj-template
 
-`oj-prepare` の設定は `~/.config/online-judge-tools/prepare.config.toml` に次のように設定する。
+`oj-template` のためのテンプレートは `-t` オプションによって指摘できます。
+組み込みで用意されているテンプレートの一覧は [onlinejudge_template_resources/template/](https://github.com/online-judge-tools/template-generator/tree/master/onlinejudge_template_resources/template) で見られます。
+たとえば [generate.cpp](https://github.com/online-judge-tools/template-generator/blob/master/onlinejudge_template_resources/template/generate.cpp) を利用したい場合は `oj-template -t generate.cpp https://...` としてください。
+
+テンプレートを自分で作成することもできます。
+テンプレート記法は [Mako](https://www.makotemplates.org/) のものを使います。
+[fastio.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/fastio.cpp) とか [customize_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/customize_sample.cpp) とかを見ていい感じに書いてください。
+API ドキュメントは [onlinejudge_template.generator package](https://online-judge-template-generator.readthedocs.io/en/latest/onlinejudge_template.generator.html) にあります。
+
+自分で書いたテンプレートを指定するときは、文字列中にパス区切り文字 `/` が含まれるようにしてパスを指定してください (シェルスクリプトでの実行ファイルの指定と同様です)。
+たとえば `customized.py` というテンプレートを書いたときは、`oj-template -t ./customized.py https://...` や `oj-template -t /path/to/customized.py https://...` のように指定してください。
+また、ディレクトリ `~/.config/online-judge-tools/template/` の下に `~/.config/online-judge-tools/template/customized.py` のようにファイルを配置しておくことで、`oj-template -t customized.py https://...` のように指定できるようにもなります。`~/.config/online-judge-tools/template/` を使えば組み込みのテンプレートを上書きすることができます。
+
+### oj-prepare
+
+`oj-prepare` の設定は `~/.config/online-judge-tools/prepare.config.toml` で行えます。
+以下のように書いてください。
 
 ``` toml
 contest_directory = "~/Desktop/{service_domain}/{contest_id}/{problem_id}"

@@ -9,6 +9,10 @@ from onlinejudge_template.types import *
 
 
 def run(analyzed: AnalyzerResult, *, template_file: str) -> bytes:
+    """
+    :raises: mako.exceptions.MakoException
+    """
+
     data: Dict[str, Any] = {
         'analyzed': analyzed,
         'config': {},
