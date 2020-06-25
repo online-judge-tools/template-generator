@@ -5,16 +5,13 @@
 [![PyPI](https://img.shields.io/pypi/v/online-judge-template-generator)](https://pypi.org/project/online-judge-template-generator/)
 [![LICENSE](https://img.shields.io/pypi/l/online-judge-template-generator.svg)](https://github.com/kmyk/online-judge-template-generator/blob/master/LICENSE)
 
+[README 日本語バージョン](https://github.com/online-judge-tools/template-generator/blob/master/README.ja.md)
+
+
 ## What is this
 
-競技プログラミングテンプレートを作ってくれるやつです。
-[kyuridenamida/atcoder-tools](https://github.com/kyuridenamida/atcoder-tools) を参考に、その本質部分だけを抜き出して再実装しました。
-内部構造については [How it works](https://online-judge-template-generator.readthedocs.io/en/latest/how-it-works.html) に書かれています。
 
-主目的は以下のふたつです:
-
--   不適切な入出力方法を用いたことによる TLE を回避すること。たとえば「Codeforces で `std::endl` を使って TLE する」みたいなのをなくしたい
--   ランダムケースを生成してのテストを気軽に行えるようにすること。たとえば、サンプル AC して提出してみたら謎の WA が出たとき「これランダムケース生成して愚直解と比較すれば原因分かるだろうけど、面倒なんだよな」ってなりがちですが、この面倒を半減させ高速にデバッグできるようにしたい
+This tool analyzes problems and generates template codes for competitive programming.
 
 
 ## How to install
@@ -26,15 +23,15 @@ $ pip3 install online-judge-template-generator
 
 ## Usage
 
-`oj-template` コマンドは、指定された問題に対し、入出力パートを自動生成します。
-入出力解析は (精度は別として) たいていのオンラインジャッジで動きます。
+`oj-template` command analyzes the specified problem and generates the template files (e.g. `main.cpp`) including input/output part (e.g. `int n; std::cin >> n;`) and the generators (e.g. `generate.py`) of random test cases for the problem. See [Examples](#examples).
+This works on many online judges which [`oj` command](https://github.com/kmyk/online-judge-tools) works.
 
 ``` console
 $ oj-template [-t TEMPLATE] URL
 ```
 
-`oj-prepare` コマンドは、指定された問題やコンテストに対し、テンプレート生成やサンプルのダウンロードを一括で行います。
-[`oj` コマンド](https://github.com/kmyk/online-judge-tools) が動くやつなら何に対してでも動きます。
+`oj-prepare` command prepares some template files and test cases for a problem or a contest at once. This is a thin wrapper of `oj` command and `oj-template` command.
+This works on many online judges which [`oj` command](https://github.com/kmyk/online-judge-tools) works.
 
 ``` console
 $ oj-prepare URL
@@ -43,26 +40,23 @@ $ oj-prepare URL
 
 ### Supported languages
 
-`oj-template` が認識する組み込みのテンプレートとして以下が使えます。
+The following template files are prepared as builtin of `oj-template` command.
 
--   `main.cpp`: C++ 解法コード
--   `main.py`: Python 解法コード
--   `generate.py`: Python ランダムケース生成器
--   `generate.cpp`: C++ ランダムケース生成器
+-   `main.cpp`: solution in C++
+-   `main.py`: solution in Python
+-   `generate.py`: random case generator in Python
+-   `generate.cpp`: random case generator in C++
 
-(他にもいくつかありますが、それらは突然削除されることがあります。)
 
 ### Generating random cases
 
-ランダムケースの生成は、`oj-prepare` コマンドがデフォルトで生成する `generate.py` を修正した後に、次のように実行してください。
+To generat random cases, please run `oj-prepare https://...` command, edit the generated `generate.py` file, and run the following command:
 
 ``` console
 $ oj generate-input "python3 generate.py"
 ```
 
-ファイル `generate.py` は `oj-template -t generate.py "https://..."` というコマンドの実行によっても生成できます。
-
-また、ランダムケース生成を補助するための module `onlinejudge_random` が用意されています。詳細は[ドキュメント](https://online-judge-template-generator.readthedocs.io/en/latest/onlinejudge_random.html)を確認してください。
+You can also generate the file `generate.py` with the running the command `oj-template -t generate.py "https://..."`.
 
 
 ## Examples
@@ -174,23 +168,24 @@ $ tree
 
 ### oj-template
 
-`oj-template` のためのテンプレートは `-t` オプションによって指摘できます。
-組み込みで用意されているテンプレートの一覧は [onlinejudge_template_resources/template/](https://github.com/online-judge-tools/template-generator/tree/master/onlinejudge_template_resources/template) で見られます。
-たとえば [generate.cpp](https://github.com/online-judge-tools/template-generator/blob/master/onlinejudge_template_resources/template/generate.cpp) を利用したい場合は `oj-template -t generate.cpp https://...` としてください。
+The template file for `oj-template` command can be specified with the `-t` option.
+You can see the list of builtin template files at [onlinejudge_template_resources/template/](https://github.com/online-judge-tools/template-generator/tree/master/onlinejudge_template_resources/template).
+For example, if you want to use [generate.cpp](https://github.com/online-judge-tools/template-generator/blob/master/onlinejudge_template_resources/template/generate.cpp), please run as `oj-template -t generate.cpp https://...`.
 
-テンプレートを自分で作成することもできます。
-テンプレート記法は [Mako](https://www.makotemplates.org/) のものを使います。
-[fastio.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/fastio.cpp) とか [customize_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/customize_sample.cpp) とかを見ていい感じに書いてください。
-API ドキュメントは [onlinejudge_template.generator package](https://online-judge-template-generator.readthedocs.io/en/latest/onlinejudge_template.generator.html) にあります。
+You can make a new template by yourself.
+The format of template files is [Mako](https://www.makotemplates.org/)'s one.
+Please write by reference to existing files like
+[fastio_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/fastio_sample.cpp) or [customize_sample.cpp](https://github.com/kmyk/online-judge-template-generator/blob/master/onlinejudge_template_resources/template/customize_sample.cpp)>
+API documentation exists at [onlinejudge_template.generator package](https://online-judge-template-generator.readthedocs.io/en/latest/onlinejudge_template.generator.html).
 
-自分で書いたテンプレートを指定するときは、文字列中にパス区切り文字 `/` が含まれるようにしてパスを指定してください (シェルスクリプトでの実行ファイルの指定と同様です)。
-たとえば `customized.py` というテンプレートを書いたときは、`oj-template -t ./customized.py https://...` や `oj-template -t /path/to/customized.py https://...` のように指定してください。
-また、ディレクトリ `~/.config/online-judge-tools/template/` の下に `~/.config/online-judge-tools/template/customized.py` のようにファイルを配置しておくことで、`oj-template -t customized.py https://...` のように指定できるようにもなります。`~/.config/online-judge-tools/template/` を使えば組み込みのテンプレートを上書きすることができます。
+To specify your new template file with `-t` option, please include the path separator character `/` in the given path (this is similar to the behavior of executing a command out of PATH in shell).
+For example, if you write a template file named `customized.py`, please run `oj-template -t ./customized.py https://...` or `oj-template -t /path/to/customized.py https://...`.
+Also you can use certain directory (when you use Linux, it's `~/.config/online-judge-tools/template/`) to place template files like `~/.config/online-judge-tools/template/customized.py`. If templates exist in this directory, you can specify them as `oj-template -t customized.py https://...`. If templates files whose names are the same to builtin templates, they are override the builtin files.
 
 ### oj-prepare
 
-`oj-prepare` の設定は `~/.config/online-judge-tools/prepare.config.toml` で行えます。
-以下のように書いてください。
+There is the config file for `oj-prepare` at `~/.config/online-judge-tools/prepare.config.toml` (in Linux).
+Please write as the following.
 
 ``` toml
 contest_directory = "~/Desktop/{service_domain}/{contest_id}/{problem_id}"
@@ -202,20 +197,21 @@ problem_directory = "."
 "generate.py" = "generate.py"
 ```
 
-設定項目:
+Available items:
 
--   `problem_directory` (string): 問題の URL が指定された場合は `{problem_directory}` にファイルが用意される。
+-   `problem_directory` (string): When a URL of a problem is given to the command, use `{problem_directory}` for the directory.
     -   default: `.`
-    -   使える変数:
-        -   `{problem_id}`: 問題 ID (`abc123_d` など)
--   `contest_directory` (string): コンテストの URL が指定された場合は `{contest_directory}/{problem_directory}` にファイルが用意される。(default: 
+    -   available vairables:
+        -   `{problem_id}`: problem ID (e.g. `abc123_d`)
+-   `contest_directory` (string): When a URL of a contest is given to the command, use `{contest_directory}/{problem_directory}` for the directory.
     -   default: `{problem_id}`
-    -   使える変数:
-        -   `{problem_id}`: 問題 ID (`abc123_d` など)
-        -   `{contest_id}`: コンテスト ID (`abc123` など)
-        -   `{service_domain}`: サービスのドメイン (`atcoder.jp` など)
-        -   `{service_name}`: サービスの名前 (`AtCoder` など)
--   `templates` (table of string): value (右側) のテンプレートによる生成結果を key (左側) で指定したパスに配置する。
+    -   available vairables:
+        -   `{problem_id}`: problem ID (e.g. `abc123_d`)
+        -   `{contest_id}`: contest ID (e.g. `abc123`)
+        -   `{service_domain}`: the domain of the online judge (e.g. `codeforces.com`)
+        -   `{service_name}`: the name of the online judge (e.g. `Codeforces`)
+-   `templates` (table of string): places the generated code specified by value (the right of `=`) into paths specified by key (the left of `=`).
+    -   example: `{ "solution.cpp" = "main.cpp", "naive.py" = main.py", "generate.cpp" = "generate.cpp" }`
     -   default: `{ "main.cpp" = "main.cpp", "main.py" = "main.py", "generate.py" = "generate.py" }`
 
 
