@@ -10,14 +10,14 @@ from logging import DEBUG, INFO, basicConfig, getLogger
 from typing import *
 
 import appdirs
-import onlinejudge_template.analyzer.combined as analyzer
-import onlinejudge_template.generator._main as generator
-import onlinejudge_template.network as network
 import requests
 import toml
 
 import onlinejudge
 import onlinejudge.utils
+import onlinejudge_template.analyzer.combined as analyzer
+import onlinejudge_template.generator._main as generator
+import onlinejudge_template.network as network
 
 logger = getLogger(__name__)
 

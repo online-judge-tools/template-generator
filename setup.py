@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-from onlinejudge_template.__about__ import __title__, __url__, __version__
 from setuptools import find_packages, setup
+
+from onlinejudge_template.__about__ import __title__, __url__, __version__
 
 setup(
     name=__title__,

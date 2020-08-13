@@ -35,6 +35,7 @@ from typing import *
 
 import ply.lex as lex
 import ply.yacc as yacc
+
 from onlinejudge_template.types import *
 from onlinejudge_template.utils import simplify
 
