@@ -3,12 +3,11 @@ import sys
 from logging import DEBUG, INFO, basicConfig, getLogger
 from typing import *
 
+import onlinejudge.dispatch
+import onlinejudge.utils
 import onlinejudge_template.analyzer.combined as analyzer
 import onlinejudge_template.generator._main as generator
 import onlinejudge_template.network as network
-
-import onlinejudge.dispatch
-import onlinejudge.utils
 
 logger = getLogger(__name__)
 

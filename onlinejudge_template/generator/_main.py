@@ -5,6 +5,7 @@ import appdirs
 import mako.lookup
 import mako.template
 import pkg_resources
+
 from onlinejudge_template.types import *
 
 

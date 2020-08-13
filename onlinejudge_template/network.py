@@ -8,10 +8,10 @@ from logging import getLogger
 from typing import *
 
 import requests
-from onlinejudge_template.types import *
 
 import onlinejudge
 import onlinejudge.utils
+from onlinejudge_template.types import *
 
 logger = getLogger(__name__)
 

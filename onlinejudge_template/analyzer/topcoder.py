@@ -8,6 +8,7 @@ from logging import getLogger
 from typing import *
 
 import bs4
+
 from onlinejudge_template.types import *
 
 logger = getLogger(__name__)

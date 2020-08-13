@@ -126,11 +126,11 @@ def _match_format_dfs(node: FormatNode, tokens: List[str], *, variables: Dict[st
 
 
 def match_format(
-        node: FormatNode,
-        data: str,
-        *,
-        variables: Dict[str, VarDecl],
-        values: Optional[Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]] = None,
+    node: FormatNode,
+    data: str,
+    *,
+    variables: Dict[str, VarDecl],
+    values: Optional[Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]] = None,
 ) -> Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]:
     """
     :raises FormatMatchError:

@@ -20,6 +20,6 @@ jobs:
         oj-template -h
         oj-prepare -h
         pylint --disable=all --enable=unused-import onlinejudge_template onlinejudge_random onlinejudge_prepare tests setup.py
-        isort --check-only --diff --recursive onlinejudge_template onlinejudge_random onlinejudge_prepare tests setup.py
+        isort --check-only --diff onlinejudge_template onlinejudge_random onlinejudge_prepare tests setup.py
         yapf --diff --recursive onlinejudge_template onlinejudge_random onlinejudge_prepare tests setup.py | tee yapf.patch && test ! -s yapf.patch
         mypy onlinejudge_template onlinejudge_random onlinejudge_prepare setup.py
