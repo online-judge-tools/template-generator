@@ -15,8 +15,10 @@ setup(
     install_requires=[
         'appdirs >= 1.4',
         'beautifulsoup4 >= 4.8',
+        'colorlog >= 4.2.1',
         'Mako >= 1.1',
-        'online-judge-tools >= 9',
+        'online-judge-api-client >= 10.3.0',
+        'online-judge-tools >= 10',
         'ply >= 3',
         'pyyaml >= 5',
         'requests >= 2.23',
