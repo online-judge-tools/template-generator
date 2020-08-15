@@ -12,7 +12,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
         format_string = '\n'.join([
             r'<var>N</var> <var>A</var> <var>B</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\n'
+        ]).strip() + '\n'
         format_tree = SequenceNode(items=[
             ItemNode(name='N'),
             ItemNode(name='A'),
@@ -28,7 +28,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             r'<var>N</var> <var>M</var> <var>V</var> <var>P</var>',
             r'<var>A_1</var> <var>A_2</var> <var>...</var> <var>A_N</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\n'
+        ]).strip() + '\n'
         format_tree = SequenceNode(items=[
             ItemNode(name='N'),
             ItemNode(name='M'),
@@ -48,7 +48,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             r'<var>N</var>',
             r'<var>c_1c_2c_3…c_N</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\n'
+        ]).strip() + '\n'
         format_tree = SequenceNode(items=[
             ItemNode(name='N'),
             NewlineNode(),
@@ -69,7 +69,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             r':',
             r'<var>c_{81}</var> <var>c_{82}</var> … <var>c_{88}</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\n'
+        ]).strip() + '\n'
         format_tree = LoopNode(name='j', size='8', body=SequenceNode(items=[
             LoopNode(name='i', size='8', body=ItemNode(name='c', indices=('i + 1', 'j + 1'))),
             NewlineNode(),
@@ -90,7 +90,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             r'<var>:</var>',
             r'<var>l_N</var> <var>r_N</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\n'
+        ]).strip() + '\n'
         format_tree = SequenceNode(items=[
             ItemNode(name='N'),
             NewlineNode(),
@@ -114,7 +114,7 @@ class TestFormatStringAnalyzerAtCoder(unittest.TestCase):
             r'<var>N</var>',
             r'<var>A_1</var> <var>op_1</var> <var>A_2</var> <var>...</var> <var>op_{N-1}</var> <var>A_N</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\n'
+        ]).strip() + '\n'
 
         self.assertRaises(parser.FormatStringParserError, lambda: parser.run(format_string))
 
