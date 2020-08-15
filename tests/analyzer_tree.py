@@ -276,9 +276,10 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
 
         self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
-    @unittest.expectedFailure
     def test_no_1(self) -> None:
-        # https://yukicoder.me/problems/no/1
+        """The problem https://yukicoder.me/problems/no/1 uses `\(` and `\)` for TeX.
+        """
+
         format_string = '\n'.join([
             r'\(N\)',
             r'\(C\)',

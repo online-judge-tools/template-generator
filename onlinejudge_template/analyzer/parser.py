@@ -75,10 +75,14 @@ def build_lexer() -> lex.Lexer:
         t.lexer.lineno += 1
         return t
 
-    t_ignore = ' \t$'
+    t_ignore = ' \t'
 
     def t_tex_space(t: lex.LexToken) -> None:
         r"""(\\[ ]|\\,|\\:|\\;|\\!|~|\\quad|\\qquad|\\hspace\{[^}]+\})"""
+        return None
+
+    def t_tex_paren(t: lex.LexToken) -> None:
+        r"""(\$|\\\(|\\\)|\\\[|\\\])"""
         return None
 
     def t_error(t: lex.LexToken) -> None:
