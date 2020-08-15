@@ -71,14 +71,18 @@ tokens = (
 
 def build_lexer() -> lex.Lexer:
     def t_NEWLINE(t: lex.LexToken) -> lex.LexToken:
-        r"""\r?\n"""
+        r"""(\r?\n|<br>)"""
         t.lexer.lineno += 1
         return t
 
-    t_ignore = ' \t$'
+    t_ignore = ' \t'
 
     def t_tex_space(t: lex.LexToken) -> None:
-        r"""(\\[ ]|\\,|\\;|~)"""
+        r"""(\\[ ]|\\,|\\:|\\;|\\!|~|\\quad|\\qquad|\\hspace\{[^}]+\})"""
+        return None
+
+    def t_math_mode(t: lex.LexToken) -> None:
+        r"""(\$|\\\(|\\\)|\\\[|\\\]|<var>|</var>)"""
         return None
 
     def t_error(t: lex.LexToken) -> None:

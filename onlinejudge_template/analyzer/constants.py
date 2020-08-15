@@ -33,7 +33,8 @@ def list_constants_from_html(html: bytes) -> Dict[str, ConstantDecl]:
         ("}", ""),
         (",", ""),
         ("'", ""),
-        (" ", ""),
+        (" ^ ", "^"),
+        (" + ", "+"),
         ("10^9+7", "1000000007"),
         ("10^9+9", "1000000009"),
     ]
@@ -45,11 +46,12 @@ def list_constants_from_html(html: bytes) -> Dict[str, ConstantDecl]:
     for value in (10**9 + 7, 10**9 + 9, 998244353):
         if re.search(r'\b' + re.escape(str(value)) + r'\b', normalized):
             mod.add(value)
-    logger.debug('MOD-like integers: %s', mod)
 
     constants: Dict[str, ConstantDecl] = {}
     if len(mod) == 1:
         constants['MOD'] = ConstantDecl(name='MOD', type=VarType.ValueInt, value=str(mod.pop()))
+    elif len(mod) >= 2:
+        logger.error('too many MOD-like integers found: %s', mod)
     return constants
 
 

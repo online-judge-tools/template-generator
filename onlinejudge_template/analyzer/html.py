@@ -40,6 +40,31 @@ table = {
 }
 
 
+def _extract_format_string_from_pre(x: bs4.Tag) -> str:
+    s = ''
+    for y in x:
+        if isinstance(y, bs4.Tag):
+            if y.name == 'br':
+                s += '<br>'
+                s += _extract_format_string_from_pre(y)  # It seems some `<pre> xxx <br /> yyy </pre>` is recognized as `<pre> xxx <br> yyy </br></pre>`. e.g. https://yukicoder.me/problems/no/1078
+            elif y.name == 'var':
+                s += '<var>'
+                s += _extract_format_string_from_pre(y)
+                s += '</var>'
+            elif y.name == 'code':
+                s += _extract_format_string_from_pre(y)
+            else:
+                logger.warning('ignored an unexpected tag: %s', y)
+                s += _extract_format_string_from_pre(y)
+        elif isinstance(y, bs4.NavigableString):
+            s += y.string
+        elif isinstance(y, bs4.Comment):
+            pass
+        else:
+            assert False
+    return s
+
+
 def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
     """
     :param kind: ``"in"`` or ``"out"``
@@ -57,10 +82,7 @@ def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
             if h3.string in table[kind]:
                 pre = h3.parent.find('pre')
                 if pre:
-                    s = ''
-                    for it in pre:
-                        s += it.string or it
-                    return s.strip() + '\r\n'
+                    return _extract_format_string_from_pre(pre).strip() + '\r\n'
         raise HTMLParserError
 
     elif 'yukicoder.me' in url:
@@ -68,7 +90,7 @@ def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
             if h4.string in table[kind]:
                 pre = h4.parent.find('pre')
                 if pre:
-                    return pre.string.strip() + '\n'
+                    return _extract_format_string_from_pre(pre).strip() + '\n'
         raise HTMLParserError
 
     elif 'judge.yosupo.jp' in url:
@@ -80,7 +102,9 @@ def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
             if found:
                 pre = h2.find_next_sibling('pre')
                 if pre:
-                    return pre.string.strip() + '\n'
+                    code = pre.find('code')
+                    if code:
+                        return _extract_format_string_from_pre(code).strip() + '\n'
         raise HTMLParserError
 
     else:

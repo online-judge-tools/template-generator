@@ -12,7 +12,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
         expected = '\r\n'.join([
             r'<var>N</var> <var>A</var> <var>B</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+        ]).strip() + '\r\n'
 
         html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
@@ -24,7 +24,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'<var>N</var> <var>M</var> <var>V</var> <var>P</var>',
             r'<var>A_1</var> <var>A_2</var> <var>...</var> <var>A_N</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+        ]).strip() + '\r\n'
 
         html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
@@ -35,7 +35,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
         expected = '\r\n'.join([
             r'<var>N</var> <var>A</var> <var>B</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+        ]).strip() + '\r\n'
 
         html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
@@ -46,7 +46,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
         expected = '\r\n'.join([
             r'<var>A</var> <var>B</var> <var>C</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+        ]).strip() + '\r\n'
 
         html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
@@ -60,7 +60,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'<var>N</var>',
             r'<var>c_1c_2c_3…c_N</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+        ]).strip() + '\r\n'
 
         html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
@@ -77,7 +77,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r':',
             r'<var>c_{81}</var> <var>c_{82}</var> … <var>c_{88}</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+        ]).strip() + '\r\n'
 
         html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
@@ -96,7 +96,7 @@ class TestFormatStringDetectorAtCoder(unittest.TestCase):
             r'<var>:</var>',
             r'<var>l_N</var> <var>r_N</var>',
             r'',
-        ]).replace('<var>', '').replace('</var>', '').strip() + '\r\n'
+        ]).strip() + '\r\n'
 
         html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
@@ -215,3 +215,22 @@ class TestFormatStringDetectorYukicoder(unittest.TestCase):
         html = download_html(url)
         self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected)
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
+
+    def test_no_1078(self) -> None:
+        """`<br />` is used in the output format.
+        """
+
+        url = 'https://yukicoder.me/problems/no/1078'
+        expected_input = '\n'.join([
+            r'$N$',
+            r'$S_1\ S_2\ \cdots\ S_N$',
+            r'$T_1\ T_2\ \cdots\ T_N$',
+            r'$U_1\ U_2\ \cdots\ U_N$',
+        ]).strip() + '\n'
+        expected_output = '\n'.join([
+            r'$a_{1,1} \cdots\ a_{1,N}$<br>$\vdots$<br>$a_{N,1} \cdots\ a_{N,N}$',
+        ]).strip() + '\n'
+
+        html = download_html(url)
+        self.assertEqual(analyzer.parse_input_format_string(html, url=url), expected_input)
+        self.assertEqual(analyzer.parse_output_format_string(html, url=url), expected_output)
