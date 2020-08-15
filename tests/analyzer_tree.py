@@ -307,3 +307,34 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
         ])
 
         self.assertEqual(str(parser.run(format_string)), str(format_tree))
+
+    def test_no_1172(self) -> None:
+        """The problem https://yukicoder.me/problems/no/1172 uses `\quad` for spacing.
+        """
+
+        format_string = '\n'.join([
+            r'$K \quad N \quad M$',
+            r'$a_0 \quad a_1 \quad \cdots \quad a_{K-1}$',
+            r'$c_1 \quad c_2 \quad \cdots \quad c_K$',
+            r'$l_1 \quad r_1$',
+            r'$l_2 \quad r_2$',
+            r'$\ \vdots$',
+            r'$l_M \quad r_M$',
+        ]).strip() + '\n'
+        format_tree = SequenceNode(items=[
+            ItemNode(name='K'),
+            ItemNode(name='N'),
+            ItemNode(name='M'),
+            NewlineNode(),
+            LoopNode(name='i', size='K', body=ItemNode(name='a', indices=('i', ))),
+            NewlineNode(),
+            LoopNode(name='i', size='K', body=ItemNode(name='c', indices=('i + 1', ))),
+            NewlineNode(),
+            LoopNode(name='i', size='M', body=SequenceNode(items=[
+                ItemNode(name='l', indices=('i + 1', )),
+                ItemNode(name='r', indices=('i + 1', )),
+                NewlineNode(),
+            ])),
+        ])
+
+        self.assertEqual(str(parser.run(format_string)), str(format_tree))

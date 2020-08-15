@@ -78,7 +78,7 @@ def build_lexer() -> lex.Lexer:
     t_ignore = ' \t$'
 
     def t_tex_space(t: lex.LexToken) -> None:
-        r"""(\\[ ]|\\,|\\;|~)"""
+        r"""(\\[ ]|\\,|\\:|\\;|\\!|~|\\quad|\\qquad|\\hspace\{[^}]+\})"""
         return None
 
     def t_error(t: lex.LexToken) -> None:
