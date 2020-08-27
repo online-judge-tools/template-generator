@@ -3,12 +3,14 @@
     import os
     import platform
     import shutil
+    from logging import getLogger
 
     import onlinejudge_template.generator.cplusplus as cplusplus
     import onlinejudge_template.generator.about as about
     import onlinejudge_template.generator.hook as hook
 %>\
 <%
+    logger = getLogger(__name__)
     data["config"]["rep_macro"] = "REP"
     data["config"]["using_namespace_std"] = True
     data["config"]["long_long_int"] = "int64_t"
@@ -20,7 +22,9 @@
             "#include <string>",
             "#include <vector>",
         ])
-    if shutil.which("clang-format"):
+    if not shutil.which("clang-format"):
+        logger.warning("clang-format is not installed")
+    else:
         format_config = {
             "BasedOnStyle": "Google",
             "IndentWidth": 4,

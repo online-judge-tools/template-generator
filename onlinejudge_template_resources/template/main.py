@@ -1,12 +1,16 @@
 <%!
     import shutil
+    from logging import getLogger
 
     import onlinejudge_template.generator.python as python
     import onlinejudge_template.generator.about as about
     import onlinejudge_template.generator.hook as hook
 %>\
 <%
-    if shutil.which("yapf"):
+    logger = getLogger(__name__)
+    if not shutil.which("yapf"):
+        logger.warning("yapf is not installed")
+    else:
         format_config = "{" + ", ".join([
             "BASED_ON_STYLE: google",
             "COLUMN_LIMIT: 9999",
