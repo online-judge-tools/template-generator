@@ -9,7 +9,7 @@
 <%
     logger = getLogger(__name__)
     if not shutil.which("yapf"):
-        logger.warning("yapf is not installed")
+        logger.warning("yapf is not installed. If you want to generate well-formatted code, please install it. You can use $ pip3 install yapf")
     else:
         format_config = "{" + ", ".join([
             "BASED_ON_STYLE: google",

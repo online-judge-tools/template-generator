@@ -24,7 +24,7 @@
             "#include <vector>",
         ])
     if not shutil.which("clang-format"):
-        logger.warning("clang-format is not installed")
+        logger.warning("clang-format is not installed. If you want to generate well-formatted code, please install it. If you use Ubuntu, you can run $ sudo apt install clang-format")
     else:
         format_config = {
             "BasedOnStyle": "Google",
