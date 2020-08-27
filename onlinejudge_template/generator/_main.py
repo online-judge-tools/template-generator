@@ -32,7 +32,6 @@ def _get_template(template_file: str) -> mako.template.Template:
 def run(analyzed: AnalyzerResult, *, template_file: str) -> bytes:
     """
     :raises: mako.exceptions.MakoException
-    :raises: subprocess.CalledProcessError
     """
 
     data: Dict[str, Any] = {
