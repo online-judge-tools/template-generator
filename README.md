@@ -47,6 +47,9 @@ The following template files are prepared as builtin of `oj-template` command.
 -   `generate.py`: random case generator in Python
 -   `generate.cpp`: random case generator in C++
 
+The builtin templates invoke [`clang-format` command](https://clang.llvm.org/docs/ClangFormat.html) and [`yapf` command](https://github.com/google/yapf) when they exist.
+Please install them too if you want to generate better formatted code.
+
 
 ### Generating random cases
 
