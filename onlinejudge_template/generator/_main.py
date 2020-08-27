@@ -1,4 +1,5 @@
 import pathlib
+from logging import getLogger
 from typing import *
 
 import appdirs
@@ -8,6 +9,8 @@ import pkg_resources
 
 import onlinejudge_template.generator.hook as hook
 from onlinejudge_template.types import *
+
+logger = getLogger(__name__)
 
 
 def _get_template(template_file: str) -> mako.template.Template:
@@ -22,6 +25,7 @@ def _get_template(template_file: str) -> mako.template.Template:
         with open(path, "rb") as fh:
             lookup.put_string(template_file, fh.read())
     template = lookup.get_template(template_file)
+    logger.info('use template file: %s', template.filename)
     return template
 
 
