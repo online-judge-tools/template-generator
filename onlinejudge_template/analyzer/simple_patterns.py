@@ -1,7 +1,7 @@
 """
-the module to guess format trees from sample strings
+the module to guess simple format trees from sample strings
 
-この module はサンプル文字列から直接 (つまり、フォーマット文字列を用いずに) フォーマット木を推測します。
+この module はサンプル文字列から直接 (つまり、フォーマット文字列を用いずに) 典型的なフォーマット木を推測します。利用可能なサンプル文字列の個数がひとつしかない場合での利用が想定されています。
 単純なフォーマット木を列挙しておき、それらとのパターンマッチをすることによって実装されています。
 
 たとえば
