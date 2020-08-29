@@ -4,6 +4,11 @@ the module to manipulate mathematical expressions (e.g. ``2 * n + 1``, ``a_i + i
 この module は数式を簡約します。
 たとえば ``(n + 1) + (n - 1)`` という式が与えられれば ``2 * n`` という式に簡約して返します。
 これは選言標準形のようなものを構成して並べ替えることによって実装されています。
+
+中心部分では、次のような競技プログラミングの問題を解いています:
+::
+    変数 x, y, z および整数と四則演算と括弧からなる数式が与えられます。
+    この数式と等しい数式であって $\sum k_i x^{a_i} y^{b_i} z^{c_i}$ という形のものを求めてください。
 """
 
 import abc
@@ -320,6 +325,7 @@ def _convert_to_dnf(e: _Expr) -> List[Tuple[List[_Expr], List[_Expr]]]:
     This also simplifies the subscripted exprs.
     """
 
+    # TODO: Rename variables. We can see $a_i + 2 a_{i + 1} + 3 a_{i + 2}$ as $x + 2 y + 3 z$ or just $v_0 + 2 v_1 + 3 v_2$. Replacing the variables with their indices will make the implementation simpler.
     if isinstance(e, _Variable):
         args = list(map(_simplify_expr, e.args))
         return [([_Variable(e.name, *args)], [])]
