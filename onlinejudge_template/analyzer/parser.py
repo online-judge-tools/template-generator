@@ -36,8 +36,8 @@ from typing import *
 import ply.lex as lex
 import ply.yacc as yacc
 
+from onlinejudge_template.analyzer.simplify import simplify
 from onlinejudge_template.types import *
-from onlinejudge_template.utils import simplify
 
 logger = getLogger(__name__)
 

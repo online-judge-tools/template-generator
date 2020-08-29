@@ -40,9 +40,9 @@ the module to generate C++ code
 from typing import *
 
 import onlinejudge_template.generator._utils as utils
+from onlinejudge_template.analyzer.simplify import simplify
 from onlinejudge_template.generator._cplusplus import *
 from onlinejudge_template.types import *
-from onlinejudge_template.utils import simplify
 
 
 def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) -> str:
@@ -205,7 +205,7 @@ def _get_type_and_ctor(decl: VarDecl, *, data: Dict[str, Any]) -> Tuple[str, str
 def _get_variable(*, decl: VarDecl, indices: List[str], decls: Dict[str, VarDecl]) -> str:
     var = decl.name
     for index, base in zip(indices, decl.bases):
-        i = simplify(f"""{index} - ({base})""", env=set(decls.keys()))
+        i = simplify(f"""{index} - ({base})""")
         var = f"""{var}[{i}]"""
     return var
 

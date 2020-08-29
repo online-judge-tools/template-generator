@@ -254,7 +254,7 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
         format_tree = SequenceNode(items=[
             ItemNode(name='N'),
             NewlineNode(),
-            LoopNode(name='i', size='2*N', body=ItemNode(name='A', indices=('i + 1', ))),
+            LoopNode(name='i', size='2 * N', body=ItemNode(name='A', indices=('i + 1', ))),
             NewlineNode(),
         ])
 

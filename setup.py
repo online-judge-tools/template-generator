@@ -22,7 +22,6 @@ setup(
         'ply >= 3',
         'pyyaml >= 5',
         'requests >= 2.23',
-        'sympy >= 1.5',
         'toml >= 0.10',
     ],
     packages=find_packages(exclude=('tests', 'docs')),
