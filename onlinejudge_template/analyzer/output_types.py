@@ -14,15 +14,15 @@ the module to analyze output types
 
 from typing import *
 
+from onlinejudge_template.analyzer.simplify import simplify
 from onlinejudge_template.types import *
-from onlinejudge_template.utils import simplify
 
 
 # TODO: remove this
 def _get_variable(*, decl: VarDecl, indices: List[str], decls: Dict[str, VarDecl]) -> str:
     var = decl.name
     for index, base in zip(indices, decl.bases):
-        i = simplify(f"""{index} - ({base})""", env=set(decls.keys()))
+        i = simplify(f"""{index} - ({base})""")
         var = f"""{var}[{i}]"""
     return var
 

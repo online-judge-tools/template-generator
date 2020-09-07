@@ -35,8 +35,8 @@ import itertools
 from logging import getLogger
 from typing import *
 
+from onlinejudge_template.analyzer.simplify import evaluate
 from onlinejudge_template.types import *
-from onlinejudge_template.utils import evaluate
 
 logger = getLogger(__name__)
 

@@ -254,7 +254,7 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
         format_tree = SequenceNode(items=[
             ItemNode(name='N'),
             NewlineNode(),
-            LoopNode(name='i', size='2*N', body=ItemNode(name='A', indices=('i + 1', ))),
+            LoopNode(name='i', size='2 * N', body=ItemNode(name='A', indices=('i + 1', ))),
             NewlineNode(),
         ])
 
@@ -277,7 +277,7 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
         self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_no_1(self) -> None:
-        """The problem https://yukicoder.me/problems/no/1 uses `\(` and `\)` for TeX.
+        """The problem https://yukicoder.me/problems/no/1 uses `\\(` and `\\)` for TeX.
         """
 
         format_string = '\n'.join([
@@ -310,7 +310,7 @@ class TestFormatStringAnalyzerYukicoder(unittest.TestCase):
         self.assertEqual(str(parser.run(format_string)), str(format_tree))
 
     def test_no_1172(self) -> None:
-        """The problem https://yukicoder.me/problems/no/1172 uses `\quad` for spacing.
+        """The problem https://yukicoder.me/problems/no/1172 uses `\\quad` for spacing.
         """
 
         format_string = '\n'.join([

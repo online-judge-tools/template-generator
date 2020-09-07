@@ -22,9 +22,9 @@ the module to generate Python code
 from typing import *
 
 import onlinejudge_template.generator._utils as utils
+from onlinejudge_template.analyzer.simplify import simplify
 from onlinejudge_template.generator._python import *
 from onlinejudge_template.types import *
-from onlinejudge_template.utils import simplify
 
 _DEDENT = '*DEDENT*'
 
