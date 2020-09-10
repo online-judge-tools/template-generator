@@ -12,7 +12,7 @@ from onlinejudge_prepare.main import chdir, main
 class TestOJPrepareCommand(unittest.TestCase):
     """TestOJPrepareCommand is a class for end-to-end tests about oj-prepare command.
     """
-    def _helper(self, *, url: str, subdir: str, template: str, placeholder: str, code: str, compile: Callable[[pathlib.Path], str], command: Callable[[pathlib.Path], str]):
+    def _helper(self, *, url: str, subdir: str, template: str, placeholder: str, code: str, compile: Callable[[pathlib.Path], List[str]], command: Callable[[pathlib.Path], str]):
         with tempfile.TemporaryDirectory() as tmpdir_:
             tmpdir = pathlib.Path(tmpdir_)
             with chdir(tmpdir):
