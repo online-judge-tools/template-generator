@@ -44,28 +44,28 @@ class SimplePatternMatchingError(AnalyzerError):
 
 # simple patterns
 _one_pattern = SequenceNode(items=[
-    ItemNode(name='a', indices=[]),
+    ItemNode(name='a'),
     NewlineNode(),
 ])
 
 _two_pattern = SequenceNode(items=[
-    ItemNode(name='a', indices=[]),
-    ItemNode(name='b', indices=[]),
+    ItemNode(name='a'),
+    ItemNode(name='b'),
     NewlineNode(),
 ])
 
 _three_pattern = SequenceNode(items=[
-    ItemNode(name='a', indices=[]),
-    ItemNode(name='b', indices=[]),
-    ItemNode(name='c', indices=[]),
+    ItemNode(name='a'),
+    ItemNode(name='b'),
+    ItemNode(name='c'),
     NewlineNode(),
 ])
 
 _four_pattern = SequenceNode(items=[
-    ItemNode(name='a', indices=[]),
-    ItemNode(name='b', indices=[]),
-    ItemNode(name='c', indices=[]),
-    ItemNode(name='d', indices=[]),
+    ItemNode(name='a'),
+    ItemNode(name='b'),
+    ItemNode(name='c'),
+    ItemNode(name='d'),
     NewlineNode(),
 ])
 
@@ -78,29 +78,29 @@ _simple_patterns = [
 
 # simple patterns (vertical versions)
 _vertical_two_pattern = SequenceNode(items=[
-    ItemNode(name='a', indices=[]),
+    ItemNode(name='a'),
     NewlineNode(),
-    ItemNode(name='b', indices=[]),
+    ItemNode(name='b'),
     NewlineNode(),
 ])
 
 _vertical_three_pattern = SequenceNode(items=[
-    ItemNode(name='a', indices=[]),
+    ItemNode(name='a'),
     NewlineNode(),
-    ItemNode(name='b', indices=[]),
+    ItemNode(name='b'),
     NewlineNode(),
-    ItemNode(name='c', indices=[]),
+    ItemNode(name='c'),
     NewlineNode(),
 ])
 
 _vertical_four_pattern = SequenceNode(items=[
-    ItemNode(name='a', indices=[]),
+    ItemNode(name='a'),
     NewlineNode(),
-    ItemNode(name='b', indices=[]),
+    ItemNode(name='b'),
     NewlineNode(),
-    ItemNode(name='c', indices=[]),
+    ItemNode(name='c'),
     NewlineNode(),
-    ItemNode(name='d', indices=[]),
+    ItemNode(name='d'),
     NewlineNode(),
 ])
 
@@ -112,14 +112,14 @@ _vertical_simple_patterns = [
 
 # one vector patterns
 _length_and_vector_pattern = SequenceNode(items=[
-    ItemNode(name='n', indices=[]),
+    ItemNode(name='n'),
     NewlineNode(),
     LoopNode(name='i', size='n', body=ItemNode(name='a', indices=['i'])),
     NewlineNode(),
 ])
 
 _length_and_vertical_vector_pattern = SequenceNode(items=[
-    ItemNode(name='n', indices=[]),
+    ItemNode(name='n'),
     NewlineNode(),
     LoopNode(name='i', size='n', body=SequenceNode(items=[
         ItemNode(name='a', indices=['i']),
@@ -134,24 +134,24 @@ _one_vector_patterns = [
 
 # one vector patterns (with data)
 _length_data_and_vector_pattern = SequenceNode(items=[
-    ItemNode(name='n', indices=[]),
-    ItemNode(name='k', indices=[]),
+    ItemNode(name='n'),
+    ItemNode(name='k'),
     NewlineNode(),
     LoopNode(name='i', size='n', body=ItemNode(name='a', indices=['i'])),
     NewlineNode(),
 ])
 
 _data_length_and_vector_pattern = SequenceNode(items=[
-    ItemNode(name='k', indices=[]),
-    ItemNode(name='n', indices=[]),
+    ItemNode(name='k'),
+    ItemNode(name='n'),
     NewlineNode(),
     LoopNode(name='i', size='n', body=ItemNode(name='a', indices=['i'])),
     NewlineNode(),
 ])
 
 _length_data_and_vertical_vector_pattern = SequenceNode(items=[
-    ItemNode(name='n', indices=[]),
-    ItemNode(name='k', indices=[]),
+    ItemNode(name='n'),
+    ItemNode(name='k'),
     NewlineNode(),
     LoopNode(name='i', size='n', body=SequenceNode(items=[
         ItemNode(name='a', indices=['i']),
@@ -160,8 +160,8 @@ _length_data_and_vertical_vector_pattern = SequenceNode(items=[
 ])
 
 _data_length_and_vertical_vector_pattern = SequenceNode(items=[
-    ItemNode(name='k', indices=[]),
-    ItemNode(name='n', indices=[]),
+    ItemNode(name='k'),
+    ItemNode(name='n'),
     NewlineNode(),
     LoopNode(name='i', size='n', body=SequenceNode(items=[
         ItemNode(name='a', indices=['i']),
@@ -178,7 +178,7 @@ _one_vector_with_data_patterns = [
 
 # two vectors patterns
 _length_and_two_vector_pattern = SequenceNode(items=[
-    ItemNode(name='n', indices=[]),
+    ItemNode(name='n'),
     NewlineNode(),
     LoopNode(name='i', size='n', body=ItemNode(name='a', indices=['i'])),
     NewlineNode(),
@@ -187,7 +187,7 @@ _length_and_two_vector_pattern = SequenceNode(items=[
 ])
 
 _length_and_vertical_two_vector_pattern = SequenceNode(items=[
-    ItemNode(name='n', indices=[]),
+    ItemNode(name='n'),
     NewlineNode(),
     LoopNode(name='i', size='n', body=SequenceNode(items=[
         ItemNode(name='a', indices=['i']),
