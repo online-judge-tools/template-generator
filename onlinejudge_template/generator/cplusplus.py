@@ -57,7 +57,7 @@ def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) 
     return '\n'.join(buf)
 
 
-def _declare_loop(var: str, size: str, *, data: Dict[str, Any]) -> str:
+def _declare_loop(var: VarName, size: str, *, data: Dict[str, Any]) -> str:
     """
     :raises CPlusPlusGeneratorError:
     """
@@ -202,10 +202,10 @@ def _get_type_and_ctor(decl: VarDecl, *, data: Dict[str, Any]) -> Tuple[str, str
     return type, ctor
 
 
-def _get_variable(*, decl: VarDecl, indices: List[str], decls: Dict[str, VarDecl]) -> str:
-    var = decl.name
+def _get_variable(*, decl: VarDecl, indices: List[Expr], decls: Dict[VarName, VarDecl]) -> str:
+    var = str(decl.name)
     for index, base in zip(indices, decl.bases):
-        i = simplify(f"""{index} - ({base})""")
+        i = simplify(Expr(f"""{index} - ({base})"""))
         var = f"""{var}[{i}]"""
     return var
 
@@ -239,13 +239,14 @@ def _declare_constant(decl: ConstantDecl, *, data: Dict[str, Any]) -> str:
     return f"""{const} {type} {decl.name} = {value};"""
 
 
-def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any], make_node: Callable[[str, Optional[VarType]], CPlusPlusNode] = lambda var, type: InputNode(exprs=[(var, type)])) -> CPlusPlusNode:
+def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[VarName, VarDecl], data: Dict[str, Any], make_node: Callable[[str, Optional[VarType]], CPlusPlusNode] = lambda var, type: InputNode(exprs=[(var, type)])) -> CPlusPlusNode:
     """
     :raises CPlusPlusGeneratorError:
     """
 
     # declare all possible variables
     new_decls: List[CPlusPlusNode] = []
+    var: str
     for var, decl in decls.items():
         if var not in declared and all([dep in initialized for dep in decl.depending]):
             new_decls.append(DeclNode(decls=[decl]))
@@ -278,7 +279,7 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
         assert False
 
 
-def _write_output_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
+def _write_output_dfs(node: FormatNode, *, decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
     """
     :raises CPlusPlusGeneratorError:
     """
@@ -286,7 +287,7 @@ def _write_output_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict
     if isinstance(node, ItemNode):
         decl = decls[node.name]
         var = _get_variable(decl=decl, indices=node.indices, decls=decls)
-        return OutputTokensNode(exprs=[(var, decl.type)])
+        return OutputTokensNode(exprs=[(VarName(var), decl.type)])
     elif isinstance(node, NewlineNode):
         return OutputNewlineNode(exprs=[])
     elif isinstance(node, SequenceNode):
@@ -368,7 +369,7 @@ def _read_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> st
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
     try:
-        lines.extend(_declare_variables([VarDecl(name='n', type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
+        lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
     except CPlusPlusGeneratorError:
         lines.append(f"""int n;""")
     try:
@@ -376,11 +377,11 @@ def _read_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> st
     except CPlusPlusGeneratorError:
         lines.append(f"""{_get_std(data=data)}scanf("%d", &n);""")
     try:
-        lines.extend(_declare_variables([VarDecl(name='a', type=VarType.ValueInt, dims=['n'], bases=['0'], depending=set(['n']))], data=data))
+        lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
     except CPlusPlusGeneratorError:
         lines.append(f"""{_get_std(data=data)}vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
     try:
-        lines.append(_declare_loop(var='i', size='n', data=data) + " {")
+        lines.append(_declare_loop(var=VarName('i'), size=Expr('n'), data=data) + " {")
     except CPlusPlusGeneratorError:
         lines.append("""for (int i = 0; i < n; ++i) {""")
     try:
@@ -412,7 +413,7 @@ def _generate_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -
     lines.append(f"""{_get_std(data=data)}random_device device;""")
     lines.append(f"""{_get_std(data=data)}default_random_engine gen(device());""")
     try:
-        lines.extend(_declare_variables([VarDecl(name='n', type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
+        lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
     except CPlusPlusGeneratorError:
         lines.append(f"""int n;""")
     try:
@@ -420,11 +421,11 @@ def _generate_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -
     except CPlusPlusGeneratorError:
         lines.append(f"""n = {_get_std(data=data)}uniform_int_distribution<int>(0, 100000)(gen);""")
     try:
-        lines.extend(_declare_variables([VarDecl(name='a', type=VarType.ValueInt, dims=['n'], bases=['0'], depending=set(['n']))], data=data))
+        lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
     except CPlusPlusGeneratorError:
         lines.append(f"""{_get_std(data=data)}vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
     try:
-        lines.append(_declare_loop(var='i', size='n', data=data) + " {")
+        lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
     except CPlusPlusGeneratorError:
         lines.append("""for (int i = 0; i < n; ++i) {""")
     try:
@@ -459,7 +460,7 @@ def _write_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> s
     except CPlusPlusGeneratorError:
         lines.append(f"""{_get_std(data=data)}printf("%d\n", ans);""")
     try:
-        lines.append(_declare_loop(var='i', size='n', data=data) + " {")
+        lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
     except CPlusPlusGeneratorError:
         lines.append("""for (int i = 0; i < n; ++i) {""")
     try:

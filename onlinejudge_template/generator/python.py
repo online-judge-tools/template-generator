@@ -59,15 +59,15 @@ def _get_python_type(type: Optional[VarType]) -> str:
         assert False
 
 
-def _get_variable(*, decl: VarDecl, indices: List[str]) -> str:
-    var = decl.name
+def _get_variable(*, decl: VarDecl, indices: Sequence[Expr]) -> str:
+    var = str(decl.name)
     for index, base in zip(indices, decl.bases):
-        i = simplify(f"""{index} - ({base})""")
+        i = simplify(Expr(f"""{index} - ({base})"""))
         var = f"""{var}[{i}]"""
     return var
 
 
-def _declare_variable(name: str, dims: List[str], *, data: Dict[str, Any]) -> Iterator[str]:
+def _declare_variable(name: VarName, dims: List[Expr], *, data: Dict[str, Any]) -> Iterator[str]:
     if dims:
         ctor = "None"
         for dim in reversed(dims):
@@ -75,7 +75,7 @@ def _declare_variable(name: str, dims: List[str], *, data: Dict[str, Any]) -> It
         yield f"""{name} = {ctor}"""
 
 
-def _declare_all_possible_variables(declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> List[PythonNode]:
+def _declare_all_possible_variables(declared: Set[VarName], initialized: Set[VarName], decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> List[PythonNode]:
     """
     :param declared: updated
     """
@@ -97,7 +97,7 @@ def _declare_constant(decl: ConstantDecl, *, data: Dict[str, Any]) -> str:
     return f"""{decl.name} = {value}"""
 
 
-def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _generate_input_dfs(node: FormatNode, *, declared: Set[VarName], initialized: Set[VarName], decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> PythonNode:
     decl_nodes = _declare_all_possible_variables(declared=declared, initialized=initialized, decls=decls, data=data)
     if decl_nodes:
         return SentencesNode(sentences=decl_nodes + [_generate_input_dfs(node, declared=declared, initialized=initialized, decls=decls, data=data)])
@@ -135,7 +135,7 @@ def _generate_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Se
         assert False
 
 
-def _read_input_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _read_input_dfs(node: FormatNode, *, decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> PythonNode:
     if isinstance(node, ItemNode):
         decl = decls[node.name]
         var = _get_variable(decl=decl, indices=node.indices)
@@ -153,7 +153,7 @@ def _read_input_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[s
         assert False
 
 
-def _write_output_dfs(node: FormatNode, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _write_output_dfs(node: FormatNode, *, decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> PythonNode:
     if isinstance(node, ItemNode):
         var = _get_variable(decl=decls[node.name], indices=node.indices)
         return PrintTokensNode(exprs=[var])
@@ -215,7 +215,7 @@ def _optimize_syntax_tree(node: PythonNode, *, data: Dict[str, Any]) -> PythonNo
         assert False
 
 
-def _realize_input_nodes_without_tokens(node: PythonNode, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _realize_input_nodes_without_tokens(node: PythonNode, *, declared: Set[VarName], initialized: Set[VarName], decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> PythonNode:
     """
     :raises TokenizedInputRequiredError:
     """
@@ -271,7 +271,7 @@ def _realize_input_nodes_without_tokens(node: PythonNode, *, declared: Set[str],
         assert False
 
 
-def _realize_input_nodes_with_tokens_dfs(node: PythonNode, tokens: str, *, declared: Set[str], initialized: Set[str], decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _realize_input_nodes_with_tokens_dfs(node: PythonNode, tokens: str, *, declared: Set[VarName], initialized: Set[VarName], decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> PythonNode:
     decl_nodes = _declare_all_possible_variables(declared=declared, initialized=initialized, decls=decls, data=data)
     if decl_nodes:
         return SentencesNode(sentences=decl_nodes + [_realize_input_nodes_with_tokens_dfs(node, tokens, declared=declared, initialized=initialized, decls=decls, data=data)])
@@ -309,7 +309,7 @@ def _realize_input_nodes_with_tokens_dfs(node: PythonNode, tokens: str, *, decla
         assert False
 
 
-def _realize_input_nodes_with_tokens(node: PythonNode, tokens: str, *, decls: Dict[str, VarDecl], data: Dict[str, Any]) -> PythonNode:
+def _realize_input_nodes_with_tokens(node: PythonNode, tokens: str, *, decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> PythonNode:
     node = SentencesNode(sentences=[
         OtherNode(line="""import sys"""),
         OtherNode(line=f"""{tokens} = iter(sys.stdin.read().split())"""),

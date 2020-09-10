@@ -44,12 +44,12 @@ class DeclaredVariablesError(AnalyzerError):
 
 
 class _CounterDecl(NamedTuple):
-    name: str
-    size: str
-    depending: Set[str]
+    name: VarName
+    size: Expr
+    depending: Set[VarName]
 
 
-def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[str, _CounterDecl], declared: Dict[str, VarDecl]) -> None:
+def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[VarName, _CounterDecl], declared: Dict[VarName, VarDecl]) -> None:
     """
     :raises DeclaredVariablesError:
     """
@@ -64,12 +64,12 @@ def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[str, _Counte
             dim = index
             base = index
             for i, decl in counter.items():
-                dim, _ = re.subn(r'\b' + re.escape(i) + r'\b', decl.size, dim)
-                base, _ = re.subn(r'\b' + re.escape(i) + r'\b', '0', base)
+                dim = Expr(re.subn(r'\b' + re.escape(i) + r'\b', decl.size, dim)[0])
+                base = Expr(re.subn(r'\b' + re.escape(i) + r'\b', '0', base)[0])
             for n in declared.keys():
                 if re.search(r'\b' + re.escape(n) + r'\b', dim):
                     depending.add(n)
-            dims.append(simplify(f"""{dim} - ({base})"""))
+            dims.append(simplify(Expr(f"""{dim} - ({base})""")))
             bases.append(simplify(base))
         declared[node.name] = VarDecl(name=node.name, dims=dims, bases=bases, depending=depending, type=None)
 
@@ -89,11 +89,11 @@ def _list_declared_variables_dfs(node: FormatNode, *, counter: Dict[str, _Counte
         _list_declared_variables_dfs(node.body, counter={node.name: decl, **counter}, declared=declared)
 
 
-def list_declared_variables(node: FormatNode) -> Dict[str, VarDecl]:
+def list_declared_variables(node: FormatNode) -> Dict[VarName, VarDecl]:
     """
     :raises DeclaredVariablesError:
     """
 
-    declared: Dict[str, VarDecl] = collections.OrderedDict()
+    declared: Dict[VarName, VarDecl] = collections.OrderedDict()
     _list_declared_variables_dfs(node, counter={}, declared=declared)
     return declared

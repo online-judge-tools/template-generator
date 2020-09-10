@@ -48,7 +48,7 @@ class SentencesNode(CPlusPlusNode):
 
 
 class RepeatNode(CPlusPlusNode):
-    def __init__(self, name: str, size: str, body: CPlusPlusNode):
+    def __init__(self, name: VarName, size: str, body: CPlusPlusNode):
         self.name = name
         self.size = size
         self.body = body

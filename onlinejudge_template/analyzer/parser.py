@@ -152,13 +152,13 @@ class NewlineParserNode(ParserNode):
 
 
 class ItemParserNode(ParserNode):
-    name: str
-    indices: Union[Tuple[str], Tuple]
+    name: VarName
+    indices: Tuple[Expr, ...]
 
-    def __init__(self, *, name: str, indices: Union[Tuple[str], Tuple] = (), line: int, column: int):
+    def __init__(self, *, name: str, indices: Tuple[str, ...] = (), line: int, column: int):
         super().__init__(line=line, column=column)
-        self.name = name
-        self.indices = indices
+        self.name = VarName(name)
+        self.indices = tuple(map(Expr, indices))
 
 
 class DotsParserNode(ParserNode):
@@ -293,7 +293,7 @@ def list_used_names(node: FormatNode) -> Set[str]:
         assert False
 
 
-def zip_nodes(a: FormatNode, b: FormatNode, *, name: str, size: Optional[str]) -> Tuple[FormatNode, Optional[str]]:
+def zip_nodes(a: FormatNode, b: FormatNode, *, name: VarName, size: Optional[Expr]) -> Tuple[FormatNode, Optional[Expr]]:
     """
     :raises FormatStringParserError:
     """
@@ -307,11 +307,11 @@ def zip_nodes(a: FormatNode, b: FormatNode, *, name: str, size: Optional[str]) -
                 indices.append(i)
             else:
                 if size is None:
-                    size = simplify(f"""{j} - {i} + 1""")
+                    size = simplify(Expr(f"""{j} - {i} + 1"""))
                 else:
-                    if simplify(f"""{j} - {i} + 1""") != simplify(size):
+                    if simplify(Expr(f"""{j} - {i} + 1""")) != simplify(size):
                         raise FormatStringParserError("semantics: unmatched dots pair: {} and {}".format(a, b))
-                indices.append(simplify(f"{i} + {name}"))
+                indices.append(simplify(Expr(f"{i} + {name}")))
         return ItemNode(name=a.name, indices=indices), size
 
     elif isinstance(a, NewlineNode) and isinstance(b, NewlineNode):
@@ -342,9 +342,9 @@ def exnted_loop_node(a: FormatNode, b: FormatNode, *, loop: LoopNode) -> Optiona
             return None
         indices = []
         for i, j in zip(a.indices, b.indices):
-            decr_j, _ = re.subn(r'\b' + re.escape(loop.name) + r'\b', '(-1)', j)
+            decr_j = Expr(re.subn(r'\b' + re.escape(loop.name) + r'\b', '(-1)', j)[0])
             if simplify(i) == simplify(decr_j):
-                indices.append(simplify(f"""{i} + {loop.name}"""))
+                indices.append(simplify(Expr(f"""{i} + {loop.name}""")))
             else:
                 return None
         return ItemNode(name=a.name, indices=indices)
@@ -407,7 +407,7 @@ def analyze_parsed_node(node: ParserNode) -> FormatNode:
                     items_tail = items[-1]
                 extended_body = exnted_loop_node(items_tail, item.body, loop=item)
                 if extended_body is not None:
-                    extended_loop: FormatNode = LoopNode(size=simplify(f"""{item.size} + 1"""), name=item.name, body=extended_body)
+                    extended_loop: FormatNode = LoopNode(size=simplify(Expr(f"""{item.size} + 1""")), name=item.name, body=extended_body)
                     items = items_init
                     que = [extended_loop] + que
                 else:
@@ -426,10 +426,10 @@ def analyze_parsed_node(node: ParserNode) -> FormatNode:
 
         # find the name of the new loop counter
         used_names = list_used_names(a) | list_used_names(b)
-        name = 'i'
+        name = VarName('i')
         while name in used_names:
-            assert name != 'z'
-            name = chr(ord(name) + 1)
+            assert name != VarName('z')
+            name = VarName(chr(ord(name) + 1))
 
         # zip bodies
         c, size = zip_nodes(a, b, name=name, size=None)

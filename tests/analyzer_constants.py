@@ -13,7 +13,7 @@ class TestConstantsDetectorAtCoder(unittest.TestCase):
         """
         url = 'https://atcoder.jp/contests/agc043/tasks/agc043_c'
         expected = {
-            "MOD": ConstantDecl(name="MOD", value="998244353", type=VarType.ValueInt),
+            VarName("MOD"): ConstantDecl(name=VarName("MOD"), value="998244353", type=VarType.ValueInt),
         }
 
         html = download_html(url)
@@ -29,11 +29,12 @@ class TestConstantsDetectorCodeforces(unittest.TestCase):
 
         url = 'https://codeforces.com/contest/1395/problem/A'
         expected = {
-            "YES": ConstantDecl(name="YES", value="Yes", type=VarType.String),
-            "NO": ConstantDecl(name="NO", value="No", type=VarType.String),
+            VarName("YES"): ConstantDecl(name=VarName("YES"), value="Yes", type=VarType.String),
+            VarName("NO"): ConstantDecl(name=VarName("NO"), value="No", type=VarType.String),
         }
 
         sample_cases = download_sample_cases(url)
+        assert sample_cases is not None
         self.assertEqual(analyzer.list_constants_from_sample_cases(sample_cases), expected)
 
 
@@ -46,7 +47,7 @@ class TestConstantsDetectorYukicoder(unittest.TestCase):
 
         url = 'https://yukicoder.me/problems/no/1039'
         expected = {
-            "MOD": ConstantDecl(name="MOD", value="1000000007", type=VarType.ValueInt),
+            VarName("MOD"): ConstantDecl(name=VarName("MOD"), value="1000000007", type=VarType.ValueInt),
         }
 
         html = download_html(url)
@@ -55,7 +56,7 @@ class TestConstantsDetectorYukicoder(unittest.TestCase):
     def test_no_1073(self) -> None:
         url = 'https://yukicoder.me/problems/no/1073'
         expected = {
-            "MOD": ConstantDecl(name="MOD", value="1000000007", type=VarType.ValueInt),
+            VarName("MOD"): ConstantDecl(name=VarName("MOD"), value="1000000007", type=VarType.ValueInt),
         }
 
         html = download_html(url)
@@ -68,7 +69,7 @@ class TestConstantsDetectorTopcoder(unittest.TestCase):
     def test_apple_trees(self) -> None:
         url = 'https://community.topcoder.com/stat?c=problem_statement&pm=11213'
         expected = {
-            "MOD": ConstantDecl(name="MOD", value="1000000007", type=VarType.ValueInt),
+            VarName("MOD"): ConstantDecl(name=VarName("MOD"), value="1000000007", type=VarType.ValueInt),
         }
 
         html = download_html(url)

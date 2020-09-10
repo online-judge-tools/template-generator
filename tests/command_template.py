@@ -14,17 +14,17 @@ from onlinejudge_template.main import main
 class TestOJTemplateCommand(unittest.TestCase):
     """TestOJTemplateCommand is a class for end-to-end tests about oj-template command.
     """
-    def _helper(self, *, url: str, template: str, placeholder: str, code: str, compile: Callable[[pathlib.Path], str], command: Callable[[pathlib.Path], str]):
+    def _helper(self, *, url: str, template: str, placeholder: str, code: str, compile: Callable[[pathlib.Path], List[str]], command: Callable[[pathlib.Path], str]):
         with tempfile.TemporaryDirectory() as tmpdir_:
             tmpdir = pathlib.Path(tmpdir_)
             source_file = tmpdir / template
             test_directory = tmpdir / 'test'
 
             # generate
-            fh = io.TextIOWrapper(io.BytesIO(), write_through=True)
+            fh: IO = io.TextIOWrapper(io.BytesIO(), write_through=True)
             with contextlib.redirect_stdout(fh):
                 main(['-t', template, url])
-            code = fh.buffer.getvalue().decode().replace(placeholder, code, 1)
+            code: str = fh.buffer.getvalue().decode().replace(placeholder, code, 1)  # type: ignore
             print(code)
             with open(source_file, 'w') as fh:
                 fh.write(code)

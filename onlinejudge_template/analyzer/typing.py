@@ -70,12 +70,12 @@ def unify_types(t1: VarType, t2: VarType) -> Optional[VarType]:
     return None
 
 
-def get_var_types_from_match_result(values: Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]], *, variables: Dict[str, VarDecl]) -> Dict[str, VarType]:
+def get_var_types_from_match_result(values: Dict[VarName, Dict[Tuple[int, ...], Union[int, float, str]]], *, variables: Dict[VarName, VarDecl]) -> Dict[VarName, VarType]:
     """
     :raises TypingError:
     """
 
-    types: Dict[str, VarType] = {}
+    types: Dict[VarName, VarType] = {}
     for name in variables.keys():
         ts = set(map(get_var_type, values[name].values()))
         while len(ts) >= 2:
@@ -102,9 +102,9 @@ def get_var_types_from_match_result(values: Dict[str, Dict[Tuple[int, ...], Unio
     return types
 
 
-def unify_var_types(t1: Dict[str, VarType], t2: Dict[str, VarType]) -> Dict[str, VarType]:
+def unify_var_types(t1: Dict[VarName, VarType], t2: Dict[VarName, VarType]) -> Dict[VarName, VarType]:
     assert set(t1.keys()) == set(t2.keys())
-    t3: Dict[str, VarType] = {}
+    t3: Dict[VarName, VarType] = {}
     for name in t1.keys():
         t = unify_types(t1[name], t2[name])
         if t is None:
@@ -113,14 +113,14 @@ def unify_var_types(t1: Dict[str, VarType], t2: Dict[str, VarType]) -> Dict[str,
     return t3
 
 
-def infer_types_from_instances(node: FormatNode, *, variables: Dict[str, VarDecl], instances: List[bytes]) -> Dict[str, VarType]:
+def infer_types_from_instances(node: FormatNode, *, variables: Dict[VarName, VarDecl], instances: List[bytes]) -> Dict[VarName, VarType]:
     """
     :raises FormatMatchError:
     :raises TypingError:
     """
 
     assert instances
-    types: Optional[Dict[str, VarType]] = None
+    types: Optional[Dict[VarName, VarType]] = None
     for i, data in enumerate(instances):
         values = match_format(node, data.decode(), variables=variables)
         logger.debug("match result for %d-th data: %s", i, values)
@@ -134,12 +134,12 @@ def infer_types_from_instances(node: FormatNode, *, variables: Dict[str, VarDecl
     return types
 
 
-def update_variables_with_types(*, variables: Dict[str, VarDecl], types: Dict[str, VarType]) -> Dict[str, VarDecl]:
+def update_variables_with_types(*, variables: Dict[VarName, VarDecl], types: Dict[VarName, VarType]) -> Dict[VarName, VarDecl]:
     """
     :raises TypingError:
     """
 
-    updated: Dict[str, VarDecl] = {}
+    updated: Dict[VarName, VarDecl] = {}
     for name, decl in variables.items():
         if decl.type is None:
             t = types[name]

@@ -2,12 +2,11 @@ import abc
 import enum
 from typing import *
 
+VarName = NewType('VarName', str)  # A name of variable. Its type is int, sequence of int, etc.. For example, "a", "b", "f", and "ans" are VarName. However, "a_i" is not a VarName.
+Expr = NewType('Expr', str)  # An expr. The type is always int. For example, "n + 1", "a_i", "x", and "2 * x" are Expr.
+
 
 class FormatNode(abc.ABC):
-    """
-    .. note::
-       仕様はこれでよさそうな感じある？
-    """
     def __repr__(self) -> str:
         keys = dir(self)
         keys = list(filter(lambda key: not key.startswith('_'), keys))
@@ -17,12 +16,12 @@ class FormatNode(abc.ABC):
 
 
 class ItemNode(FormatNode):
-    name: str
-    indices: List[str]
+    name: VarName
+    indices: List[Expr]
 
     def __init__(self, *, name: str, indices: Sequence[str] = []):
-        self.name = name
-        self.indices = list(indices)
+        self.name = VarName(name)
+        self.indices = list(map(Expr, indices))
 
 
 class NewlineNode(FormatNode):
@@ -37,18 +36,13 @@ class SequenceNode(FormatNode):
 
 
 class LoopNode(FormatNode):
-    """
-    .. todo::
-       `name` を `counter` とかに rename する？
-    """
-
-    size: str
-    name: str
+    size: Expr
+    name: VarName  # TODO: rename `name` with `counter`
     body: FormatNode
 
     def __init__(self, *, size: str, name: str, body: FormatNode):
-        self.size = size
-        self.name = name
+        self.size = Expr(size)
+        self.name = VarName(name)
         self.body = body
 
 
@@ -67,11 +61,6 @@ class AnalyzerResources(NamedTuple):
 
 
 class VarType(enum.Enum):
-    """
-    .. todo::
-       仕様の確定
-    """
-
     IndexInt = 'IndexInt'
     ValueInt = 'ValueInt'
     Float = 'Float'
@@ -81,26 +70,16 @@ class VarType(enum.Enum):
 
 
 class VarDecl(NamedTuple):
-    """
-    .. todo::
-       仕様の確定
-    """
-
-    name: str
+    name: VarName
     type: Optional[VarType]
-    dims: List[str]
-    bases: List[str]
-    depending: Set[str]
+    dims: List[Expr]
+    bases: List[Expr]
+    depending: Set[VarName]
 
 
 class ConstantDecl(NamedTuple):
-    """
-    .. todo::
-       仕様の確定
-    """
-
-    name: str
-    value: str
+    name: VarName
+    value: str  # For example, "1000000007", "Yes", "No". Not Expr type.
     type: VarType
 
 
@@ -109,33 +88,33 @@ class OutputType(abc.ABC):
 
 
 class YesNoOutputType(OutputType):
-    name: str
+    name: Expr
     yes: str
     no: str
 
-    def __init__(self, *, name: str, yes: str, no: str):
+    def __init__(self, *, name: Expr, yes: str, no: str):
         self.name = name
         self.yes = yes
         self.no = no
 
 
 class OneOutputType(OutputType):
-    name: str
+    name: Expr
     type: VarType
 
-    def __init__(self, *, name: str, type: VarType):
+    def __init__(self, *, name: Expr, type: VarType):
         self.name = name
         self.type = type
 
 
 class TwoOutputType(OutputType):
-    name1: str
+    name1: Expr
     type1: VarType
-    name2: str
+    name2: Expr
     type2: VarType
     print_newline_after_item: bool
 
-    def __init__(self, *, name1: str, type1: VarType, name2: str, type2: VarType, print_newline_after_item: bool):
+    def __init__(self, *, name1: Expr, type1: VarType, name2: Expr, type2: VarType, print_newline_after_item: bool):
         self.name1 = name1
         self.type1 = type1
         self.name2 = name2
@@ -144,15 +123,15 @@ class TwoOutputType(OutputType):
 
 
 class VectorOutputType(OutputType):
-    name: str
+    name: VarName  # This has VarName type instead of Expr type becuase it will be subscripted.
     type: VarType
-    subscripted_name: str
-    counter_name: str
+    subscripted_name: str  # TODO: remove this variable. This has a string like "a[i]", but carrying source code is not responsibility of this class.
+    counter_name: VarName
     print_size: bool
     print_newline_after_size: bool
     print_newline_after_item: bool
 
-    def __init__(self, *, name: str, type: VarType, subscripted_name: str, counter_name: str, print_size: bool, print_newline_after_size: bool, print_newline_after_item: bool):
+    def __init__(self, *, name: VarName, type: VarType, subscripted_name: str, counter_name: VarName, print_size: bool, print_newline_after_size: bool, print_newline_after_item: bool):
         self.name = name
         self.type = type
         self.subscripted_name = subscripted_name
@@ -176,22 +155,17 @@ class TopcoderType(enum.Enum):
 class TopcoderClassDefinition(NamedTuple):
     class_name: str
     method_name: str
-    formal_arguments: List[Tuple[TopcoderType, str]]
+    formal_arguments: List[Tuple[TopcoderType, VarName]]
     return_type: TopcoderType
 
 
 class AnalyzerResult(NamedTuple):
-    """
-    .. todo::
-       仕様の確定
-    """
-
     resources: AnalyzerResources
     input_format: Optional[FormatNode]
-    input_variables: Optional[Dict[str, VarDecl]]
+    input_variables: Optional[Dict[VarName, VarDecl]]
     output_format: Optional[FormatNode]
-    output_variables: Optional[Dict[str, VarDecl]]
-    constants: Dict[str, ConstantDecl]
+    output_variables: Optional[Dict[VarName, VarDecl]]
+    constants: Dict[VarName, ConstantDecl]
     output_type: Optional[OutputType]
     topcoder_class_definition: Optional[TopcoderClassDefinition]
 

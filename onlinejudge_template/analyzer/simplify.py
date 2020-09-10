@@ -11,6 +11,8 @@ the module to manipulate mathematical expressions (e.g. ``2 * n + 1``, ``a_i + i
     この数式と等しい数式であって $\sum k_i x^{a_i} y^{b_i} z^{c_i}$ という形のものを求めてください。
 """
 
+# TODO: move and split this module?
+
 import abc
 import fractions
 from logging import getLogger
@@ -270,7 +272,7 @@ def _get_subscripted_value(value: Union[int, List[int], List[List[int]], List[Li
     return result
 
 
-def evaluate(s: str, *, env: Mapping[str, Union[int, List[int], List[List[int]], List[List[List[int]]]]] = {}) -> Optional[int]:
+def evaluate(s: Expr, *, env: Mapping[VarName, Union[int, List[int], List[List[int]], List[List[List[int]]]]] = {}) -> Optional[int]:
     """evaluate converts the given expr to an integer.
     """
     def go(e: _Expr) -> fractions.Fraction:
@@ -283,7 +285,7 @@ def evaluate(s: str, *, env: Mapping[str, Union[int, List[int], List[List[int]],
                 if arg.denominator != 1:
                     raise ExprParserError('indices must be an integer, not fraction: {}[{}]'.format(e.name, ', '.join(map(str, args))))
                 indices.append(arg.numerator)
-            return fractions.Fraction(_get_subscripted_value(env[e.name], indices, name_for_error_message=e.name))
+            return fractions.Fraction(_get_subscripted_value(env[VarName(e.name)], indices, name_for_error_message=e.name))
         elif isinstance(e, _Function):
             args = list(map(go, e.args))
             if e.value == _Function.ADD and len(e.args) == 2:
@@ -454,7 +456,7 @@ def _simplify_expr(e: _Expr) -> _Expr:
     return _convert_from_dnf(_simplify_dnf(_convert_to_dnf(e)))
 
 
-def simplify(s: str) -> str:
+def simplify(s: Expr) -> Expr:
     """simplify converts the given expr to a simple expr.
     """
 
@@ -468,4 +470,28 @@ def simplify(s: str) -> str:
     except ExprParserError as e:
         logger.debug('failed to simplify %s: %s', repr(s), e)
         return s
-    return _format(simplified)
+    return Expr(_format(simplified))
+
+
+def format_subscripted_variable(*, name: str, indices: List[str]) -> str:
+    """format_subscripted_variable constructs a single expr from a variable name and indices
+
+    :raises ExprParserError: if not a variable
+    """
+
+    expr = _parse(name)
+    if not isinstance(expr, _Variable) or expr.args:
+        raise ExprParserError('not a variable name: {}'.format(name))
+    return _format(_Variable(expr.name, *map(_parse, indices)))
+
+
+def parse_subscripted_variable(s: str) -> Tuple[str, List[str]]:
+    """parse_subscripted_variable is an inverse of format_subscripted_variable.
+
+    :raises ExprParserError: if not a variable
+    """
+
+    expr = _parse(s)
+    if not isinstance(expr, _Variable):
+        raise ExprParserError('not a subscripted variable: {}'.format(s))
+    return expr.name, list(map(_format, expr.args))

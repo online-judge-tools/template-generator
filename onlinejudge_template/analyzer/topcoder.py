@@ -51,7 +51,7 @@ def _parse_topcoder_html(soup: bs4.BeautifulSoup) -> Dict[str, str]:
     return definition
 
 
-def _parse_topcoder_method_signature(signature: str) -> Tuple[TopcoderType, List[Tuple[TopcoderType, str]]]:
+def _parse_topcoder_method_signature(signature: str) -> Tuple[TopcoderType, List[Tuple[TopcoderType, VarName]]]:
     """
     .. code-block::
 
@@ -81,7 +81,7 @@ def _parse_topcoder_method_signature(signature: str) -> Tuple[TopcoderType, List
     formal_arguments = []
     for decl in m.group(2).split(', '):
         type_, name = decl.split()
-        formal_arguments.append((type_table[type_], name))
+        formal_arguments.append((type_table[type_], VarName(name)))
     return (return_type, formal_arguments)
 
 
@@ -107,15 +107,15 @@ def parse_topcoder_class_definition(html: bytes, *, url: str) -> TopcoderClassDe
     return class_definition
 
 
-def _convert_topcoder_node(type_: TopcoderType, name: str) -> FormatNode:
+def _convert_topcoder_node(type_: TopcoderType, name: VarName) -> FormatNode:
     if type_ in (TopcoderType.Int, TopcoderType.Long, TopcoderType.Double, TopcoderType.String):
         return SequenceNode(items=[
             ItemNode(name=name),
             NewlineNode(),
         ])
     elif type_ in (TopcoderType.IntList, TopcoderType.LongList, TopcoderType.DoubleList, TopcoderType.StringList):
-        length_name = name + '_length'
-        index_name = 'i'
+        length_name = VarName(name + 'Length')
+        index_name = VarName('i')
         return SequenceNode(items=[
             ItemNode(name=length_name),
             LoopNode(name=index_name, size=length_name, body=ItemNode(name=name, indices=[index_name])),
@@ -133,10 +133,10 @@ def convert_topcoder_class_definition_to_input_format(definition: TopcoderClassD
 
 
 def convert_topcoder_class_definition_to_output_format(definition: TopcoderClassDefinition) -> FormatNode:
-    return _convert_topcoder_node(definition.return_type, 'ans')
+    return _convert_topcoder_node(definition.return_type, VarName('ans'))
 
 
-def _convert_topcoder_var_decls(type_: TopcoderType, name: str) -> List[VarDecl]:
+def _convert_topcoder_var_decls(type_: TopcoderType, name: VarName) -> List[VarDecl]:
     type_table = {
         TopcoderType.Int: (VarType.IndexInt, False),
         TopcoderType.Long: (VarType.ValueInt, False),
@@ -149,7 +149,7 @@ def _convert_topcoder_var_decls(type_: TopcoderType, name: str) -> List[VarDecl]
     }
     type__, is_list = type_table[type_]
     if is_list:
-        length_name = name + '_length'
+        length_name = VarName(name + 'Length')
         return [VarDecl(
             name=length_name,
             type=VarType.IndexInt,
@@ -159,8 +159,8 @@ def _convert_topcoder_var_decls(type_: TopcoderType, name: str) -> List[VarDecl]
         ), VarDecl(
             name=name,
             type=type__,
-            dims=[length_name],
-            bases=['0'],
+            dims=[Expr(length_name)],
+            bases=[Expr('0')],
             depending=set([length_name]),
         )]
     else:
@@ -173,13 +173,13 @@ def _convert_topcoder_var_decls(type_: TopcoderType, name: str) -> List[VarDecl]
         )]
 
 
-def convert_topcoder_class_definition_to_input_variables(definition: TopcoderClassDefinition) -> Dict[str, VarDecl]:
+def convert_topcoder_class_definition_to_input_variables(definition: TopcoderClassDefinition) -> Dict[VarName, VarDecl]:
     decls = []
     for type_, name in definition.formal_arguments:
         decls.extend(_convert_topcoder_var_decls(type_, name))
     return {decl.name: decl for decl in decls}
 
 
-def convert_topcoder_class_definition_to_output_variables(definition: TopcoderClassDefinition) -> Dict[str, VarDecl]:
-    decls = _convert_topcoder_var_decls(definition.return_type, 'ans')
+def convert_topcoder_class_definition_to_output_variables(definition: TopcoderClassDefinition) -> Dict[VarName, VarDecl]:
+    decls = _convert_topcoder_var_decls(definition.return_type, VarName('ans'))
     return {decl.name: decl for decl in decls}
