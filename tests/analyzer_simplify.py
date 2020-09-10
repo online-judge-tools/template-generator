@@ -1,7 +1,7 @@
 import unittest
 
 import onlinejudge_template.analyzer.simplify as simplify
-from onlinejudge_template.analyzer.simplify import _Constant, _Function, _Variable
+from onlinejudge_template.analyzer.simplify import ExprParserError, _Constant, _Function, _Variable
 from onlinejudge_template.types import *
 
 var = _Variable
@@ -138,4 +138,26 @@ class TestExprSimplification(unittest.TestCase):
         expected = 'a_1 + a_2 + a_3 + a_n + a_{n - 1} + dots'
 
         actual = simplify.simplify(expr)
+        self.assertEqual(actual, expected)
+
+
+class TestVariableUtils(unittest.TestCase):
+    def test_parse_success(self) -> None:
+        s = 'a_{i, n - j - 1}'
+        expected = ('a', ['i', 'n - j - 1'])
+
+        actual = simplify.parse_subscripted_variable(s)
+        self.assertEqual(actual, expected)
+
+    def test_parse_success(self) -> None:
+        s = 'k + 1'
+
+        self.assertRaises(ExprParserError, simplify.parse_subscripted_variable, s)
+
+    def test_format(self) -> None:
+        name = 'a'
+        indices = ['i', 'n - j - 1']
+        expected = 'a_{i, n - j - 1}'
+
+        actual = simplify.format_subscripted_variable(name=name, indices=indices)
         self.assertEqual(actual, expected)

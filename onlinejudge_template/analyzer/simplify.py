@@ -11,6 +11,8 @@ the module to manipulate mathematical expressions (e.g. ``2 * n + 1``, ``a_i + i
     この数式と等しい数式であって $\sum k_i x^{a_i} y^{b_i} z^{c_i}$ という形のものを求めてください。
 """
 
+# TODO: move and split this module?
+
 import abc
 import fractions
 from logging import getLogger
@@ -469,3 +471,27 @@ def simplify(s: str) -> str:
         logger.debug('failed to simplify %s: %s', repr(s), e)
         return s
     return _format(simplified)
+
+
+def format_subscripted_variable(*, name: str, indices: List[str]) -> str:
+    """format_subscripted_variable constructs a single expr from a variable name and indices
+
+    :raises ExprParserError: if not a variable
+    """
+
+    expr = _parse(name)
+    if not isinstance(expr, _Variable) or expr.args:
+        raise ExprParserError('not a variable name: {}'.format(name))
+    return _format(_Variable(expr.name, *map(_parse, indices)))
+
+
+def parse_subscripted_variable(s: str) -> Tuple[str, List[str]]:
+    """parse_subscripted_variable is an inverse of format_subscripted_variable.
+
+    :raises ExprParserError: if not a variable
+    """
+
+    expr = _parse(s)
+    if not isinstance(expr, _Variable):
+        raise ExprParserError('not a subscripted variable: {}'.format(s))
+    return expr.name, list(map(_format, expr.args))
