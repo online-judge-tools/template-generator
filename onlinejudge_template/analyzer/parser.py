@@ -153,9 +153,9 @@ class NewlineParserNode(ParserNode):
 
 class ItemParserNode(ParserNode):
     name: str
-    indices: Union[Tuple[str], Tuple]
+    indices: Tuple[str, ...]
 
-    def __init__(self, *, name: str, indices: Union[Tuple[str], Tuple] = (), line: int, column: int):
+    def __init__(self, *, name: str, indices: Tuple[str, ...] = (), line: int, column: int):
         super().__init__(line=line, column=column)
         self.name = name
         self.indices = indices
