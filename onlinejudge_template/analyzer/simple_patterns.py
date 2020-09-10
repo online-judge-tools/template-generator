@@ -240,7 +240,7 @@ def _make_tree_patterns(patterns: List[FormatNode]) -> List[FormatNode]:
 
 
 @functools.lru_cache(maxsize=None)
-def list_all_patterns() -> List[Tuple[FormatNode, Dict[str, VarDecl]]]:
+def list_all_patterns() -> List[Tuple[FormatNode, Dict[VarName, VarDecl]]]:
     """list_all_patterns lists all pre-defined petterns.
     """
 
@@ -253,7 +253,7 @@ def list_all_patterns() -> List[Tuple[FormatNode, Dict[str, VarDecl]]]:
     ]
     all_patterns = patterns + _make_tree_patterns(patterns)
 
-    results: List[Tuple[FormatNode, Dict[str, VarDecl]]] = []
+    results: List[Tuple[FormatNode, Dict[VarName, VarDecl]]] = []
     for pattern in all_patterns:
         try:
             variables = onlinejudge_template.analyzer.variables.list_declared_variables(pattern)
@@ -282,7 +282,7 @@ def list_output_patterns_depending_input_variable(n: str) -> List[FormatNode]:
     return all_patterns
 
 
-def _rename_variables_if_conflicts_dfs(node: FormatNode, *, mapping: Dict[str, str], env: Dict[str, VarDecl]) -> FormatNode:
+def _rename_variables_if_conflicts_dfs(node: FormatNode, *, mapping: Dict[VarName, Expr], env: Dict[VarName, VarDecl]) -> FormatNode:
     def rename(s: str) -> str:
         for a, b in mapping.items():
             s = re.sub(r'\b' + re.escape(a) + r'\b', b, s)
@@ -294,9 +294,9 @@ def _rename_variables_if_conflicts_dfs(node: FormatNode, *, mapping: Dict[str, s
             return node
         else:
             for i in itertools.count(1):
-                new_name = node.name + str(i)
+                new_name = VarName(node.name + str(i))
                 if new_name not in env:
-                    mapping[node.name] = new_name
+                    mapping[node.name] = Expr(new_name)
                     break
             indices = list(map(rename, node.indices))
             return ItemNode(name=mapping[node.name], indices=indices)
@@ -318,7 +318,7 @@ def _rename_variables_if_conflicts_dfs(node: FormatNode, *, mapping: Dict[str, s
         assert False
 
 
-def rename_variables_if_conflicts(node: FormatNode, *, env: Dict[str, VarDecl]) -> FormatNode:
+def rename_variables_if_conflicts(node: FormatNode, *, env: Dict[VarName, VarDecl]) -> FormatNode:
     return _rename_variables_if_conflicts_dfs(node, mapping={}, env=env)
 
 
@@ -348,7 +348,7 @@ def guess_format_with_pattern_matching(*, instances: List[bytes]) -> Optional[Fo
         return None
 
 
-def guess_output_format_with_pattern_matching_using_input_format(*, instances: List[SampleCase], input_format: FormatNode, input_variables: Dict[str, VarDecl]) -> Optional[FormatNode]:
+def guess_output_format_with_pattern_matching_using_input_format(*, instances: List[SampleCase], input_format: FormatNode, input_variables: Dict[VarName, VarDecl]) -> Optional[FormatNode]:
     """guess_output_format_with_pattern_matching_using_input_format
 
     :param instances: are sample cases.
@@ -371,7 +371,7 @@ def guess_output_format_with_pattern_matching_using_input_format(*, instances: L
             found.append(pattern)
 
     # patterns with variables in the input format
-    for name in ('n', 'N', 'm', 'M', 't', 'T'):
+    for name in map(VarName, ('n', 'N', 'm', 'M', 't', 'T')):
         if name in input_variables and input_variables[name].type in (VarType.IndexInt, VarType.ValueInt):
             env = dict(input_variables)
             env.pop(name)

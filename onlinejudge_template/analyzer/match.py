@@ -45,15 +45,15 @@ class FormatMatchError(AnalyzerError):
     pass
 
 
-def _get_env(values: Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]) -> Dict[str, int]:
-    env: Dict[str, int] = {}
+def _get_env(values: Dict[VarName, Dict[Tuple[int, ...], Union[int, float, str]]]) -> Dict[VarName, int]:
+    env: Dict[VarName, int] = {}
     for name, value in values.items():
         if () in value and isinstance(value[()], int):
             env[name] = value[()]
     return env
 
 
-def _match_format_dfs(node: FormatNode, tokens: List[str], *, variables: Dict[str, VarDecl], values: Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]) -> None:
+def _match_format_dfs(node: FormatNode, tokens: List[str], *, variables: Dict[VarName, VarDecl], values: Dict[VarName, Dict[Tuple[int, ...], Union[int, float, str]]]) -> None:
     """
     :raises FormatMatchError:
     """
@@ -89,7 +89,7 @@ def _match_format_dfs(node: FormatNode, tokens: List[str], *, variables: Dict[st
         ix = []
         env = _get_env(values)
         for str_i, str_dim, str_base in zip(node.indices, variables[node.name].dims, variables[node.name].bases):
-            i = evaluate(f"""{str_i} - ({str_base})""", env=env)
+            i = evaluate(Expr(f"""{str_i} - ({str_base})"""), env=env)
             dim = evaluate(str_dim, env=env)
             if i is None:
                 raise FormatMatchError(f"""failed to evaluate: {str_i} - ({str_base})""")
@@ -129,9 +129,9 @@ def match_format(
     node: FormatNode,
     data: str,
     *,
-    variables: Dict[str, VarDecl],
-    values: Optional[Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]] = None,
-) -> Dict[str, Dict[Tuple[int, ...], Union[int, float, str]]]:
+    variables: Dict[VarName, VarDecl],
+    values: Optional[Dict[VarName, Dict[Tuple[int, ...], Union[int, float, str]]]] = None,
+) -> Dict[VarName, Dict[Tuple[int, ...], Union[int, float, str]]]:
     """
     :raises FormatMatchError:
     :param values: is an optional argument to specify pre-defined variables.

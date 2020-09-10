@@ -26,7 +26,7 @@ from onlinejudge_template.types import *
 logger = getLogger(__name__)
 
 
-def list_constants_from_html(html: bytes) -> Dict[str, ConstantDecl]:
+def list_constants_from_html(html: bytes) -> Dict[VarName, ConstantDecl]:
     replace = [
         ("\\", ""),
         ("{", ""),
@@ -47,15 +47,15 @@ def list_constants_from_html(html: bytes) -> Dict[str, ConstantDecl]:
         if re.search(r'\b' + re.escape(str(value)) + r'\b', normalized):
             mod.add(value)
 
-    constants: Dict[str, ConstantDecl] = {}
+    constants: Dict[VarName, ConstantDecl] = {}
     if len(mod) == 1:
-        constants['MOD'] = ConstantDecl(name='MOD', type=VarType.ValueInt, value=str(mod.pop()))
+        constants[VarName('MOD')] = ConstantDecl(name=VarName('MOD'), type=VarType.ValueInt, value=Expr(str(mod.pop())))
     elif len(mod) >= 2:
         logger.error('too many MOD-like integers found: %s', mod)
     return constants
 
 
-def list_constants_from_sample_cases(sample_cases: List[SampleCase]) -> Dict[str, ConstantDecl]:
+def list_constants_from_sample_cases(sample_cases: List[SampleCase]) -> Dict[VarName, ConstantDecl]:
     yes: Set[str] = set()
     no: Set[str] = set()
     first: Set[str] = set()
@@ -75,19 +75,19 @@ def list_constants_from_sample_cases(sample_cases: List[SampleCase]) -> Dict[str
     logger.debug('Alice-like strings: %s', first)
     logger.debug('Bob-like strings: %s', second)
 
-    constants: Dict[str, ConstantDecl] = {}
+    constants: Dict[VarName, ConstantDecl] = {}
     if len(yes) == 1:
-        constants['YES'] = ConstantDecl(name='YES', type=VarType.String, value=yes.pop())
+        constants[VarName('YES')] = ConstantDecl(name=VarName('YES'), type=VarType.String, value=yes.pop())
     if len(no) == 1:
-        constants['NO'] = ConstantDecl(name='NO', type=VarType.String, value=no.pop())
+        constants[VarName('NO')] = ConstantDecl(name=VarName('NO'), type=VarType.String, value=no.pop())
     if len(first) == 1:
-        constants['FIRST'] = ConstantDecl(name='FIRST', type=VarType.String, value=first.pop())
+        constants[VarName('FIRST')] = ConstantDecl(name=VarName('FIRST'), type=VarType.String, value=first.pop())
     if len(second) == 1:
-        constants['SECOND'] = ConstantDecl(name='SECOND', type=VarType.String, value=second.pop())
+        constants[VarName('SECOND')] = ConstantDecl(name=VarName('SECOND'), type=VarType.String, value=second.pop())
     return constants
 
 
-def list_constants(*, html: Optional[bytes], sample_cases: Optional[List[SampleCase]]) -> Dict[str, ConstantDecl]:
+def list_constants(*, html: Optional[bytes], sample_cases: Optional[List[SampleCase]]) -> Dict[VarName, ConstantDecl]:
     constants = {}
     if html is not None:
         constants.update(list_constants_from_html(html))

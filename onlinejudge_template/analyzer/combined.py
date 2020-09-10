@@ -67,7 +67,7 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
         input_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=input_samples)
 
     # list the variables for input
-    input_variables: Optional[Dict[str, VarDecl]] = None
+    input_variables: Optional[Dict[VarName, VarDecl]] = None
     if resources.input_format_string is None and topcoder_class_definition is not None:
         input_variables = onlinejudge_template.analyzer.topcoder.convert_topcoder_class_definition_to_input_variables(topcoder_class_definition)
 
@@ -104,7 +104,7 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
             output_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=output_samples)
 
     # list the variables for output
-    output_variables: Optional[Dict[str, VarDecl]] = None
+    output_variables: Optional[Dict[VarName, VarDecl]] = None
     if resources.output_format_string is None and topcoder_class_definition is not None:
         output_variables = onlinejudge_template.analyzer.topcoder.convert_topcoder_class_definition_to_output_variables(topcoder_class_definition)
 
@@ -123,7 +123,7 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
                 logger.error('output analyzer failed: %s', e)
 
     # list constants
-    constants: Dict[str, ConstantDecl] = {}
+    constants: Dict[VarName, ConstantDecl] = {}
     if resources.html is not None or resources.sample_cases:
         constants.update(onlinejudge_template.analyzer.constants.list_constants(html=resources.html, sample_cases=resources.sample_cases))
 

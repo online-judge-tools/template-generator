@@ -51,7 +51,7 @@ class SentencesNode(PythonNode):
 
 
 class RangeNode(PythonNode):
-    def __init__(self, name: str, size: str, body: PythonNode):
+    def __init__(self, name: VarName, size: str, body: PythonNode):
         self.name = name
         self.size = size
         self.body = body
