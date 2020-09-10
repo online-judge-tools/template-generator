@@ -69,9 +69,6 @@ def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
     """
     :param kind: ``"in"`` or ``"out"``
     :raises HTMLParserError:
-
-    .. todo::
-       現状は ``<var>`` や ``</var>`` を消去しているが残す。構文解析時に利用できるため。
     """
 
     soup = bs4.BeautifulSoup(html, 'html.parser')

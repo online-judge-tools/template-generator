@@ -36,13 +36,8 @@ class SequenceNode(FormatNode):
 
 
 class LoopNode(FormatNode):
-    """
-    .. todo::
-       `name` を `counter` とかに rename する？
-    """
-
     size: Expr
-    name: VarName
+    name: VarName  # TODO: rename `name` with `counter`
     body: FormatNode
 
     def __init__(self, *, size: str, name: str, body: FormatNode):
@@ -66,11 +61,6 @@ class AnalyzerResources(NamedTuple):
 
 
 class VarType(enum.Enum):
-    """
-    .. todo::
-       仕様の確定
-    """
-
     IndexInt = 'IndexInt'
     ValueInt = 'ValueInt'
     Float = 'Float'
@@ -80,11 +70,6 @@ class VarType(enum.Enum):
 
 
 class VarDecl(NamedTuple):
-    """
-    .. todo::
-       仕様の確定
-    """
-
     name: VarName
     type: Optional[VarType]
     dims: List[Expr]
@@ -93,11 +78,6 @@ class VarDecl(NamedTuple):
 
 
 class ConstantDecl(NamedTuple):
-    """
-    .. todo::
-       仕様の確定
-    """
-
     name: VarName
     value: str  # For example, "1000000007", "Yes", "No". Not Expr type.
     type: VarType
@@ -180,11 +160,6 @@ class TopcoderClassDefinition(NamedTuple):
 
 
 class AnalyzerResult(NamedTuple):
-    """
-    .. todo::
-       仕様の確定
-    """
-
     resources: AnalyzerResources
     input_format: Optional[FormatNode]
     input_variables: Optional[Dict[VarName, VarDecl]]
