@@ -114,7 +114,7 @@ def _convert_topcoder_node(type_: TopcoderType, name: str) -> FormatNode:
             NewlineNode(),
         ])
     elif type_ in (TopcoderType.IntList, TopcoderType.LongList, TopcoderType.DoubleList, TopcoderType.StringList):
-        length_name = name + '_length'
+        length_name = name + 'Length'
         index_name = 'i'
         return SequenceNode(items=[
             ItemNode(name=length_name),
@@ -149,7 +149,7 @@ def _convert_topcoder_var_decls(type_: TopcoderType, name: str) -> List[VarDecl]
     }
     type__, is_list = type_table[type_]
     if is_list:
-        length_name = name + '_length'
+        length_name = name + 'Length'
         return [VarDecl(
             name=length_name,
             type=VarType.IndexInt,
