@@ -32,6 +32,32 @@ class TestMinimumTree(unittest.TestCase):
         actual = analyzer.construct_minimum_input_format_tree(instances=instances)
         self.assertEqual(str(actual), str(expected))
 
+    def test_failure(self) -> None:
+        instances = [
+            textwrap.dedent("""\
+            a
+            """),
+            textwrap.dedent("""\
+            b
+            c
+            """),
+            textwrap.dedent("""\
+            d e
+            f
+            """),
+        ]
+        expected = None
+
+        actual = analyzer.construct_minimum_input_format_tree(instances=instances)
+        self.assertEqual(str(actual), str(expected))
+
+    def test_too_slow(self) -> None:
+        instances = ['5 5 5 5 5\n' * 100]
+        expected = None
+
+        actual = analyzer.construct_minimum_input_format_tree(instances=instances)
+        self.assertEqual(str(actual), str(expected))
+
     def test_codeforces_1406_A(self) -> None:
         """It has only one sample input with multiple cases. Each case is simple.
         """
