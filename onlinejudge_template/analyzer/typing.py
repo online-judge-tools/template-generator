@@ -62,12 +62,20 @@ def get_var_type(value: Union[int, float, str]) -> VarType:
         assert False
 
 
-def unify_types(t1: VarType, t2: VarType) -> Optional[VarType]:
+def unify_types(t1: VarType, t2: VarType) -> VarType:
     if t1 == t2:
         return t1
-    if set([t1, t2]) == set([VarType.Char, VarType.String]):
+    if t1 == VarType.String or t2 == VarType.String:
         return VarType.String
-    return None
+    if t1 == VarType.Char or t2 == VarType.Char:
+        return VarType.String
+    if set([t1, t2]) == set([VarType.IndexInt, VarType.ValueInt]):
+        return VarType.ValueInt
+    if set([t1, t2]) == set([VarType.IndexInt, VarType.Float]):
+        return VarType.Float
+    if set([t1, t2]) == set([VarType.ValueInt, VarType.Float]):
+        return VarType.Float
+    assert False
 
 
 def get_var_types_from_match_result(values: Dict[VarName, Dict[Tuple[int, ...], Union[int, float, str]]], *, variables: Dict[VarName, VarDecl]) -> Dict[VarName, VarType]:
@@ -82,8 +90,6 @@ def get_var_types_from_match_result(values: Dict[VarName, Dict[Tuple[int, ...], 
             t1 = ts.pop()
             t2 = ts.pop()
             t3 = unify_types(t1, t2)
-            if t3 is None:
-                raise TypingError(f"""failed to unify types: {t1} and {t2} for variable {name}""")
             ts.add(t3)
         if not ts:
             raise TypingError(f"""failed to infer type: {name} has no candidate types""")
@@ -96,8 +102,6 @@ def get_var_types_from_match_result(values: Dict[VarName, Dict[Tuple[int, ...], 
     for name, decl in variables.items():
         if decl.type is not None:
             t = unify_types(types[name], decl.type)
-            if t is None:
-                raise TypingError(f"""failed to unify types: {types[name]} and {decl.type} for variable {name}""")
             types[name] = t
     return types
 
@@ -107,8 +111,6 @@ def unify_var_types(t1: Dict[VarName, VarType], t2: Dict[VarName, VarType]) -> D
     t3: Dict[VarName, VarType] = {}
     for name in t1.keys():
         t = unify_types(t1[name], t2[name])
-        if t is None:
-            raise TypingError(f"""failed to unify types: {t1[name]} and {t2[name]} for variable {name}""")
         t3[name] = t
     return t3
 
@@ -145,8 +147,6 @@ def update_variables_with_types(*, variables: Dict[VarName, VarDecl], types: Dic
             t = types[name]
         else:
             t1 = unify_types(types[name], decl.type)
-            if t1 is None:
-                raise TypingError(f"""failed to unify types: {types[name]} and {decl.type} for variable {name}""")
             t = t1
         updated[name] = VarDecl(
             type=t,
