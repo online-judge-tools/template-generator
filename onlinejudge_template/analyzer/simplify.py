@@ -15,6 +15,7 @@ the module to manipulate mathematical expressions (e.g. ``2 * n + 1``, ``a_i + i
 
 import abc
 import fractions
+import re
 from logging import getLogger
 from typing import *
 
@@ -495,3 +496,18 @@ def parse_subscripted_variable(s: str) -> Tuple[str, List[str]]:
     if not isinstance(expr, _Variable):
         raise ExprParserError('not a subscripted variable: {}'.format(s))
     return expr.name, list(map(_format, expr.args))
+
+
+def rename_variables_in_expr(expr: Expr, *, replace: Dict[VarName, VarName]) -> Expr:
+    """
+    :raises ExprParserError:
+    """
+
+    pattern = r'[A-Za-z]+|[^A-Za-z]+'
+    s = []
+    for c in re.findall(pattern, str(expr)):
+        if c.isalpha() and VarName(c) in replace:
+            s.append(str(replace[VarName(c)]))
+        else:
+            s.append(c)
+    return Expr(_format(_parse(''.join(s))))

@@ -3,6 +3,7 @@ from typing import *
 
 import onlinejudge_template.analyzer.constants
 import onlinejudge_template.analyzer.html
+import onlinejudge_template.analyzer.minimum_tree
 import onlinejudge_template.analyzer.output_types
 import onlinejudge_template.analyzer.parser
 import onlinejudge_template.analyzer.simple_patterns
@@ -63,8 +64,10 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
     elif topcoder_class_definition is not None:
         input_format = onlinejudge_template.analyzer.topcoder.convert_topcoder_class_definition_to_input_format(topcoder_class_definition)
     elif resources.sample_cases:
-        input_samples = [case.input for case in resources.sample_cases]
+        input_samples = [case.input.decode() for case in resources.sample_cases]
         input_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=input_samples)
+        if input_format is None:
+            input_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_input_format_tree(instances=input_samples)
 
     # list the variables for input
     input_variables: Optional[Dict[VarName, VarDecl]] = None
@@ -78,7 +81,7 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
             logger.error('input analyzer failed: %s', e)
 
         if input_format is not None and input_variables is not None and resources.sample_cases:
-            input_samples = [case.input for case in resources.sample_cases]
+            input_samples = [case.input.decode() for case in resources.sample_cases]
             try:
                 input_types = onlinejudge_template.analyzer.typing.infer_types_from_instances(input_format, variables=input_variables, instances=input_samples)
                 input_variables = onlinejudge_template.analyzer.typing.update_variables_with_types(variables=input_variables, types=input_types)
@@ -99,9 +102,13 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
     elif resources.sample_cases:
         if input_format is not None and input_variables is not None:
             output_format = onlinejudge_template.analyzer.simple_patterns.guess_output_format_with_pattern_matching_using_input_format(instances=resources.sample_cases, input_format=input_format, input_variables=input_variables)
+            if output_format is None:
+                output_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_output_format_tree_using_input_format(instances=resources.sample_cases, input_format=input_format, input_variables=input_variables)
         else:
-            output_samples = [case.output for case in resources.sample_cases]
+            output_samples = [case.output.decode() for case in resources.sample_cases]
             output_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=output_samples)
+            if output_format is None:
+                output_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_output_format_tree(instances=output_samples)
 
     # list the variables for output
     output_variables: Optional[Dict[VarName, VarDecl]] = None
@@ -115,7 +122,7 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
             logger.error('output analyzer failed: %s', e)
 
         if output_format is not None and output_variables is not None and resources.sample_cases:
-            output_samples = [case.output for case in resources.sample_cases]
+            output_samples = [case.output.decode() for case in resources.sample_cases]
             try:
                 output_types = onlinejudge_template.analyzer.typing.infer_types_from_instances(output_format, variables=output_variables, instances=output_samples)
                 output_variables = onlinejudge_template.analyzer.typing.update_variables_with_types(variables=output_variables, types=output_types)

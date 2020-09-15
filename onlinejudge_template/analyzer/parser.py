@@ -336,7 +336,7 @@ def zip_nodes(a: FormatNode, b: FormatNode, *, name: VarName, size: Optional[Exp
         raise FormatStringParserError("semantics: unmatched dots pair: {} and {}".format(a, b))
 
 
-def exnted_loop_node(a: FormatNode, b: FormatNode, *, loop: LoopNode) -> Optional[FormatNode]:
+def extend_loop_node(a: FormatNode, b: FormatNode, *, loop: LoopNode) -> Optional[FormatNode]:
     if isinstance(a, ItemNode) and isinstance(b, ItemNode):
         if a.name != b.name or len(a.indices) != len(b.indices):
             return None
@@ -357,7 +357,7 @@ def exnted_loop_node(a: FormatNode, b: FormatNode, *, loop: LoopNode) -> Optiona
             return None
         items = []
         for a_i, b_i in zip(a.items, b.items):
-            c_i = exnted_loop_node(a_i, b_i, loop=loop)
+            c_i = extend_loop_node(a_i, b_i, loop=loop)
             if c_i is None:
                 return None
             items.append(c_i)
@@ -366,7 +366,7 @@ def exnted_loop_node(a: FormatNode, b: FormatNode, *, loop: LoopNode) -> Optiona
     elif isinstance(a, LoopNode) and isinstance(b, LoopNode):
         if a.size != b.size or a.name != b.name:
             return None
-        c = exnted_loop_node(a.body, b.body, loop=loop)
+        c = extend_loop_node(a.body, b.body, loop=loop)
         if c is None:
             return None
         return LoopNode(size=a.size, name=a.name, body=c)
@@ -405,7 +405,7 @@ def analyze_parsed_node(node: ParserNode) -> FormatNode:
                 else:
                     items_init = items[:-1]
                     items_tail = items[-1]
-                extended_body = exnted_loop_node(items_tail, item.body, loop=item)
+                extended_body = extend_loop_node(items_tail, item.body, loop=item)
                 if extended_body is not None:
                     extended_loop: FormatNode = LoopNode(size=simplify(Expr(f"""{item.size} + 1""")), name=item.name, body=extended_body)
                     items = items_init

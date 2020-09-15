@@ -1,7 +1,7 @@
 """
-the module to guess format trees from sample strings
+the module to guess simple format trees from sample strings
 
-この module はサンプル文字列から直接 (つまり、フォーマット文字列を用いずに) フォーマット木を推測します。
+この module はサンプル文字列から直接 (つまり、フォーマット文字列を用いずに) 典型的なフォーマット木を推測します。利用可能なサンプル文字列の個数がひとつしかない場合での利用が想定されています。
 単純なフォーマット木を列挙しておき、それらとのパターンマッチをすることによって実装されています。
 
 たとえば
@@ -201,60 +201,21 @@ _two_vectors_patterns = [
     _length_and_vertical_two_vector_pattern,
 ]
 
-
-def _make_tree_pattern_dfs(node: FormatNode) -> Tuple[FormatNode, bool]:
-    if isinstance(node, ItemNode):
-        return node, False
-
-    elif isinstance(node, NewlineNode):
-        return node, False
-
-    elif isinstance(node, SequenceNode):
-        items: List[FormatNode] = []
-        any_replaced = False
-        for item in node.items:
-            item, replaced = _make_tree_pattern_dfs(item)
-            if replaced:
-                any_replaced = True
-        return SequenceNode(items=items), any_replaced
-
-    elif isinstance(node, LoopNode):
-        assert node.size == 'n'
-        body, _ = _make_tree_pattern_dfs(node.body)
-        return LoopNode(name=node.name, size='n - 1', body=body), True
-
-    else:
-        assert False
-
-
-def _make_tree_patterns(patterns: List[FormatNode]) -> List[FormatNode]:
-    """_make_tree_patterns detects patterns which have the variable `n` and arrays with lentgh `n`, and replaces the length of arrays with `n - 1`.
-    """
-
-    tree_patterns = []
-    for pattern in patterns:
-        pattern, replaced = _make_tree_pattern_dfs(pattern)
-        if replaced:
-            tree_patterns.append(pattern)
-    return tree_patterns
+_all_patterns: List[FormatNode] = [
+    *_simple_patterns,
+    *_vertical_simple_patterns,
+    *_one_vector_patterns,
+    *_one_vector_with_data_patterns,
+    *_two_vectors_patterns,
+]
 
 
 @functools.lru_cache(maxsize=None)
 def list_all_patterns() -> List[Tuple[FormatNode, Dict[VarName, VarDecl]]]:
     """list_all_patterns lists all pre-defined petterns.
     """
-
-    patterns: List[FormatNode] = [
-        *_simple_patterns,
-        *_vertical_simple_patterns,
-        *_one_vector_patterns,
-        *_one_vector_with_data_patterns,
-        *_two_vectors_patterns,
-    ]
-    all_patterns = patterns + _make_tree_patterns(patterns)
-
     results: List[Tuple[FormatNode, Dict[VarName, VarDecl]]] = []
-    for pattern in all_patterns:
+    for pattern in _all_patterns:
         try:
             variables = onlinejudge_template.analyzer.variables.list_declared_variables(pattern)
             results.append((pattern, variables))
@@ -322,7 +283,7 @@ def rename_variables_if_conflicts(node: FormatNode, *, env: Dict[VarName, VarDec
     return _rename_variables_if_conflicts_dfs(node, mapping={}, env=env)
 
 
-def guess_format_with_pattern_matching(*, instances: List[bytes]) -> Optional[FormatNode]:
+def guess_format_with_pattern_matching(*, instances: List[str]) -> Optional[FormatNode]:
     """guess_format_with_pattern_matching guesses a format tree from the strings which match with the format tree, i.e. sample cases.
 
     :param instances: are sample cases.
@@ -335,7 +296,7 @@ def guess_format_with_pattern_matching(*, instances: List[bytes]) -> Optional[Fo
         pattern = rename_variables_if_conflicts(pattern, env={})
         try:
             for data in instances:
-                match_format(pattern, data.decode(), variables=variables)
+                match_format(pattern, data, variables=variables)
         except FormatMatchError:
             pass
         else:
