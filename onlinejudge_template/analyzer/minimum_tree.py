@@ -527,11 +527,6 @@ def construct_minimum_output_format_tree_using_input_format(*, instances: List[S
     except FormatMatchError:
         output_samples = [case.output.decode() for case in instances]
         return construct_minimum_output_format_tree(instances=output_samples)
-    print('construct_minimum_output_format_tree_using_input_format')
-    print(input_variables)
-    print(minimizer_env)
-    print(converter_env)
-    print(converter_used)
 
     # construct the tree
     tokenized_instances = [list(tokenize_content(instance.output.decode())) for instance in instances]
@@ -542,5 +537,4 @@ def construct_minimum_output_format_tree_using_input_format(*, instances: List[S
     # make format node
     format_node = _convert_to_format_node(node, env=converter_env, used=converter_used)
     format_node = node_util.rename_variable_nicely(format_node, used=converter_used)
-    print(format_node)
     return node_util.remove_superfluous_sequence_nodes(format_node)
