@@ -92,6 +92,7 @@ import string
 from typing import *
 
 import onlinejudge_template.analyzer.node_util as node_util
+from onlinejudge_template.analyzer.match import FormatMatchError, match_format
 from onlinejudge_template.types import *
 
 
@@ -384,7 +385,7 @@ def list_next_possible_node(states: List[_MatchState]) -> Iterator[_Node]:
     return
 
 
-def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token]], limit: int = 10000) -> Optional[_Node]:
+def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token]], initial_env: Optional[List[List[int]]] = None, limit: int = 10000) -> Optional[_Node]:
     # init
     que = _PriorityQueue()
     initial_node = _PlaceholderNode()
@@ -395,9 +396,13 @@ def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token
 
         # calc
         states = []
-        for instance in instances:
+        for i, instance in enumerate(instances):
+            if initial_env is not None:
+                env = initial_env[i]
+            else:
+                env = []
             try:
-                state = cur.run_match(_MatchState(tokens=instance, offset=0, env=[]))
+                state = cur.run_match(_MatchState(tokens=instance, offset=0, env=env))
                 if state is None:
                     break
                 if state.offset != len(state.tokens):
@@ -501,5 +506,41 @@ def construct_minimum_output_format_tree(*, instances: List[str]) -> Optional[Fo
 
 
 def construct_minimum_output_format_tree_using_input_format(*, instances: List[SampleCase], input_format: FormatNode, input_variables: Dict[VarName, VarDecl]) -> Optional[FormatNode]:
-    output_samples = [case.output.decode() for case in instances]
-    return construct_minimum_output_format_tree(instances=output_samples)
+    # prepare environments
+    minimizer_env: List[List[int]] = []
+    converter_env: List[EnvItem] = []
+    converter_used: Set[VarName] = set()
+    try:
+        for i, data in enumerate(instances):
+            minimizer_env.append([])
+            input_values = match_format(input_format, data.input.decode(), variables=input_variables)
+            for name in sorted(input_variables.keys()):
+                decl = input_variables[name]
+                if (decl.type == VarType.IndexInt or decl.type == VarType.ValueInt) and not decl.dims:
+                    value = input_values[name][()]
+                    assert isinstance(value, int)
+                    minimizer_env[i].append(value)
+                    if i == 0:
+                        converter_env.append(EnvItem(name, False))
+                if i == 0:
+                    converter_used.add(name)
+    except FormatMatchError:
+        output_samples = [case.output.decode() for case in instances]
+        return construct_minimum_output_format_tree(instances=output_samples)
+    print('construct_minimum_output_format_tree_using_input_format')
+    print(input_variables)
+    print(minimizer_env)
+    print(converter_env)
+    print(converter_used)
+
+    # construct the tree
+    tokenized_instances = [list(tokenize_content(instance.output.decode())) for instance in instances]
+    node = _construct_minimum_input_format_internal_tree(instances=tokenized_instances, initial_env=minimizer_env)
+    if node is None:
+        return None
+
+    # make format node
+    format_node = _convert_to_format_node(node, env=converter_env, used=converter_used)
+    format_node = node_util.rename_variable_nicely(format_node, used=converter_used)
+    print(format_node)
+    return node_util.remove_superfluous_sequence_nodes(format_node)

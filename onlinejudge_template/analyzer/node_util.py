@@ -88,5 +88,5 @@ def _rename_variable_nicely_dfs(node: FormatNode, *, replace: Dict[VarName, VarN
         assert False
 
 
-def rename_variable_nicely(node: FormatNode) -> FormatNode:
-    return _rename_variable_nicely_dfs(node, replace={}, used=set())
+def rename_variable_nicely(node: FormatNode, *, used: Optional[Set[VarName]] = None) -> FormatNode:
+    return _rename_variable_nicely_dfs(node, replace={}, used=used or set())
