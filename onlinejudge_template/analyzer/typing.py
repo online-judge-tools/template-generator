@@ -113,7 +113,7 @@ def unify_var_types(t1: Dict[VarName, VarType], t2: Dict[VarName, VarType]) -> D
     return t3
 
 
-def infer_types_from_instances(node: FormatNode, *, variables: Dict[VarName, VarDecl], instances: List[bytes]) -> Dict[VarName, VarType]:
+def infer_types_from_instances(node: FormatNode, *, variables: Dict[VarName, VarDecl], instances: List[str]) -> Dict[VarName, VarType]:
     """
     :raises FormatMatchError:
     :raises TypingError:
@@ -122,7 +122,7 @@ def infer_types_from_instances(node: FormatNode, *, variables: Dict[VarName, Var
     assert instances
     types: Optional[Dict[VarName, VarType]] = None
     for i, data in enumerate(instances):
-        values = match_format(node, data.decode(), variables=variables)
+        values = match_format(node, data, variables=variables)
         logger.debug("match result for %d-th data: %s", i, values)
         types2 = get_var_types_from_match_result(values, variables=variables)
         if types is None:

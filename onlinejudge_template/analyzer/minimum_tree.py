@@ -494,3 +494,12 @@ def construct_minimum_input_format_tree(*, instances: List[str]) -> Optional[For
     format_node = _convert_to_format_node(node, env=[], used=set())
     format_node = node_util.rename_variable_nicely(format_node)
     return node_util.remove_superfluous_sequence_nodes(format_node)
+
+
+def construct_minimum_output_format_tree(*, instances: List[str]) -> Optional[FormatNode]:
+    return construct_minimum_input_format_tree(instances=instances)
+
+
+def construct_minimum_output_format_tree_using_input_format(*, instances: List[SampleCase], input_format: FormatNode, input_variables: Dict[VarName, VarDecl]) -> Optional[FormatNode]:
+    output_samples = [case.output.decode() for case in instances]
+    return construct_minimum_output_format_tree(instances=output_samples)
