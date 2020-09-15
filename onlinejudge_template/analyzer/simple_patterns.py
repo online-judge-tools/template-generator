@@ -353,8 +353,7 @@ def guess_output_format_with_pattern_matching_using_input_format(*, instances: L
                         values = {name: input_values[name]}  # hide variables other than the `name`
                         match_format(pattern, data.output.decode(), variables=variables, values=values)
                 except FormatMatchError as e:
-                    logger.exception(e)
-                    pass
+                    logger.error(e)
                 else:
                     logger.debug('simple output pattern found with input variables: %s', pattern)
                     found.append(pattern)
