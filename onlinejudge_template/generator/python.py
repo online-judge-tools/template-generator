@@ -114,11 +114,11 @@ def _generate_input_dfs(node: FormatNode, *, declared: Set[VarName], initialized
         elif type_ == VarType.Float:
             return OtherNode(line=f"""{var} = 100.0 * random.random()  # TODO: edit here""")
         elif type_ == VarType.String:
-            return OtherNode(line=f"""{var} = ''.join([random.choice('abcde') for range(random.randint(1, 100))])  # TODO: edit here""")
+            return OtherNode(line=f"""{var} = ''.join([random.choice('abcde') for _ in range(random.randint(1, 100))])  # TODO: edit here""")
         elif type_ == VarType.Char:
             return OtherNode(line=f"""{var} = random.choice('abcde')  # TODO: edit here""")
         else:
-            return OtherNode(line=f"""{var} = None  # TODO: edit here""")
+            return OtherNode(line=f"""{var} = random.randint(1, 10)  # TODO: edit here""")
     elif isinstance(node, NewlineNode):
         return SentencesNode(sentences=[])
     elif isinstance(node, SequenceNode):
