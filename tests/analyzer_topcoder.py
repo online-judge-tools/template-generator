@@ -8,6 +8,9 @@ from onlinejudge_template.types import *
 class TestFormatStringDetectorTopcoder(unittest.TestCase):
     """TestFormatStringAnalyzerTopcoder is a class for unit tests for the parser of the class specification of Topcoder (with network access).
     """
+
+    # TODO: This problem may be deleted (found at 2020/09/20). Wait for a while (a month?) and delete this test if the problem actually deleted.
+    @unittest.expectedFailure
     def test_10760(self):
         # `double` is used and one of values is a scientific form `1.0E50`.
         url = 'https://community.topcoder.com/stat?c=problem_statement&pm=10760'
