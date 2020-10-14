@@ -34,6 +34,8 @@
         hook.register_filter_command(["clang-format", "--style", json.dumps(format_config)], data=data)
 %>\
 ${include}
+// usage: $ oj generate-input ./generate
+// usage: $ oj generate-input --hack-actual=./a.out --hack-expected=./naive ./generate
 #define REP(i, n) for (int i = 0; (i) < (int)(n); ++ (i))
 #define REP3(i, m, n) for (int i = (m); (i) < (int)(n); ++ (i))
 #define REP_R(i, n) for (int i = (int)(n) - 1; (i) >= 0; -- (i))
