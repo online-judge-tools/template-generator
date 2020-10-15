@@ -37,8 +37,6 @@ class TestFormatStringDetectorTopcoder(unittest.TestCase):
         definition = analyzer.parse_topcoder_class_definition(html, url=url)
         self.assertEqual(definition, expected)
 
-    # TODO: This problem may be deleted (found at 2020/09/19). Wait for a while (a month?) and delete this test if the problem actually deleted.
-    @unittest.expectedFailure
     def test_10727(self):
         # `long` is used.
         url = 'https://community.topcoder.com/stat?c=problem_statement&pm=10727'
