@@ -53,7 +53,7 @@ Please install them too if you want to generate better formatted code.
 
 ### Generating random cases
 
-To generat random cases, please run `oj-prepare https://...` command, edit the generated `generate.py` file, and run the following command:
+To generate random cases, please run `oj-prepare https://...` command, edit the generated `generate.py` file, and run the following command:
 
 ``` console
 $ oj generate-input "python3 generate.py"
