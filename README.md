@@ -13,6 +13,8 @@
 
 This tool analyzes problems and generates template codes for competitive programming.
 
+Online Demo: <https://online-judge-tools.github.io/template-generator-webapp/>
+
 
 ## How to install
 
