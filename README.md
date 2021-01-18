@@ -1,4 +1,4 @@
-# Online Judge Template Generator
+# online-judge-tools/template-generator
 
 [![test](https://github.com/kmyk/online-judge-template-generator/workflows/test/badge.svg)](https://github.com/kmyk/online-judge-template-generator/actions)
 [![Documentation Status](https://readthedocs.org/projects/online-judge-template-generator/badge/)](https://online-judge-template-generator.readthedocs.io/en/latest/)
