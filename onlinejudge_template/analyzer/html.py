@@ -8,8 +8,8 @@ the module to find the input format string written with ``<pre>`` tags from HTML
 
     <h3>Input</h3><p>Input is given from Standard Input in the following format:</p>
     <pre><var>N</var>
-    <var>P_0</var> <var>P_1</var> <var>\cdots</var> <var>P_{N-1}</var>
-    <var>Q_0</var> <var>Q_1</var> <var>\cdots</var> <var>Q_{N-1}</var>
+    <var>P_0</var> <var>P_1</var> <var>\\cdots</var> <var>P_{N-1}</var>
+    <var>Q_0</var> <var>Q_1</var> <var>\\cdots</var> <var>Q_{N-1}</var>
     </pre>
 
 という部分文字列を含みますが、ここから次のような文字列を抜き出します。
