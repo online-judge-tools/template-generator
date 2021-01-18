@@ -90,7 +90,9 @@ def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
                     return _extract_format_string_from_pre(pre).strip() + '\n'
         raise HTMLParserError
 
-    elif 'judge.yosupo.jp' in url:
+    elif 'yosupo.jp' in url:
+        assert 'old.yosupo.jp' in url  # TODO: update this for new site https://judge.yosupo.jp/. The current implementation is for https://old.yosupo.jp/.
+
         for h2 in soup.find_all('h2'):
             found = False
             for div in h2.find_all('div'):

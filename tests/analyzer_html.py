@@ -107,7 +107,7 @@ class TestFormatStringDetectorLibraryChecker(unittest.TestCase):
     """TestFormatStringDetectorLibraryChecker is a class for unit tests about the format string detection of Library Checker (with network access).
     """
     def test_unionfind(self) -> None:
-        url = 'https://judge.yosupo.jp/problem/unionfind'
+        url = 'https://old.yosupo.jp/problem/unionfind'
         expected = '\n'.join([
             r'$N$ $Q$',
             r'$t_1$ $u_1$ $v_1$',
@@ -122,7 +122,7 @@ class TestFormatStringDetectorLibraryChecker(unittest.TestCase):
         self.assertRaises(analyzer.HTMLParserError, lambda: analyzer.parse_output_format_string(html, url=url))
 
     def test_two_edge_connected_components(self) -> None:
-        url = 'https://judge.yosupo.jp/problem/two_edge_connected_components'
+        url = 'https://old.yosupo.jp/problem/two_edge_connected_components'
         expected_input = '\n'.join([
             r'$N$ $M$',
             r'$a_0$ $b_0$',
@@ -141,7 +141,7 @@ class TestFormatStringDetectorLibraryChecker(unittest.TestCase):
         self.assertEqual(analyzer.parse_output_format_string(html, url=url), expected_output)
 
     def test_stirling_number_of_the_second_kind(self) -> None:
-        url = 'https://judge.yosupo.jp/problem/stirling_number_of_the_second_kind'
+        url = 'https://old.yosupo.jp/problem/stirling_number_of_the_second_kind'
         expected_input = '\n'.join([
             r'$N$',
             r'',

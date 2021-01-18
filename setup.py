@@ -17,7 +17,7 @@ setup(
         'beautifulsoup4 >= 4.8',
         'colorlog >= 4.2.1',
         'Mako >= 1.1',
-        'online-judge-api-client >= 10.3.0',
+        'online-judge-api-client >= 10.8.0',
         'online-judge-tools >= 10',
         'ply >= 3',
         'pyyaml >= 5',
