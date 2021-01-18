@@ -8,8 +8,8 @@ the module to find the input format string written with ``<pre>`` tags from HTML
 
     <h3>Input</h3><p>Input is given from Standard Input in the following format:</p>
     <pre><var>N</var>
-    <var>P_0</var> <var>P_1</var> <var>\cdots</var> <var>P_{N-1}</var>
-    <var>Q_0</var> <var>Q_1</var> <var>\cdots</var> <var>Q_{N-1}</var>
+    <var>P_0</var> <var>P_1</var> <var>\\cdots</var> <var>P_{N-1}</var>
+    <var>Q_0</var> <var>Q_1</var> <var>\\cdots</var> <var>Q_{N-1}</var>
     </pre>
 
 という部分文字列を含みますが、ここから次のような文字列を抜き出します。
@@ -90,7 +90,9 @@ def parse_generic_format_string(html: bytes, *, kind: str, url: str) -> str:
                     return _extract_format_string_from_pre(pre).strip() + '\n'
         raise HTMLParserError
 
-    elif 'judge.yosupo.jp' in url:
+    elif 'yosupo.jp' in url:
+        assert 'old.yosupo.jp' in url  # TODO: update this for new site https://judge.yosupo.jp/. The current implementation is for https://old.yosupo.jp/.
+
         for h2 in soup.find_all('h2'):
             found = False
             for div in h2.find_all('div'):

@@ -35,6 +35,7 @@ def main(args: Optional[List[str]] = None) -> None:
     problem = onlinejudge.dispatch.problem_from_url(url)
     if problem is not None:
         url = problem.get_url()  # normalize url
+        url = url.replace('judge.yosupo.jp', 'old.yosupo.jp')  # TODO: support the new pages
     logger.debug('url: %s', url)
     with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=parsed.cookie) as session:
         html = network.download_html(url, session=session)
