@@ -22,6 +22,8 @@
 
 ## Resources
 
+オンライン上の試用版: <https://online-judge-tools.github.io/template-generator-webapp/>
+
 有志による紹介記事 (日本語):
 
 -   [Online Judge Template Generator を Windows 10 + Python で使う：AtCoder コンテストにおける提出コードの作成，テストから提出まで - はむ吉（のんびり）の練習ノート](https://hamukichi.hatenablog.jp/entry/2020/09/17/230818)
