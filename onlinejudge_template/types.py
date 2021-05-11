@@ -100,21 +100,21 @@ class YesNoOutputType(OutputType):
 
 class OneOutputType(OutputType):
     name: Expr
-    type: VarType
+    type: Optional[VarType]
 
-    def __init__(self, *, name: Expr, type: VarType):
+    def __init__(self, *, name: Expr, type: Optional[VarType]):
         self.name = name
         self.type = type
 
 
 class TwoOutputType(OutputType):
     name1: Expr
-    type1: VarType
+    type1: Optional[VarType]
     name2: Expr
-    type2: VarType
+    type2: Optional[VarType]
     print_newline_after_item: bool
 
-    def __init__(self, *, name1: Expr, type1: VarType, name2: Expr, type2: VarType, print_newline_after_item: bool):
+    def __init__(self, *, name1: Expr, type1: Optional[VarType], name2: Expr, type2: Optional[VarType], print_newline_after_item: bool):
         self.name1 = name1
         self.type1 = type1
         self.name2 = name2
@@ -124,14 +124,14 @@ class TwoOutputType(OutputType):
 
 class VectorOutputType(OutputType):
     name: VarName  # This has VarName type instead of Expr type becuase it will be subscripted.
-    type: VarType
+    type: Optional[VarType]
     subscripted_name: str  # TODO: remove this variable. This has a string like "a[i]", but carrying source code is not responsibility of this class.
     counter_name: VarName
     print_size: bool
     print_newline_after_size: bool
     print_newline_after_item: bool
 
-    def __init__(self, *, name: VarName, type: VarType, subscripted_name: str, counter_name: VarName, print_size: bool, print_newline_after_size: bool, print_newline_after_item: bool):
+    def __init__(self, *, name: VarName, type: Optional[VarType], subscripted_name: str, counter_name: VarName, print_size: bool, print_newline_after_size: bool, print_newline_after_item: bool):
         self.name = name
         self.type = type
         self.subscripted_name = subscripted_name

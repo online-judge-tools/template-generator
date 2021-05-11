@@ -75,6 +75,8 @@ def get_directory(*, problem: onlinejudge.type.Problem, contest: Optional[online
 
 
 def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onlinejudge.type.Contest] = None, config: Dict[str, Any], session: requests.Session) -> None:
+    logger.info('prepare the problem: %s', problem.get_url())
+
     table = config.get('templates')
     if table is None:
         table = {
@@ -97,14 +99,17 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
         resources = analyzer.prepare_from_html(html, url=url, sample_cases=sample_cases)
         analyzed = analyzer.run(resources)
 
+        exceptions: List[Exception] = []
+
         for dest_str, template in table.items():
             dest = pathlib.Path(dest_str)
 
             # generate
             try:
                 code = generator.run(analyzed, template_file=template)
-            except NotImplementedError as e:
-                logger.error('generator failed: %s', e)
+            except Exception as e:
+                logger.exception('generator failed: template = %s, dest = %s', template, dest_str)
+                exceptions.append(e)
                 continue
 
             # write
@@ -123,11 +128,27 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
             subprocess.check_call(['oj', 'download', problem.get_url()], stdout=sys.stdout, stderr=sys.stderr)
         except subprocess.CalledProcessError as e:
             logger.error('samples downloader failed: %s', e)
+            exceptions.append(e)
+
+        if exceptions:
+            raise exceptions[0]
 
 
 def prepare_contest(contest: onlinejudge.type.Contest, *, config: Dict[str, Any], session: requests.Session) -> None:
+    logger.info('prepare the contest: %s', contest.get_url())
+
+    exceptions: List[Exception] = []
+
     for i, problem in enumerate(contest.list_problems()):
-        prepare_problem(problem, contest=contest, config=config, session=session)
+        try:
+            prepare_problem(problem, contest=contest, config=config, session=session)
+
+        except Exception as e:
+            logger.exception('failed to prepare the problem: %s', problem.get_url())
+            exceptions.append(e)
+
+    if exceptions:
+        raise exceptions[0]
 
 
 default_config_path = pathlib.Path(appdirs.user_config_dir('online-judge-tools')) / 'prepare.config.toml'

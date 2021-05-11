@@ -37,12 +37,15 @@ the module to generate C++ code
 - :func:`write_input`
 """
 
+from logging import getLogger
 from typing import *
 
 import onlinejudge_template.generator._utils as utils
 from onlinejudge_template.analyzer.simplify import simplify
 from onlinejudge_template.generator._cplusplus import *
 from onlinejudge_template.types import *
+
+logger = getLogger(__name__)
 
 
 def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) -> str:
@@ -90,7 +93,7 @@ def _read_variables(exprs: List[Tuple[str, Optional[VarType]]], *, data: Dict[st
         return [f"""scanf("{specifiers}"{', '.join(arguments)});"""]
     elif scanner is None or scanner in ('cin', 'std::cin'):
         items = []
-        items.append(f"""{_get_std(data=data)}cin""")
+        items.append(f"""std::cin""")
         for expr, _ in exprs:
             items.append(expr)
         return [" >> ".join(items) + ";"]
@@ -100,11 +103,12 @@ def _read_variables(exprs: List[Tuple[str, Optional[VarType]]], *, data: Dict[st
         raise CPlusPlusGeneratorError(f"""invalid "scanner" config: {scanner}""")
 
 
-def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: bool, data: Dict[str, Any]) -> List[str]:
+def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, end: str, data: Dict[str, Any]) -> List[str]:
     """
     :raises CPlusPlusGeneratorError:
     """
 
+    assert end in ('', ' ', '\n')
     printer = data['config'].get('printer')
     if printer == 'printf':
         specifiers = ''
@@ -112,18 +116,23 @@ def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: boo
         for expr, type in exprs:
             specifiers += _get_base_type_format_specifier(type, name=expr, data=data)
             arguments.append(expr)
-        return [f"""printf("{specifiers}\\n"{', '.join(arguments)});"""]
+        if end == '\n':
+            end = '\\n'
+        return [f"""printf("{specifiers}{end}"{', '.join(arguments)});"""]
     elif printer is None or printer in ('cout', 'std::cout'):
         items = []
-        items.append(f"""{_get_std(data=data)}cout""")
+        items.append(f"""std::cout""")
         for i, (expr, _) in enumerate(exprs):
             if i:
                 items.append("""' '""")
             items.append(expr)
-        items.append(f"""{_get_std(data=data)}endl""")
+        if end == ' ':
+            items.append("' '")
+        elif end == '\n':
+            items.append("'\\n'")
         return [" << ".join(items) + ";"]
     elif callable(printer):
-        return printer(exprs, newline=newline)
+        return printer(exprs, newline=(end == '\n'))
     else:
         raise CPlusPlusGeneratorError(f"""invalid "printer" config: {printer}""")
 
@@ -143,14 +152,7 @@ def _generate_variable(expr: Tuple[str, Optional[VarType]], *, data: Dict[str, A
     else:
         raise CPlusPlusGeneratorError(f"""cannot generate a variable of type {type}: {repr(name)}""")
 
-    yield f"""{name} = {_get_std(data=data)}uniform_int_distribution<{_get_base_type(type, data=data)}>({l}, {r - 1})(gen);"""
-
-
-def _get_std(data: Dict['str', Any]) -> str:
-    if data['config'].get('using_namespace_std'):
-        return ''
-    else:
-        return 'std::'
+    yield f"""{name} = std::uniform_int_distribution<{_get_base_type(type, data=data)}>({l}, {r - 1})(gen);"""
 
 
 def _get_base_type(type: Optional[VarType], *, data: Dict[str, Any]) -> str:
@@ -161,7 +163,7 @@ def _get_base_type(type: Optional[VarType], *, data: Dict[str, Any]) -> str:
     elif type == VarType.Float:
         return "double"
     elif type == VarType.String:
-        return f"""{_get_std(data=data)}string"""
+        return f"""std::string"""
     elif type == VarType.Char:
         return "char"
     elif type is None:
@@ -198,7 +200,7 @@ def _get_type_and_ctor(decl: VarDecl, *, data: Dict[str, Any]) -> Tuple[str, str
         sndarg = f""", {type}({ctor})""" if ctor else ''
         ctor = f"""({dim}{sndarg})"""
         space = ' ' if type.endswith('>') else ''
-        type = f"""{_get_std(data=data)}vector<{type}{space}>"""
+        type = f"""std::vector<{type}{space}>"""
     return type, ctor
 
 
@@ -216,7 +218,7 @@ def _declare_variables(decls: List[VarDecl], *, data: Dict[str, Any]) -> Iterato
     for decl in decls:
         type, ctor = _get_type_and_ctor(decl, data=data)
         if last_type != type and last_type is not None:
-            yield f"""{type} {", ".join(last_inits)};"""
+            yield f"""{last_type} {", ".join(last_inits)};"""
             last_inits = []
         last_type = type
         last_inits.append(f"""{decl.name}{ctor}""")
@@ -279,6 +281,20 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
         assert False
 
 
+def _has_trailing_space(node: CPlusPlusNode) -> bool:
+    if isinstance(node, OutputTokensNode):
+        return node.end != ''
+    elif isinstance(node, SentencesNode):
+        if not node:
+            return False
+        else:
+            return _has_trailing_space(node.sentences[-1])
+    elif isinstance(node, RepeatNode):
+        return _has_trailing_space(node.body)
+    else:
+        assert False
+
+
 def _write_output_dfs(node: FormatNode, *, decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
     """
     :raises CPlusPlusGeneratorError:
@@ -287,16 +303,21 @@ def _write_output_dfs(node: FormatNode, *, decls: Dict[VarName, VarDecl], data: 
     if isinstance(node, ItemNode):
         decl = decls[node.name]
         var = _get_variable(decl=decl, indices=node.indices, decls=decls)
-        return OutputTokensNode(exprs=[(VarName(var), decl.type)])
+        return OutputTokensNode(exprs=[(VarName(var), decl.type)], end='')
     elif isinstance(node, NewlineNode):
-        return OutputNewlineNode(exprs=[])
+        return OutputTokensNode(exprs=[], end='\n')
     elif isinstance(node, SequenceNode):
         sentences = []
-        for item in node.items:
-            sentences.append(_write_output_dfs(item, decls=decls, data=data))
+        for i, item in enumerate(node.items):
+            sentence = _write_output_dfs(item, decls=decls, data=data)
+            sentences.append(sentence)
+            if i + 1 < len(node.items) and not _has_trailing_space(sentence):
+                sentences.append(OutputTokensNode(exprs=[], end=' '))
         return SentencesNode(sentences=sentences)
     elif isinstance(node, LoopNode):
         body = _write_output_dfs(node.body, decls=decls, data=data)
+        if not _has_trailing_space(body):
+            body = SentencesNode(sentences=[body, OutputTokensNode(exprs=[], end=' ')])
         result = RepeatNode(name=node.name, size=node.size, body=body)
         return result
     else:
@@ -310,8 +331,6 @@ def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlus
         return node
     elif isinstance(node, OutputTokensNode):
         return node
-    elif isinstance(node, OutputNewlineNode):
-        return node
     elif isinstance(node, GenerateNode):
         return node
     elif isinstance(node, SentencesNode):
@@ -323,10 +342,9 @@ def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlus
                 sentences[-1].decls.extend(sentence.decls)
             elif sentences and isinstance(sentences[-1], InputNode) and isinstance(sentence, InputNode):
                 sentences[-1].exprs.extend(sentence.exprs)
-            elif sentences and isinstance(sentences[-1], OutputTokensNode) and isinstance(sentence, OutputTokensNode):
+            elif sentences and isinstance(sentences[-1], OutputTokensNode) and sentences[-1].end != '\n' and isinstance(sentence, OutputTokensNode):
                 sentences[-1].exprs.extend(sentence.exprs)
-            elif sentences and isinstance(sentences[-1], OutputTokensNode) and isinstance(sentence, OutputNewlineNode):
-                sentences[-1] = OutputNewlineNode(exprs=sentences[-1].exprs + sentence.exprs)
+                sentences[-1].end = sentence.end
             elif isinstance(sentence, SentencesNode):
                 que = sentence.sentences + que
             else:
@@ -346,9 +364,7 @@ def _serialize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> Iter
     elif isinstance(node, InputNode):
         yield from _read_variables(node.exprs, data=data)
     elif isinstance(node, OutputTokensNode):
-        yield from _write_variables(node.exprs, newline=False, data=data)
-    elif isinstance(node, OutputNewlineNode):
-        yield from _write_variables(node.exprs, newline=True, data=data)
+        yield from _write_variables(node.exprs, end=node.end, data=data)
     elif isinstance(node, GenerateNode):
         yield from _generate_variable(node.expr, data=data)
     elif isinstance(node, SentencesNode):
@@ -368,26 +384,11 @@ def _read_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> st
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    try:
-        lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""int n;""")
-    try:
-        lines.extend(_read_variables([('n', VarType.IndexInt)], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}scanf("%d", &n);""")
-    try:
-        lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
-    try:
-        lines.append(_declare_loop(var=VarName('i'), size=Expr('n'), data=data) + " {")
-    except CPlusPlusGeneratorError:
-        lines.append("""for (int i = 0; i < n; ++i) {""")
-    try:
-        lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}scanf("{_get_base_type_format_specifier(VarType.ValueInt, name="a", data=data)}", &a[i]);""")
+    lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
+    lines.extend(_read_variables([('n', VarType.IndexInt)], data=data))
+    lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
+    lines.append(_declare_loop(var=VarName('i'), size=Expr('n'), data=data) + " {")
+    lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
@@ -397,41 +398,23 @@ def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
     if analyzed.input_format is None or analyzed.input_variables is None:
         return _read_input_fallback(message="failed to analyze input format", data=data, nest=nest)
 
-    try:
-        node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data)
-    except CPlusPlusGeneratorError as e:
-        return _read_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
+    node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
-def _generate_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> str:
+def _generate_input_fallback(message: str, data: Dict[str, Any], *, nest: int = 1) -> str:
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    lines.append(f"""{_get_std(data=data)}random_device device;""")
-    lines.append(f"""{_get_std(data=data)}default_random_engine gen(device());""")
-    try:
-        lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""int n;""")
-    try:
-        lines.extend(_generate_variable(('n', VarType.IndexInt), data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""n = {_get_std(data=data)}uniform_int_distribution<int>(0, 100000)(gen);""")
-    try:
-        lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
-    try:
-        lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
-    except CPlusPlusGeneratorError:
-        lines.append("""for (int i = 0; i < n; ++i) {""")
-    try:
-        lines.extend(_generate_variable(('a[i]', VarType.ValueInt), data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""a[i] = {_get_std(data=data)}uniform_int_distribution<{_get_base_type(VarType.ValueInt, data=data)}>(0, 1000000000)(gen);""")
+    lines.append(f"""std::random_device device;""")
+    lines.append(f"""std::default_random_engine gen(device());""")
+    lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
+    lines.extend(_generate_variable(('n', VarType.IndexInt), data=data))
+    lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
+    lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
+    lines.extend(_generate_variable(('a[i]', VarType.ValueInt), data=data))
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
@@ -441,45 +424,33 @@ def generate_input(data: Dict[str, Any], *, nest: int = 1) -> str:
     if analyzed.input_format is None or analyzed.input_variables is None:
         return _generate_input_fallback(message="failed to analyze input format", data=data, nest=nest)
 
-    try:
-        make_node = lambda var, type: GenerateNode(expr=(var, type))
-        node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data, make_node=make_node)
-    except CPlusPlusGeneratorError as e:
-        return _read_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
+    make_node = lambda var, type: GenerateNode(expr=(var, type))
+    node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data, make_node=make_node)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
-def _write_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> str:
+def _write_input_fallback(message: str, data: Dict[str, Any], *, nest: int = 1) -> str:
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    try:
-        lines.extend(_write_variables([('n', VarType.IndexInt)], newline=True, data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}printf("%d\n", ans);""")
-    try:
-        lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
-    except CPlusPlusGeneratorError:
-        lines.append("""for (int i = 0; i < n; ++i) {""")
-    try:
-        lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}printf("{_get_base_type(VarType.ValueInt, data=data)}%c", &a[i], i < n - 1 ? ' ' : '\\n');""")
+    lines.extend(_write_variables([('n', VarType.IndexInt)], end='\n', data=data))
+    lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
+    lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
 def write_input(data: Dict[str, Any], *, nest: int = 1) -> str:
+    if data['config'].get('using_namespace_std') == False:
+        logger.warning('Now `data["config"]["using_namespace_std"] = False` is deprecated and has no meaning.')
+
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
         return _write_input_fallback(message="failed to analyze input format", data=data, nest=nest)
 
-    try:
-        node = _write_output_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
-    except CPlusPlusGeneratorError as e:
-        return _write_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
+    node = _write_output_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
@@ -489,10 +460,7 @@ def _write_output_fallback(message: str, *, data: Dict[str, Any], nest: int) -> 
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    try:
-        lines.extend(_write_variables([('ans', VarType.ValueInt)], newline=True, data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}printf("%d\n", ans);""")
+    lines.extend(_write_variables([('ans', VarType.ValueInt)], end='\n', data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
@@ -501,44 +469,45 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
     output_type = analyzed.output_type
 
     if isinstance(output_type, OneOutputType):
-        node: CPlusPlusNode = OutputNewlineNode(exprs=[(output_type.name, output_type.type)])
+        node: CPlusPlusNode = OutputTokensNode(exprs=[(output_type.name, output_type.type)], end='\n')
 
     elif isinstance(output_type, TwoOutputType):
         sentences: List[CPlusPlusNode] = []
-        sentences.append(OutputTokensNode(exprs=[(output_type.name1, output_type.type1)]))
+        sentences.append(OutputTokensNode(exprs=[(output_type.name1, output_type.type1)], end=''))
         if output_type.print_newline_after_item:
-            sentences.append(OutputNewlineNode(exprs=[]))
-        sentences.append(OutputNewlineNode(exprs=[(output_type.name2, output_type.type2)]))
+            sentences.append(OutputTokensNode(exprs=[], end='\n'))
+        sentences.append(OutputTokensNode(exprs=[(output_type.name2, output_type.type2)], end='\n'))
         node = SentencesNode(sentences=sentences)
 
     elif isinstance(output_type, YesNoOutputType):
         expr = f"""({output_type.name} ? {output_type.yes} : {output_type.no})"""
-        node = OutputNewlineNode(exprs=[(expr, VarType.String)])
+        node = OutputTokensNode(exprs=[(expr, VarType.String)], end='\n')
 
     elif isinstance(output_type, VectorOutputType):
         inner_sentences: List[CPlusPlusNode] = []
-        inner_sentences.append(OutputTokensNode(exprs=[(output_type.subscripted_name, output_type.type)]))
+        inner_sentences.append(OutputTokensNode(exprs=[(output_type.subscripted_name, output_type.type)], end=''))
         if output_type.print_newline_after_item:
-            inner_sentences.append(OutputNewlineNode(exprs=[]))
+            end = '\n'
+        else:
+            end = ' '
+        inner_sentences.append(OutputTokensNode(exprs=[], end=end))
 
         sentences = []
         size = f"""({_get_base_type(VarType.IndexInt, data=data)}){output_type.name}.size()"""
         if output_type.print_size:
-            sentences.append(OutputTokensNode(exprs=[(size, VarType.IndexInt)]))
+            sentences.append(OutputTokensNode(exprs=[(size, VarType.IndexInt)], end=''))
             if output_type.print_newline_after_size:
-                sentences.append(OutputNewlineNode(exprs=[]))
+                sentences.append(OutputTokensNode(exprs=[], end='\n'))
         sentences.append(RepeatNode(name=output_type.counter_name, size=size, body=SentencesNode(sentences=inner_sentences)))
         if not output_type.print_newline_after_item:
-            inner_sentences.append(OutputNewlineNode(exprs=[]))
+            sentences.append(OutputTokensNode(exprs=[], end='\n'))
         node = SentencesNode(sentences=sentences)
 
     elif output_type is None:
         if analyzed.output_format is None or analyzed.output_variables is None:
             return _write_output_fallback(message="failed to analyze output format", data=data, nest=nest)
-        try:
+        else:
             node = _write_output_dfs(analyzed.output_format, decls=analyzed.output_variables, data=data)
-        except CPlusPlusGeneratorError as e:
-            return _write_output_fallback(message="failed to generate output part: " + str(e), data=data, nest=nest)
 
     else:
         assert False
@@ -551,7 +520,7 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
 def formal_arguments(data: Dict[str, Any]) -> str:
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
-        return f"""int n, const {_get_std(data=data)}vector<int64_t> & a"""
+        return f"""int n, const std::vector<int64_t> &a"""
 
     decls = analyzed.input_variables
     decls = utils._filter_ignored_variables(decls, data=data)
@@ -561,10 +530,10 @@ def formal_arguments(data: Dict[str, Any]) -> str:
         type = _get_base_type(decl.type, data=data)
         for _ in reversed(decl.dims):
             space = ' ' if type.endswith('>') else ''
-            type = f"""{_get_std(data=data)}vector<{type}{space}>"""
+            type = f"""std::vector<{type}{space}>"""
         if decl.dims:
             type = f"""const {type} &"""
-        args.append(f"""{type} {name}""")
+        args.append(f"""{type} {name}""".replace('& ', '&'))
     return ', '.join(args)
 
 
@@ -584,11 +553,11 @@ def return_type(data: Dict[str, Any]) -> str:
     if isinstance(output_type, OneOutputType):
         return _get_base_type(output_type.type, data=data)
     elif isinstance(output_type, TwoOutputType):
-        return f"""{_get_std(data=data)}pair<{_get_base_type(output_type.type1, data=data)}, {_get_base_type(output_type.type2, data=data)}>"""
+        return f"""std::pair<{_get_base_type(output_type.type1, data=data)}, {_get_base_type(output_type.type2, data=data)}>"""
     elif isinstance(output_type, YesNoOutputType):
         return "bool"
     elif isinstance(output_type, VectorOutputType):
-        return f"""{_get_std(data=data)}vector<{_get_base_type(output_type.type, data=data)}>"""
+        return f"""std::vector<{_get_base_type(output_type.type, data=data)}>"""
     elif output_type is None:
         return "auto"
     else:

@@ -1,6 +1,7 @@
 from logging import getLogger
 from typing import *
 
+import onlinejudge_template.analyzer.codeforces
 import onlinejudge_template.analyzer.constants
 import onlinejudge_template.analyzer.html
 import onlinejudge_template.analyzer.minimum_tree
@@ -52,6 +53,13 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
         if resources.html is not None:
             topcoder_class_definition = onlinejudge_template.analyzer.topcoder.parse_topcoder_class_definition(resources.html, url=resources.url)
 
+    multiple_test_cases = False
+    if resources.url is not None and onlinejudge_template.analyzer.codeforces.is_codeforces_url(resources.url):
+        if resources.html is not None:
+            multiple_test_cases = onlinejudge_template.analyzer.codeforces.has_multiple_testcases(resources.html, url=resources.url)
+            if multiple_test_cases:
+                logger.info('Each input of this problem has multiple test cases.')
+
     # parse the format tree for input
     input_format: Optional[FormatNode] = None
     if resources.input_format_string is not None:
@@ -65,9 +73,10 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
         input_format = onlinejudge_template.analyzer.topcoder.convert_topcoder_class_definition_to_input_format(topcoder_class_definition)
     elif resources.sample_cases:
         input_samples = [case.input.decode() for case in resources.sample_cases]
-        input_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=input_samples)
+        if not multiple_test_cases:
+            input_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=input_samples)
         if input_format is None:
-            input_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_input_format_tree(instances=input_samples)
+            input_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_input_format_tree(instances=input_samples, multiple_test_cases=multiple_test_cases)
 
     # list the variables for input
     input_variables: Optional[Dict[VarName, VarDecl]] = None
@@ -101,9 +110,10 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
         output_format = onlinejudge_template.analyzer.topcoder.convert_topcoder_class_definition_to_output_format(topcoder_class_definition)
     elif resources.sample_cases:
         if input_format is not None and input_variables is not None:
-            output_format = onlinejudge_template.analyzer.simple_patterns.guess_output_format_with_pattern_matching_using_input_format(instances=resources.sample_cases, input_format=input_format, input_variables=input_variables)
+            if not multiple_test_cases:
+                output_format = onlinejudge_template.analyzer.simple_patterns.guess_output_format_with_pattern_matching_using_input_format(instances=resources.sample_cases, input_format=input_format, input_variables=input_variables)
             if output_format is None:
-                output_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_output_format_tree_using_input_format(instances=resources.sample_cases, input_format=input_format, input_variables=input_variables)
+                output_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_output_format_tree_using_input_format(instances=resources.sample_cases, input_format=input_format, input_variables=input_variables, multiple_test_cases=multiple_test_cases)
         else:
             output_samples = [case.output.decode() for case in resources.sample_cases]
             output_format = onlinejudge_template.analyzer.simple_patterns.guess_format_with_pattern_matching(instances=output_samples)

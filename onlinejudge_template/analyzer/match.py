@@ -31,7 +31,6 @@ the module to match format trees and sample strings
 に相当する結果を返します。
 """
 
-import itertools
 from logging import getLogger
 from typing import *
 
@@ -45,11 +44,21 @@ class FormatMatchError(AnalyzerError):
     pass
 
 
-def _get_env(values: Dict[VarName, Dict[Tuple[int, ...], Union[int, float, str]]]) -> Dict[VarName, int]:
-    env: Dict[VarName, int] = {}
+def _get_env(values: Dict[VarName, Dict[Tuple[int, ...], Union[int, float, str]]]) -> Dict[VarName, Union[int, List[int], List[List[int]]]]:
+    env: Dict[VarName, Union[int, List[int], List[List[int]]]] = {}
     for name, value in values.items():
         if () in value and isinstance(value[()], int):
             env[name] = value[()]
+        elif (0, ) in value and isinstance(value[(0, )], int):
+            f: Dict[int, int] = {i: a_i for (i, ), a_i in value.items()}  # type: ignore
+            env[name] = [f[i] for i in range(max(f.keys()) + 1)]
+        elif (0, 0) in value and isinstance(value[(0, 0)], int):
+            g: Dict[int, Dict[int, int]] = {}
+            for (i, j), a_i_j in value.items():
+                if i not in g:
+                    g[i] = {}
+                g[i][j] = a_i_j  # type: ignore
+            env[name] = [[g[i][j] for j in range(max(g[i].keys()) + 1)] for i in range(max(g.keys()) + 1)]
     return env
 
 
@@ -155,17 +164,4 @@ def match_format(
     _match_format_dfs(node, tokens, variables=variables, values=values)
     if tokens:
         raise FormatMatchError(f"""end of tokens is expected, but {repr(tokens[0])} found""")
-
-    # check results
-    env = _get_env(values)
-    for name, decl in variables.items():
-        dims: List[int] = []
-        for str_dim in decl.dims:
-            dim = evaluate(str_dim, env=env)
-            if dim is None:
-                raise FormatMatchError(f"""failed to evaluate: {str_dim}""")
-            dims.append(dim)
-        for ix in itertools.product(*map(lambda n: range(n), dims)):
-            if ix not in values[name]:
-                raise FormatMatchError(f"""matched, but {name}{ix} is not assigned""")
     return values

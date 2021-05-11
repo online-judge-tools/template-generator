@@ -53,9 +53,16 @@ def _get_nice_counter_name(*, used: Set[VarName]) -> VarName:
     assert False
 
 
+# use the name `testcases` for variables which describes the number of test cases.
+testcases_varname: VarName = VarName('testcases')
+
+
 def _rename_variable_nicely_dfs(node: FormatNode, *, replace: Dict[VarName, VarName], used: Set[VarName]) -> FormatNode:
     if isinstance(node, ItemNode):
-        name = _get_nice_variable_name(used=used)
+        if node.name == testcases_varname:
+            name = testcases_varname
+        else:
+            name = _get_nice_variable_name(used=used)
         indices = [simplify.rename_variables_in_expr(index, replace=replace) for index in node.indices]
 
         assert node.name not in replace

@@ -13,7 +13,6 @@
 <%
     logger = getLogger(__name__)
     data["config"]["rep_macro"] = "REP"
-    data["config"]["using_namespace_std"] = True
     data["config"]["long_long_int"] = "int64_t"
     if platform.system() == "Linux" and "clang" not in os.environ.get("CXX", "g++"):
         include = "#include <bits/stdc++.h>"
@@ -62,7 +61,6 @@ ${cplusplus.return_type(data)} solve(${cplusplus.formal_arguments(data)}) {
 int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
-    constexpr char endl = '\n';
 ${cplusplus.read_input(data)}
     auto ${cplusplus.return_value(data)} = ${solve_function}(${cplusplus.actual_arguments(data)});
 ${cplusplus.write_output(data)}
