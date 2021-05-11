@@ -37,12 +37,15 @@ the module to generate C++ code
 - :func:`write_input`
 """
 
+from logging import getLogger
 from typing import *
 
 import onlinejudge_template.generator._utils as utils
 from onlinejudge_template.analyzer.simplify import simplify
 from onlinejudge_template.generator._cplusplus import *
 from onlinejudge_template.types import *
+
+logger = getLogger(__name__)
 
 
 def _join_with_indent(lines: Iterator[str], *, nest: int, data: Dict[str, Any]) -> str:
@@ -90,7 +93,7 @@ def _read_variables(exprs: List[Tuple[str, Optional[VarType]]], *, data: Dict[st
         return [f"""scanf("{specifiers}"{', '.join(arguments)});"""]
     elif scanner is None or scanner in ('cin', 'std::cin'):
         items = []
-        items.append(f"""{_get_std(data=data)}cin""")
+        items.append(f"""std::cin""")
         for expr, _ in exprs:
             items.append(expr)
         return [" >> ".join(items) + ";"]
@@ -115,7 +118,7 @@ def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: boo
         return [f"""printf("{specifiers}\\n"{', '.join(arguments)});"""]
     elif printer is None or printer in ('cout', 'std::cout'):
         items = []
-        items.append(f"""{_get_std(data=data)}cout""")
+        items.append(f"""std::cout""")
         for i, (expr, _) in enumerate(exprs):
             if i:
                 items.append("""' '""")
@@ -143,14 +146,7 @@ def _generate_variable(expr: Tuple[str, Optional[VarType]], *, data: Dict[str, A
     else:
         raise CPlusPlusGeneratorError(f"""cannot generate a variable of type {type}: {repr(name)}""")
 
-    yield f"""{name} = {_get_std(data=data)}uniform_int_distribution<{_get_base_type(type, data=data)}>({l}, {r - 1})(gen);"""
-
-
-def _get_std(data: Dict['str', Any]) -> str:
-    if data['config'].get('using_namespace_std'):
-        return ''
-    else:
-        return 'std::'
+    yield f"""{name} = std::uniform_int_distribution<{_get_base_type(type, data=data)}>({l}, {r - 1})(gen);"""
 
 
 def _get_base_type(type: Optional[VarType], *, data: Dict[str, Any]) -> str:
@@ -161,7 +157,7 @@ def _get_base_type(type: Optional[VarType], *, data: Dict[str, Any]) -> str:
     elif type == VarType.Float:
         return "double"
     elif type == VarType.String:
-        return f"""{_get_std(data=data)}string"""
+        return f"""std::string"""
     elif type == VarType.Char:
         return "char"
     elif type is None:
@@ -198,7 +194,7 @@ def _get_type_and_ctor(decl: VarDecl, *, data: Dict[str, Any]) -> Tuple[str, str
         sndarg = f""", {type}({ctor})""" if ctor else ''
         ctor = f"""({dim}{sndarg})"""
         space = ' ' if type.endswith('>') else ''
-        type = f"""{_get_std(data=data)}vector<{type}{space}>"""
+        type = f"""std::vector<{type}{space}>"""
     return type, ctor
 
 
@@ -375,11 +371,11 @@ def _read_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> st
     try:
         lines.extend(_read_variables([('n', VarType.IndexInt)], data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}scanf("%d", &n);""")
+        lines.append(f"""std::scanf("%d", &n);""")
     try:
         lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
+        lines.append(f"""std::vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
     try:
         lines.append(_declare_loop(var=VarName('i'), size=Expr('n'), data=data) + " {")
     except CPlusPlusGeneratorError:
@@ -387,7 +383,7 @@ def _read_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> st
     try:
         lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}scanf("{_get_base_type_format_specifier(VarType.ValueInt, name="a", data=data)}", &a[i]);""")
+        lines.append(f"""std::scanf("{_get_base_type_format_specifier(VarType.ValueInt, name="a", data=data)}", &a[i]);""")
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
@@ -410,8 +406,8 @@ def _generate_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    lines.append(f"""{_get_std(data=data)}random_device device;""")
-    lines.append(f"""{_get_std(data=data)}default_random_engine gen(device());""")
+    lines.append(f"""std::random_device device;""")
+    lines.append(f"""std::default_random_engine gen(device());""")
     try:
         lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
     except CPlusPlusGeneratorError:
@@ -419,11 +415,11 @@ def _generate_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -
     try:
         lines.extend(_generate_variable(('n', VarType.IndexInt), data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""n = {_get_std(data=data)}uniform_int_distribution<int>(0, 100000)(gen);""")
+        lines.append(f"""n = std::uniform_int_distribution<int>(0, 100000)(gen);""")
     try:
         lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
+        lines.append(f"""std::vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
     try:
         lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
     except CPlusPlusGeneratorError:
@@ -431,7 +427,7 @@ def _generate_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -
     try:
         lines.extend(_generate_variable(('a[i]', VarType.ValueInt), data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""a[i] = {_get_std(data=data)}uniform_int_distribution<{_get_base_type(VarType.ValueInt, data=data)}>(0, 1000000000)(gen);""")
+        lines.append(f"""a[i] = std::uniform_int_distribution<{_get_base_type(VarType.ValueInt, data=data)}>(0, 1000000000)(gen);""")
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
@@ -458,7 +454,7 @@ def _write_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> s
     try:
         lines.extend(_write_variables([('n', VarType.IndexInt)], newline=True, data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}printf("%d\n", ans);""")
+        lines.append(f"""std::printf("%d\n", ans);""")
     try:
         lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
     except CPlusPlusGeneratorError:
@@ -466,12 +462,15 @@ def _write_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> s
     try:
         lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}printf("{_get_base_type(VarType.ValueInt, data=data)}%c", &a[i], i < n - 1 ? ' ' : '\\n');""")
+        lines.append(f"""std::printf("{_get_base_type(VarType.ValueInt, data=data)}%c", &a[i], i < n - 1 ? ' ' : '\\n');""")
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
 def write_input(data: Dict[str, Any], *, nest: int = 1) -> str:
+    if data['config'].get('using_namespace_std') == False:
+        logger.warning('Now `data["config"]["using_namespace_std"] = False` is deprecated and has no meaning.')
+
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
         return _write_input_fallback(message="failed to analyze input format", data=data, nest=nest)
@@ -492,7 +491,7 @@ def _write_output_fallback(message: str, *, data: Dict[str, Any], nest: int) -> 
     try:
         lines.extend(_write_variables([('ans', VarType.ValueInt)], newline=True, data=data))
     except CPlusPlusGeneratorError:
-        lines.append(f"""{_get_std(data=data)}printf("%d\n", ans);""")
+        lines.append(f"""std::printf("%d\n", ans);""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
@@ -551,7 +550,7 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
 def formal_arguments(data: Dict[str, Any]) -> str:
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
-        return f"""int n, const {_get_std(data=data)}vector<int64_t> & a"""
+        return f"""int n, const std::vector<int64_t> & a"""
 
     decls = analyzed.input_variables
     decls = utils._filter_ignored_variables(decls, data=data)
@@ -561,7 +560,7 @@ def formal_arguments(data: Dict[str, Any]) -> str:
         type = _get_base_type(decl.type, data=data)
         for _ in reversed(decl.dims):
             space = ' ' if type.endswith('>') else ''
-            type = f"""{_get_std(data=data)}vector<{type}{space}>"""
+            type = f"""std::vector<{type}{space}>"""
         if decl.dims:
             type = f"""const {type} &"""
         args.append(f"""{type} {name}""")
@@ -584,11 +583,11 @@ def return_type(data: Dict[str, Any]) -> str:
     if isinstance(output_type, OneOutputType):
         return _get_base_type(output_type.type, data=data)
     elif isinstance(output_type, TwoOutputType):
-        return f"""{_get_std(data=data)}pair<{_get_base_type(output_type.type1, data=data)}, {_get_base_type(output_type.type2, data=data)}>"""
+        return f"""std::pair<{_get_base_type(output_type.type1, data=data)}, {_get_base_type(output_type.type2, data=data)}>"""
     elif isinstance(output_type, YesNoOutputType):
         return "bool"
     elif isinstance(output_type, VectorOutputType):
-        return f"""{_get_std(data=data)}vector<{_get_base_type(output_type.type, data=data)}>"""
+        return f"""std::vector<{_get_base_type(output_type.type, data=data)}>"""
     elif output_type is None:
         return "auto"
     else:

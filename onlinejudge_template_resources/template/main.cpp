@@ -13,7 +13,6 @@
 <%
     logger = getLogger(__name__)
     data["config"]["rep_macro"] = "REP"
-    data["config"]["using_namespace_std"] = True
     data["config"]["long_long_int"] = "int64_t"
     if platform.system() == "Linux" and "clang" not in os.environ.get("CXX", "g++"):
         include = "#include <bits/stdc++.h>"
