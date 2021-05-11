@@ -33,8 +33,9 @@ class GenerateNode(CPlusPlusNode):
 
 
 class OutputTokensNode(CPlusPlusNode):
-    def __init__(self, exprs: List[Tuple[str, Optional[VarType]]]):
+    def __init__(self, exprs: List[Tuple[str, Optional[VarType]]], trailing_space: bool = False):
         self.exprs = exprs
+        self.trailing_space = trailing_space
 
 
 class OutputNewlineNode(CPlusPlusNode):

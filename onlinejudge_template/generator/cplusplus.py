@@ -103,11 +103,12 @@ def _read_variables(exprs: List[Tuple[str, Optional[VarType]]], *, data: Dict[st
         raise CPlusPlusGeneratorError(f"""invalid "scanner" config: {scanner}""")
 
 
-def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: bool, data: Dict[str, Any]) -> List[str]:
+def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, end: str, data: Dict[str, Any]) -> List[str]:
     """
     :raises CPlusPlusGeneratorError:
     """
 
+    assert end in ('', ' ', '\n')
     printer = data['config'].get('printer')
     if printer == 'printf':
         specifiers = ''
@@ -115,7 +116,9 @@ def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: boo
         for expr, type in exprs:
             specifiers += _get_base_type_format_specifier(type, name=expr, data=data)
             arguments.append(expr)
-        return [f"""printf("{specifiers}\\n"{', '.join(arguments)});"""]
+        if end == '\n':
+            end = '\\n'
+        return [f"""printf("{specifiers}{end}"{', '.join(arguments)});"""]
     elif printer is None or printer in ('cout', 'std::cout'):
         items = []
         items.append(f"""std::cout""")
@@ -123,10 +126,13 @@ def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: boo
             if i:
                 items.append("""' '""")
             items.append(expr)
-        items.append("'\\n'")
+        if end == ' ':
+            items.append("' '")
+        elif end == '\n':
+            items.append("'\\n'")
         return [" << ".join(items) + ";"]
     elif callable(printer):
-        return printer(exprs, newline=newline)
+        return printer(exprs, newline=(end == '\n'))
     else:
         raise CPlusPlusGeneratorError(f"""invalid "printer" config: {printer}""")
 
@@ -275,6 +281,22 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
         assert False
 
 
+def _has_trailing_space(node: CPlusPlusNode) -> bool:
+    if isinstance(node, OutputTokensNode):
+        return False
+    elif isinstance(node, OutputNewlineNode):
+        return True
+    elif isinstance(node, SentencesNode):
+        if not node:
+            return False
+        else:
+            return _has_trailing_space(node.sentences[-1])
+    elif isinstance(node, RepeatNode):
+        return _has_trailing_space(node.body)
+    else:
+        assert False
+
+
 def _write_output_dfs(node: FormatNode, *, decls: Dict[VarName, VarDecl], data: Dict[str, Any]) -> CPlusPlusNode:
     """
     :raises CPlusPlusGeneratorError:
@@ -288,11 +310,16 @@ def _write_output_dfs(node: FormatNode, *, decls: Dict[VarName, VarDecl], data: 
         return OutputNewlineNode(exprs=[])
     elif isinstance(node, SequenceNode):
         sentences = []
-        for item in node.items:
-            sentences.append(_write_output_dfs(item, decls=decls, data=data))
+        for i, item in enumerate(node.items):
+            sentence = _write_output_dfs(item, decls=decls, data=data)
+            sentences.append(sentence)
+            if i + 1 < len(node.items) and not _has_trailing_space(sentence):
+                sentences.append(OutputTokensNode(exprs=[], trailing_space=True))
         return SentencesNode(sentences=sentences)
     elif isinstance(node, LoopNode):
         body = _write_output_dfs(node.body, decls=decls, data=data)
+        if not _has_trailing_space(body):
+            body = SentencesNode(sentences=[body, OutputTokensNode(exprs=[], trailing_space=True)])
         result = RepeatNode(name=node.name, size=node.size, body=body)
         return result
     else:
@@ -321,6 +348,7 @@ def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlus
                 sentences[-1].exprs.extend(sentence.exprs)
             elif sentences and isinstance(sentences[-1], OutputTokensNode) and isinstance(sentence, OutputTokensNode):
                 sentences[-1].exprs.extend(sentence.exprs)
+                sentences[-1].trailing_space = sentence.trailing_space
             elif sentences and isinstance(sentences[-1], OutputTokensNode) and isinstance(sentence, OutputNewlineNode):
                 sentences[-1] = OutputNewlineNode(exprs=sentences[-1].exprs + sentence.exprs)
             elif isinstance(sentence, SentencesNode):
@@ -342,9 +370,9 @@ def _serialize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> Iter
     elif isinstance(node, InputNode):
         yield from _read_variables(node.exprs, data=data)
     elif isinstance(node, OutputTokensNode):
-        yield from _write_variables(node.exprs, newline=False, data=data)
+        yield from _write_variables(node.exprs, end=(node.trailing_space and ' ' or ''), data=data)
     elif isinstance(node, OutputNewlineNode):
-        yield from _write_variables(node.exprs, newline=True, data=data)
+        yield from _write_variables(node.exprs, end='\n', data=data)
     elif isinstance(node, GenerateNode):
         yield from _generate_variable(node.expr, data=data)
     elif isinstance(node, SentencesNode):
@@ -415,7 +443,7 @@ def _write_input_fallback(message: str, data: Dict[str, Any], *, nest: int = 1) 
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    lines.extend(_write_variables([('n', VarType.IndexInt)], newline=True, data=data))
+    lines.extend(_write_variables([('n', VarType.IndexInt)], end='\n', data=data))
     lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
     lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
     lines.append("""}""")
@@ -440,7 +468,7 @@ def _write_output_fallback(message: str, *, data: Dict[str, Any], nest: int) -> 
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    lines.extend(_write_variables([('ans', VarType.ValueInt)], newline=True, data=data))
+    lines.extend(_write_variables([('ans', VarType.ValueInt)], end='\n', data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
