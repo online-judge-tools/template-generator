@@ -487,7 +487,10 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
         inner_sentences: List[CPlusPlusNode] = []
         inner_sentences.append(OutputTokensNode(exprs=[(output_type.subscripted_name, output_type.type)], end=''))
         if output_type.print_newline_after_item:
-            inner_sentences.append(OutputTokensNode(exprs=[], end='\n'))
+            end = '\n'
+        else:
+            end = ' '
+        inner_sentences.append(OutputTokensNode(exprs=[], end=end))
 
         sentences = []
         size = f"""({_get_base_type(VarType.IndexInt, data=data)}){output_type.name}.size()"""
@@ -497,7 +500,7 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
                 sentences.append(OutputTokensNode(exprs=[], end='\n'))
         sentences.append(RepeatNode(name=output_type.counter_name, size=size, body=SentencesNode(sentences=inner_sentences)))
         if not output_type.print_newline_after_item:
-            inner_sentences.append(OutputTokensNode(exprs=[], end='\n'))
+            sentences.append(OutputTokensNode(exprs=[], end='\n'))
         node = SentencesNode(sentences=sentences)
 
     elif output_type is None:
