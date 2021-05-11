@@ -283,9 +283,7 @@ def _read_input_dfs(node: FormatNode, *, declared: Set[str], initialized: Set[st
 
 def _has_trailing_space(node: CPlusPlusNode) -> bool:
     if isinstance(node, OutputTokensNode):
-        return False
-    elif isinstance(node, OutputNewlineNode):
-        return True
+        return node.end != ''
     elif isinstance(node, SentencesNode):
         if not node:
             return False
@@ -305,21 +303,21 @@ def _write_output_dfs(node: FormatNode, *, decls: Dict[VarName, VarDecl], data: 
     if isinstance(node, ItemNode):
         decl = decls[node.name]
         var = _get_variable(decl=decl, indices=node.indices, decls=decls)
-        return OutputTokensNode(exprs=[(VarName(var), decl.type)])
+        return OutputTokensNode(exprs=[(VarName(var), decl.type)], end='')
     elif isinstance(node, NewlineNode):
-        return OutputNewlineNode(exprs=[])
+        return OutputTokensNode(exprs=[], end='\n')
     elif isinstance(node, SequenceNode):
         sentences = []
         for i, item in enumerate(node.items):
             sentence = _write_output_dfs(item, decls=decls, data=data)
             sentences.append(sentence)
             if i + 1 < len(node.items) and not _has_trailing_space(sentence):
-                sentences.append(OutputTokensNode(exprs=[], trailing_space=True))
+                sentences.append(OutputTokensNode(exprs=[], end=' '))
         return SentencesNode(sentences=sentences)
     elif isinstance(node, LoopNode):
         body = _write_output_dfs(node.body, decls=decls, data=data)
         if not _has_trailing_space(body):
-            body = SentencesNode(sentences=[body, OutputTokensNode(exprs=[], trailing_space=True)])
+            body = SentencesNode(sentences=[body, OutputTokensNode(exprs=[], end=' ')])
         result = RepeatNode(name=node.name, size=node.size, body=body)
         return result
     else:
@@ -333,8 +331,6 @@ def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlus
         return node
     elif isinstance(node, OutputTokensNode):
         return node
-    elif isinstance(node, OutputNewlineNode):
-        return node
     elif isinstance(node, GenerateNode):
         return node
     elif isinstance(node, SentencesNode):
@@ -346,11 +342,9 @@ def _optimize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> CPlus
                 sentences[-1].decls.extend(sentence.decls)
             elif sentences and isinstance(sentences[-1], InputNode) and isinstance(sentence, InputNode):
                 sentences[-1].exprs.extend(sentence.exprs)
-            elif sentences and isinstance(sentences[-1], OutputTokensNode) and isinstance(sentence, OutputTokensNode):
+            elif sentences and isinstance(sentences[-1], OutputTokensNode) and sentences[-1].end != '\n' and isinstance(sentence, OutputTokensNode):
                 sentences[-1].exprs.extend(sentence.exprs)
-                sentences[-1].trailing_space = sentence.trailing_space
-            elif sentences and isinstance(sentences[-1], OutputTokensNode) and isinstance(sentence, OutputNewlineNode):
-                sentences[-1] = OutputNewlineNode(exprs=sentences[-1].exprs + sentence.exprs)
+                sentences[-1].end = sentence.end
             elif isinstance(sentence, SentencesNode):
                 que = sentence.sentences + que
             else:
@@ -370,9 +364,7 @@ def _serialize_syntax_tree(node: CPlusPlusNode, *, data: Dict[str, Any]) -> Iter
     elif isinstance(node, InputNode):
         yield from _read_variables(node.exprs, data=data)
     elif isinstance(node, OutputTokensNode):
-        yield from _write_variables(node.exprs, end=(node.trailing_space and ' ' or ''), data=data)
-    elif isinstance(node, OutputNewlineNode):
-        yield from _write_variables(node.exprs, end='\n', data=data)
+        yield from _write_variables(node.exprs, end=node.end, data=data)
     elif isinstance(node, GenerateNode):
         yield from _generate_variable(node.expr, data=data)
     elif isinstance(node, SentencesNode):
@@ -477,35 +469,35 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
     output_type = analyzed.output_type
 
     if isinstance(output_type, OneOutputType):
-        node: CPlusPlusNode = OutputNewlineNode(exprs=[(output_type.name, output_type.type)])
+        node: CPlusPlusNode = OutputTokensNode(exprs=[(output_type.name, output_type.type)], end='\n')
 
     elif isinstance(output_type, TwoOutputType):
         sentences: List[CPlusPlusNode] = []
-        sentences.append(OutputTokensNode(exprs=[(output_type.name1, output_type.type1)]))
+        sentences.append(OutputTokensNode(exprs=[(output_type.name1, output_type.type1)], end=''))
         if output_type.print_newline_after_item:
-            sentences.append(OutputNewlineNode(exprs=[]))
-        sentences.append(OutputNewlineNode(exprs=[(output_type.name2, output_type.type2)]))
+            sentences.append(OutputTokensNode(exprs=[], end='\n'))
+        sentences.append(OutputTokensNode(exprs=[(output_type.name2, output_type.type2)], end='\n'))
         node = SentencesNode(sentences=sentences)
 
     elif isinstance(output_type, YesNoOutputType):
         expr = f"""({output_type.name} ? {output_type.yes} : {output_type.no})"""
-        node = OutputNewlineNode(exprs=[(expr, VarType.String)])
+        node = OutputTokensNode(exprs=[(expr, VarType.String)], end='\n')
 
     elif isinstance(output_type, VectorOutputType):
         inner_sentences: List[CPlusPlusNode] = []
-        inner_sentences.append(OutputTokensNode(exprs=[(output_type.subscripted_name, output_type.type)]))
+        inner_sentences.append(OutputTokensNode(exprs=[(output_type.subscripted_name, output_type.type)], end=''))
         if output_type.print_newline_after_item:
-            inner_sentences.append(OutputNewlineNode(exprs=[]))
+            inner_sentences.append(OutputTokensNode(exprs=[], end='\n'))
 
         sentences = []
         size = f"""({_get_base_type(VarType.IndexInt, data=data)}){output_type.name}.size()"""
         if output_type.print_size:
-            sentences.append(OutputTokensNode(exprs=[(size, VarType.IndexInt)]))
+            sentences.append(OutputTokensNode(exprs=[(size, VarType.IndexInt)], end=''))
             if output_type.print_newline_after_size:
-                sentences.append(OutputNewlineNode(exprs=[]))
+                sentences.append(OutputTokensNode(exprs=[], end='\n'))
         sentences.append(RepeatNode(name=output_type.counter_name, size=size, body=SentencesNode(sentences=inner_sentences)))
         if not output_type.print_newline_after_item:
-            inner_sentences.append(OutputNewlineNode(exprs=[]))
+            inner_sentences.append(OutputTokensNode(exprs=[], end='\n'))
         node = SentencesNode(sentences=sentences)
 
     elif output_type is None:
