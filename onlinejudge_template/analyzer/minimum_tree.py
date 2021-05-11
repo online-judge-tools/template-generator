@@ -151,52 +151,13 @@ class _Node(abc.ABC):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 
-    @abc.abstractmethod
-    def get_tree_size(self) -> int:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def run_match(self, state: _MatchState) -> Optional[_MatchState]:
-        """
-        :raises _MatchStop:
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def count_placeholder(self) -> int:
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def get_replaced_first_placeholder(self, node: '_Node') -> Optional['_Node']:
-        raise NotImplementedError
-
 
 class _PlaceholderNode(_Node):
-    def get_tree_size(self) -> int:
-        return 1
-
-    def run_match(self, state: _MatchState) -> Optional[_MatchState]:
-        raise _MatchStop(state)
-
-    def count_placeholder(self) -> int:
-        return 1
-
-    def get_replaced_first_placeholder(self, node: _Node) -> _Node:
-        return node
+    pass
 
 
 class _EOFNode(_Node):
-    def get_tree_size(self) -> int:
-        return 1
-
-    def run_match(self, state: _MatchState) -> Optional[_MatchState]:
-        return state
-
-    def count_placeholder(self) -> int:
-        return 0
-
-    def get_replaced_first_placeholder(self, node: _Node) -> Optional[_Node]:
-        return None
+    pass
 
 
 class _SimpleNonLeafNode(_Node):
@@ -208,53 +169,17 @@ class _SimpleNonLeafNode(_Node):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(next={self.next})"
 
-    def get_tree_size(self) -> int:
-        return 1 + self.next.get_tree_size()
-
-    def count_placeholder(self) -> int:
-        return self.next.count_placeholder()
-
-    def get_replaced_first_placeholder(self, node: _Node) -> Optional[_Node]:
-        next = self.next.get_replaced_first_placeholder(node)
-        if next is None:
-            return None
-        else:
-            return self.__class__(next=next)
-
 
 class _IntNode(_SimpleNonLeafNode):
-    def run_match(self, state: _MatchState) -> Optional[_MatchState]:
-        assert 0 <= state.offset <= len(state.tokens)
-        if state.offset >= len(state.tokens):
-            return None
-        token = state.tokens[state.offset]
-        if not isinstance(token, _IntToken):
-            return None
-        state = _MatchState(tokens=state.tokens, offset=state.offset + 1, env=[token.value] + state.env)
-        return self.next.run_match(state)
+    pass
 
 
 class _StringNode(_SimpleNonLeafNode):
-    def run_match(self, state: _MatchState) -> Optional[_MatchState]:
-        assert 0 <= state.offset <= len(state.tokens)
-        if state.offset >= len(state.tokens):
-            return None
-        # An int is a str. `101` is an int but `1010100101010101010100111111101010101` may be a str. `10.1` is also a str.
-        if not isinstance(state.tokens[state.offset], _StringToken) and not isinstance(state.tokens[state.offset], _IntToken):
-            return None
-        state = _MatchState(tokens=state.tokens, offset=state.offset + 1, env=state.env)
-        return self.next.run_match(state)
+    pass
 
 
 class _NewlineNode(_SimpleNonLeafNode):
-    def run_match(self, state: _MatchState) -> Optional[_MatchState]:
-        assert 0 <= state.offset <= len(state.tokens)
-        if state.offset >= len(state.tokens):
-            return None
-        if not isinstance(state.tokens[state.offset], _NewlineToken):
-            return None
-        state = _MatchState(tokens=state.tokens, offset=state.offset + 1, env=state.env)
-        return self.next.run_match(state)
+    pass
 
 
 class _LoopNode(_Node):
@@ -273,36 +198,114 @@ class _LoopNode(_Node):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(index={self.index}, delta={self.delta}, body={self.body}, next={self.next})"
 
-    def get_tree_size(self) -> int:
-        return 1 + abs(self.delta) + self.body.get_tree_size() + self.next.get_tree_size()
 
-    def run_match(self, state: _MatchState) -> Optional[_MatchState]:
-        assert 0 <= self.index < len(state.env)
-        count = state.env[self.index] + self.delta
+def get_tree_size(node: _Node) -> int:
+    if isinstance(node, _PlaceholderNode):
+        return 1
+    elif isinstance(node, _EOFNode):
+        return 1
+    elif isinstance(node, _SimpleNonLeafNode):
+        return 1 + get_tree_size(node.next)
+    elif isinstance(node, _LoopNode):
+        return 1 + abs(node.delta) + get_tree_size(node.body) + get_tree_size(node.next)
+    else:
+        assert False
+
+
+def run_match(node: _Node, state: _MatchState) -> Optional[_MatchState]:
+    """
+    :raises _MatchStop:
+    """
+
+    if isinstance(node, _PlaceholderNode):
+        raise _MatchStop(state)
+
+    elif isinstance(node, _EOFNode):
+        return state
+
+    elif isinstance(node, _IntNode):
+        assert 0 <= state.offset <= len(state.tokens)
+        if state.offset >= len(state.tokens):
+            return None
+        token = state.tokens[state.offset]
+        if not isinstance(token, _IntToken):
+            return None
+        state = _MatchState(tokens=state.tokens, offset=state.offset + 1, env=[token.value] + state.env)
+        return run_match(node.next, state)
+
+    elif isinstance(node, _StringNode):
+        assert 0 <= state.offset <= len(state.tokens)
+        if state.offset >= len(state.tokens):
+            return None
+        # An int is a str. `101` is an int but `1010100101010101010100111111101010101` may be a str. `10.1` is also a str.
+        if not isinstance(state.tokens[state.offset], _StringToken) and not isinstance(state.tokens[state.offset], _IntToken):
+            return None
+        state = _MatchState(tokens=state.tokens, offset=state.offset + 1, env=state.env)
+        return run_match(node.next, state)
+
+    elif isinstance(node, _NewlineNode):
+        assert 0 <= state.offset <= len(state.tokens)
+        if state.offset >= len(state.tokens):
+            return None
+        if not isinstance(state.tokens[state.offset], _NewlineToken):
+            return None
+        state = _MatchState(tokens=state.tokens, offset=state.offset + 1, env=state.env)
+        return run_match(node.next, state)
+
+    elif isinstance(node, _LoopNode):
+        assert 0 <= node.index < len(state.env)
+        count = state.env[node.index] + node.delta
         if count <= 0:
             # loops of zero times cause some problems because some placeholders may be skipped
             return None
 
         for _ in range(count):
-            result = self.body.run_match(state)
+            result = run_match(node.body, state)
             if result is None:
                 return None
             state = _MatchState(tokens=state.tokens, offset=result.offset, env=state.env)  # reset
-        return self.next.run_match(state)
+        return run_match(node.next, state)
 
-    def count_placeholder(self) -> int:
-        return self.body.count_placeholder() + self.next.count_placeholder()
+    else:
+        assert False
 
-    def get_replaced_first_placeholder(self, node: _Node) -> Optional[_Node]:
-        body = self.body.get_replaced_first_placeholder(node)
-        if body is not None:
-            return _LoopNode(index=self.index, delta=self.delta, body=body, next=self.next)
+
+def count_placeholder(node: _Node) -> int:
+    if isinstance(node, _PlaceholderNode):
+        return 1
+    elif isinstance(node, _EOFNode):
+        return 0
+    elif isinstance(node, _SimpleNonLeafNode):
+        return count_placeholder(node.next)
+    elif isinstance(node, _LoopNode):
+        return count_placeholder(node.body) + count_placeholder(node.next)
+    else:
+        assert False
+
+
+def get_replaced_first_placeholder(node: _Node, subst: _Node) -> Optional[_Node]:
+    if isinstance(node, _PlaceholderNode):
+        return subst
+    elif isinstance(node, _EOFNode):
+        return None
+    elif isinstance(node, _SimpleNonLeafNode):
+        next = get_replaced_first_placeholder(node.next, subst)
+        if next is None:
+            return None
         else:
-            next = self.next.get_replaced_first_placeholder(node)
+            return node.__class__(next=next)
+    elif isinstance(node, _LoopNode):
+        body = get_replaced_first_placeholder(node.body, subst)
+        if body is not None:
+            return _LoopNode(index=node.index, delta=node.delta, body=body, next=node.next)
+        else:
+            next = get_replaced_first_placeholder(node.next, subst)
             if next is not None:
-                return _LoopNode(index=self.index, delta=self.delta, body=self.body, next=next)
+                return _LoopNode(index=node.index, delta=node.delta, body=node.body, next=next)
             else:
                 return None
+    else:
+        assert False
 
 
 class _PriorityQueue:
@@ -391,7 +394,7 @@ def list_next_possible_node(states: List[_MatchState]) -> Iterator[_Node]:
 def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token]], initial_env: Optional[List[List[int]]] = None, limit: int = 10000, initial_node: _Node = _PlaceholderNode()) -> Optional[_Node]:
     # init
     que = _PriorityQueue()
-    que.push(initial_node.get_tree_size(), initial_node)
+    que.push(get_tree_size(initial_node), initial_node)
     while not que.empty():
         # pop
         cur = que.pop()
@@ -404,7 +407,7 @@ def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token
             else:
                 env = []
             try:
-                state = cur.run_match(_MatchState(tokens=instance, offset=0, env=env))
+                state = run_match(cur, _MatchState(tokens=instance, offset=0, env=env))
                 if state is None:
                     break
                 if state.offset != len(state.tokens):
@@ -414,14 +417,14 @@ def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token
             states.append(state)
         if len(states) != len(instances):
             continue
-        if all([state.offset == len(state.tokens) for state in states]) and not cur.count_placeholder():
+        if all([state.offset == len(state.tokens) for state in states]) and not count_placeholder(cur):
             return cur
 
         # push
         for delta in list_next_possible_node(states):
-            nxt = cur.get_replaced_first_placeholder(delta)
+            nxt = get_replaced_first_placeholder(cur, delta)
             assert nxt is not None
-            que.push(nxt.get_tree_size(), nxt)
+            que.push(get_tree_size(nxt), nxt)
 
         # timeout. This function doesn't have good time complexity, so may take too long time.
         limit -= 1
