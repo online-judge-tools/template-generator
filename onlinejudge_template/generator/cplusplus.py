@@ -218,7 +218,7 @@ def _declare_variables(decls: List[VarDecl], *, data: Dict[str, Any]) -> Iterato
     for decl in decls:
         type, ctor = _get_type_and_ctor(decl, data=data)
         if last_type != type and last_type is not None:
-            yield f"""{type} {", ".join(last_inits)};"""
+            yield f"""{last_type} {", ".join(last_inits)};"""
             last_inits = []
         last_type = type
         last_inits.append(f"""{decl.name}{ctor}""")
