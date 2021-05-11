@@ -120,7 +120,7 @@ def _write_variables(exprs: List[Tuple[str, Optional[VarType]]], *, newline: boo
             if i:
                 items.append("""' '""")
             items.append(expr)
-        items.append(f"""{_get_std(data=data)}endl""")
+        items.append("'\\n'")
         return [" << ".join(items) + ";"]
     elif callable(printer):
         return printer(exprs, newline=newline)
