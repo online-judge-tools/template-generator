@@ -364,26 +364,11 @@ def _read_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> st
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    try:
-        lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""int n;""")
-    try:
-        lines.extend(_read_variables([('n', VarType.IndexInt)], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""std::scanf("%d", &n);""")
-    try:
-        lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""std::vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
-    try:
-        lines.append(_declare_loop(var=VarName('i'), size=Expr('n'), data=data) + " {")
-    except CPlusPlusGeneratorError:
-        lines.append("""for (int i = 0; i < n; ++i) {""")
-    try:
-        lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""std::scanf("{_get_base_type_format_specifier(VarType.ValueInt, name="a", data=data)}", &a[i]);""")
+    lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
+    lines.extend(_read_variables([('n', VarType.IndexInt)], data=data))
+    lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
+    lines.append(_declare_loop(var=VarName('i'), size=Expr('n'), data=data) + " {")
+    lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
@@ -393,41 +378,23 @@ def read_input(data: Dict[str, Any], *, nest: int = 1) -> str:
     if analyzed.input_format is None or analyzed.input_variables is None:
         return _read_input_fallback(message="failed to analyze input format", data=data, nest=nest)
 
-    try:
-        node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data)
-    except CPlusPlusGeneratorError as e:
-        return _read_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
+    node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
-def _generate_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> str:
+def _generate_input_fallback(message: str, data: Dict[str, Any], *, nest: int = 1) -> str:
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
     lines.append(f"""std::random_device device;""")
     lines.append(f"""std::default_random_engine gen(device());""")
-    try:
-        lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""int n;""")
-    try:
-        lines.extend(_generate_variable(('n', VarType.IndexInt), data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""n = std::uniform_int_distribution<int>(0, 100000)(gen);""")
-    try:
-        lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""std::vector<{_get_base_type(VarType.ValueInt, data=data)}> a(n);""")
-    try:
-        lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
-    except CPlusPlusGeneratorError:
-        lines.append("""for (int i = 0; i < n; ++i) {""")
-    try:
-        lines.extend(_generate_variable(('a[i]', VarType.ValueInt), data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""a[i] = std::uniform_int_distribution<{_get_base_type(VarType.ValueInt, data=data)}>(0, 1000000000)(gen);""")
+    lines.extend(_declare_variables([VarDecl(name=VarName('n'), type=VarType.IndexInt, dims=[], bases=[], depending=set())], data=data))
+    lines.extend(_generate_variable(('n', VarType.IndexInt), data=data))
+    lines.extend(_declare_variables([VarDecl(name=VarName('a'), type=VarType.ValueInt, dims=[Expr('n')], bases=[Expr('0')], depending=set([VarName('n')]))], data=data))
+    lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
+    lines.extend(_generate_variable(('a[i]', VarType.ValueInt), data=data))
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
@@ -437,32 +404,20 @@ def generate_input(data: Dict[str, Any], *, nest: int = 1) -> str:
     if analyzed.input_format is None or analyzed.input_variables is None:
         return _generate_input_fallback(message="failed to analyze input format", data=data, nest=nest)
 
-    try:
-        make_node = lambda var, type: GenerateNode(expr=(var, type))
-        node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data, make_node=make_node)
-    except CPlusPlusGeneratorError as e:
-        return _read_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
+    make_node = lambda var, type: GenerateNode(expr=(var, type))
+    node = _read_input_dfs(analyzed.input_format, declared=set(), initialized=set(), decls=analyzed.input_variables, data=data, make_node=make_node)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
-def _write_input_fallback(message: str, *, data: Dict[str, Any], nest: int) -> str:
+def _write_input_fallback(message: str, data: Dict[str, Any], *, nest: int = 1) -> str:
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    try:
-        lines.extend(_write_variables([('n', VarType.IndexInt)], newline=True, data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""std::printf("%d\n", ans);""")
-    try:
-        lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
-    except CPlusPlusGeneratorError:
-        lines.append("""for (int i = 0; i < n; ++i) {""")
-    try:
-        lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""std::printf("{_get_base_type(VarType.ValueInt, data=data)}%c", &a[i], i < n - 1 ? ' ' : '\\n');""")
+    lines.extend(_write_variables([('n', VarType.IndexInt)], newline=True, data=data))
+    lines.append(_declare_loop(var=VarName('i'), size='n', data=data) + " {")
+    lines.extend(_read_variables([('a[i]', VarType.ValueInt)], data=data))
     lines.append("""}""")
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
@@ -475,10 +430,7 @@ def write_input(data: Dict[str, Any], *, nest: int = 1) -> str:
     if analyzed.input_format is None or analyzed.input_variables is None:
         return _write_input_fallback(message="failed to analyze input format", data=data, nest=nest)
 
-    try:
-        node = _write_output_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
-    except CPlusPlusGeneratorError as e:
-        return _write_input_fallback(message="failed to generate input part: " + str(e), data=data, nest=nest)
+    node = _write_output_dfs(analyzed.input_format, decls=analyzed.input_variables, data=data)
     node = _optimize_syntax_tree(node, data=data)
     lines = list(_serialize_syntax_tree(node, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
@@ -488,10 +440,7 @@ def _write_output_fallback(message: str, *, data: Dict[str, Any], nest: int) -> 
     lines = []
     lines.append(f"""// {message}""")
     lines.append(f"""// TODO: edit here""")
-    try:
-        lines.extend(_write_variables([('ans', VarType.ValueInt)], newline=True, data=data))
-    except CPlusPlusGeneratorError:
-        lines.append(f"""std::printf("%d\n", ans);""")
+    lines.extend(_write_variables([('ans', VarType.ValueInt)], newline=True, data=data))
     return _join_with_indent(iter(lines), nest=nest, data=data)
 
 
@@ -534,10 +483,8 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
     elif output_type is None:
         if analyzed.output_format is None or analyzed.output_variables is None:
             return _write_output_fallback(message="failed to analyze output format", data=data, nest=nest)
-        try:
+        else:
             node = _write_output_dfs(analyzed.output_format, decls=analyzed.output_variables, data=data)
-        except CPlusPlusGeneratorError as e:
-            return _write_output_fallback(message="failed to generate output part: " + str(e), data=data, nest=nest)
 
     else:
         assert False
