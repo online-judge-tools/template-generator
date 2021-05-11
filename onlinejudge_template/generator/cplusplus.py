@@ -520,7 +520,7 @@ def write_output(data: Dict[str, Any], *, nest: int = 1) -> str:
 def formal_arguments(data: Dict[str, Any]) -> str:
     analyzed = utils.get_analyzed(data)
     if analyzed.input_format is None or analyzed.input_variables is None:
-        return f"""int n, const std::vector<int64_t> & a"""
+        return f"""int n, const std::vector<int64_t> &a"""
 
     decls = analyzed.input_variables
     decls = utils._filter_ignored_variables(decls, data=data)
@@ -533,7 +533,7 @@ def formal_arguments(data: Dict[str, Any]) -> str:
             type = f"""std::vector<{type}{space}>"""
         if decl.dims:
             type = f"""const {type} &"""
-        args.append(f"""{type} {name}""")
+        args.append(f"""{type} {name}""".replace('& ', '&'))
     return ', '.join(args)
 
 
