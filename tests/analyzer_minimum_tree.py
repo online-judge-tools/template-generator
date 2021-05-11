@@ -190,3 +190,30 @@ class TestMinimumTree(unittest.TestCase):
 
         actual = analyzer.construct_minimum_input_format_tree(instances=instances)
         self.assertEqual(str(actual), str(expected))
+
+    def test_multiple_test_cases(self) -> None:
+        instances = [
+            textwrap.dedent("""\
+            3
+            5
+            5 3 2 1 4
+            6
+            2 2 2 2 2 2
+            2
+            2 1
+            """),
+        ]
+        expected = SequenceNode(items=[
+            ItemNode(name='testcases'),
+            NewlineNode(),
+            LoopNode(size='testcases', name='i', body=SequenceNode(items=[
+                ItemNode(name='a', indices=['i']),
+                NewlineNode(),
+                LoopNode(size='a_i', name='j', body=ItemNode(name='b', indices=['i', 'j'])),
+                NewlineNode(),
+            ])),
+        ])
+
+        actual = analyzer.construct_minimum_input_format_tree(instances=instances, multiple_test_cases=True)
+        print(actual)
+        self.assertEqual(str(actual), str(expected))
