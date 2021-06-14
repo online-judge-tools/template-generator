@@ -526,12 +526,6 @@ def construct_minimum_output_format_tree_using_input_format(*, instances: List[S
     try:
         for i, data in enumerate(instances):
             minimizer_env.append([])
-            print()
-            print(input_format, data.input.decode(), input_variables)
-            print()
-            print(input_format, data.input.decode(), input_variables)
-            print()
-            print(input_format, data.input.decode(), input_variables)
             input_values = match_format(input_format, data.input.decode(), variables=input_variables)
             for name in sorted(input_variables.keys()):
                 decl = input_variables[name]
