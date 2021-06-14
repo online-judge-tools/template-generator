@@ -547,6 +547,8 @@ def construct_minimum_output_format_tree_using_input_format(*, instances: List[S
         logger.debug('failed to match sample input: %s', e)
         output_samples = [case.output.decode() for case in instances]
         return construct_minimum_output_format_tree(instances=output_samples)
+    for i in range(len(minimizer_env)):
+        assert len(minimizer_env[i]) == len(converter_env)
 
     # construct the tree
     tokenized_instances = [list(tokenize_content(instance.output.decode())) for instance in instances]
