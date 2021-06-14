@@ -151,7 +151,7 @@ def prepare_contest(contest: onlinejudge.type.Contest, *, config: Dict[str, Any]
 
     exceptions: List[Exception] = []
 
-    for i, problem in enumerate(contest.list_problems()):
+    for problem in contest.list_problems():
         try:
             prepare_problem(problem, contest=contest, config=config, session=session)
 
