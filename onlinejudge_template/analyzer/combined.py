@@ -84,6 +84,8 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
                 input_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_input_format_tree(instances=input_samples, multiple_test_cases=multiple_test_cases)
     except AnalyzerError as e:
         logger.info('failed to analyze the input format from the input sample cases: %s', e)
+    if input_format is None:
+        logger.info('failed to analyze the input format: all analyzers failed')
 
     # list the variables for input
     input_variables: Optional[Dict[VarName, VarDecl]] = None
@@ -123,6 +125,8 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
                     output_format = onlinejudge_template.analyzer.minimum_tree.construct_minimum_output_format_tree(instances=output_samples)
     except AnalyzerError as e:
         logger.info('failed to analyze the output format from the sample cases: %s', e)
+    if output_format is None:
+        logger.info('failed to analyze the output format: all analyzers failed')
 
     # list the variables for output
     output_variables: Optional[Dict[VarName, VarDecl]] = None
