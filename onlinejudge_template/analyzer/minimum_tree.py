@@ -309,10 +309,12 @@ def get_replaced_first_placeholder(node: _Node, subst: _Node) -> Optional[_Node]
 
 
 class _PriorityQueue:
-    _heap: List[Tuple[int, int, _Node]] = []
-    _counter = itertools.count()
+    def __init__(self) -> None:
+        self._heap: List[Tuple[int, int, _Node]] = []
+        self._counter = itertools.count()
 
     def push(self, cost: int, node: _Node) -> None:
+        # Put an index to costs to avoid comparison of nodes.
         heapq.heappush(self._heap, (cost, next(self._counter), node))
 
     def pop(self) -> _Node:
