@@ -91,15 +91,26 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
 
     dir.parent.mkdir(parents=True, exist_ok=True)
     with chdir(dir):
+        exceptions: List[Exception] = []
+
         url = problem.get_url()
-        html = network.download_html(url, session=session)
-        sample_cases = network.download_sample_cases(url, session=session)
+        try:
+            html = network.download_html(url, session=session)
+            sample_cases = network.download_sample_cases(url, session=session)
+        except Exception as e:
+            logger.error('failed to download sample cases')
+            exceptions.append(e)
+            html = b''
+            sample_cases = []
 
         # analyze
         resources = analyzer.prepare_from_html(html, url=url, sample_cases=sample_cases)
-        analyzed = analyzer.run(resources)
-
-        exceptions: List[Exception] = []
+        try:
+            analyzed = analyzer.run(resources)
+        except Exception as e:
+            logger.exception('failed to analyze the problem')
+            exceptions.append(e)
+            analyzed = analyzer.get_empty_analyzer_result(resources)
 
         for dest_str, template in table.items():
             dest = pathlib.Path(dest_str)
@@ -108,7 +119,7 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
             try:
                 code = generator.run(analyzed, template_file=template)
             except Exception as e:
-                logger.exception('generator failed: template = %s, dest = %s', template, dest_str)
+                logger.exception('failed to generate code: template = %s, dest = %s', template, dest_str)
                 exceptions.append(e)
                 continue
 
@@ -125,9 +136,10 @@ def prepare_problem(problem: onlinejudge.type.Problem, *, contest: Optional[onli
 
         # download
         try:
+            # TODO: remove this and use the result of `network.download_sample_cases` instead
             subprocess.check_call(['oj', 'download', problem.get_url()], stdout=sys.stdout, stderr=sys.stderr)
         except subprocess.CalledProcessError as e:
-            logger.error('samples downloader failed: %s', e)
+            logger.error('failed to download sample cases: %s', e)
             exceptions.append(e)
 
         if exceptions:

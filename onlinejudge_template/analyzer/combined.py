@@ -165,3 +165,16 @@ def run(resources: AnalyzerResources) -> AnalyzerResult:
         output_type=output_type,
         topcoder_class_definition=topcoder_class_definition,
     )
+
+
+def get_empty_analyzer_result(resources: AnalyzerResources) -> AnalyzerResult:
+    return AnalyzerResult(
+        resources=resources,
+        input_format=None,
+        output_format=None,
+        input_variables=None,
+        output_variables=None,
+        constants={},
+        output_type=None,
+        topcoder_class_definition=None,
+    )
