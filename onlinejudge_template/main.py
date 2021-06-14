@@ -30,6 +30,8 @@ def main(args: Optional[List[str]] = None) -> None:
         level = DEBUG
     basicConfig(level=level, handlers=[handler])
 
+    exceptions: List[Exception] = []
+
     # download
     url = parsed.url
     problem = onlinejudge.dispatch.problem_from_url(url)
@@ -37,20 +39,38 @@ def main(args: Optional[List[str]] = None) -> None:
         url = problem.get_url()  # normalize url
         url = url.replace('judge.yosupo.jp', 'old.yosupo.jp')  # TODO: support the new pages
     logger.debug('url: %s', url)
-    with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=parsed.cookie) as session:
-        html = network.download_html(url, session=session)
-        sample_cases = network.download_sample_cases(url, session=session)
+    try:
+        with onlinejudge.utils.with_cookiejar(onlinejudge.utils.get_default_session(), path=parsed.cookie) as session:
+            html = network.download_html(url, session=session)
+            sample_cases = network.download_sample_cases(url, session=session)
+    except Exception as e:
+        exceptions.append(e)
+        logger.error('failed to download sample cases')
+        html = b''
+        sample_cases = []
     logger.debug('sample cases: %s', sample_cases)
 
     # analyze
     resources = analyzer.prepare_from_html(html, url=url, sample_cases=sample_cases)
     logger.debug('analyzer resources: %s', resources._replace(html=b'...skipped...'))
-    analyzed = analyzer.run(resources)
+    try:
+        analyzed = analyzer.run(resources)
+    except Exception as e:
+        exceptions.append(e)
+        logger.exception('failed to analyze the problem')
+        analyzed = analyzer.get_empty_analyzer_result(resources)
     logger.debug('analyzed result: %s', analyzed._replace(resources=analyzed.resources._replace(html=b'...skipped...')))
 
     # generate
-    code = generator.run(analyzed, template_file=parsed.template)
-    sys.stdout.buffer.write(code)
+    try:
+        code = generator.run(analyzed, template_file=parsed.template)
+        sys.stdout.buffer.write(code)
+    except Exception as e:
+        exceptions.append(e)
+        logger.exception('failed to generate code')
+
+    if exceptions:
+        raise exceptions[0]
 
 
 if __name__ == '__main__':
