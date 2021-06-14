@@ -391,7 +391,7 @@ def list_next_possible_node(states: List[_MatchState]) -> Iterator[_Node]:
     return
 
 
-def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token]], initial_env: Optional[List[List[int]]] = None, limit: int = 10000, initial_node: _Node = _PlaceholderNode()) -> Optional[_Node]:
+def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token]], initial_env: Optional[List[List[int]]] = None, iteration_limit: int = 10000, size_limit: int = 20, initial_node: _Node = _PlaceholderNode()) -> Optional[_Node]:
     # init
     que = _PriorityQueue()
     que.push(get_tree_size(initial_node), initial_node)
@@ -424,11 +424,12 @@ def _construct_minimum_input_format_internal_tree(*, instances: List[List[_Token
         for delta in list_next_possible_node(states):
             nxt = get_replaced_first_placeholder(cur, delta)
             assert nxt is not None
-            que.push(get_tree_size(nxt), nxt)
+            if get_tree_size(nxt) <= size_limit:
+                que.push(get_tree_size(nxt), nxt)
 
         # timeout. This function doesn't have good time complexity, so may take too long time.
-        limit -= 1
-        if limit < 0:
+        iteration_limit -= 1
+        if iteration_limit < 0:
             break
 
     return None
