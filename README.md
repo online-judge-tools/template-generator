@@ -189,7 +189,7 @@ Also you can use certain directory (when you use Linux, it's `~/.config/online-j
 
 ### oj-prepare
 
-The config file for `oj-prepare` can be found at the following paths according to your operating system:
+The config file for `oj-prepare` can be found at the following paths depending on your operating system:
 `~/.config/online-judge-tools/prepare.config.toml` (Linux)
 `/Users/{user_name}/Library/Application Support/online-judge-tools/prepare.config.toml` (MacOS)
 
