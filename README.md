@@ -189,8 +189,11 @@ Also you can use certain directory (when you use Linux, it's `~/.config/online-j
 
 ### oj-prepare
 
-There is the config file for `oj-prepare` at `~/.config/online-judge-tools/prepare.config.toml` (in Linux).
-Please write as the following.
+The config file for `oj-prepare` can be found at the following paths depending on your operating system:
+`~/.config/online-judge-tools/prepare.config.toml` (Linux)
+`/Users/{user_name}/Library/Application Support/online-judge-tools/prepare.config.toml` (MacOS)
+
+Please use the following format when editing the file:
 
 ``` toml
 contest_directory = "~/Desktop/{service_domain}/{contest_id}/{problem_id}"

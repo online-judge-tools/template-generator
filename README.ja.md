@@ -199,8 +199,7 @@ API ドキュメントは [onlinejudge_template.generator package](https://onlin
 
 ### oj-prepare
 
-`oj-prepare` の設定は (Linux の場合は) `~/.config/online-judge-tools/prepare.config.toml` で行えます。
-以下のように書いてください。
+`oj-prepare` の設定は (Linux の場合は) `~/.config/online-judge-tools/prepare.config.toml` で行えます。MacOS の場合は `/Users/{user_name}/Library/Application Support/online-judge-tools/prepare.config.toml` で行えます。以下のように書いてください。
 
 ``` toml
 contest_directory = "~/Desktop/{service_domain}/{contest_id}/{problem_id}"
